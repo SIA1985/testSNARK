@@ -15,6 +15,8 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)
 
 add_executable(testSNARK
-  main.cpp
+    circut.h circut.cpp
+    setup.h setup.cpp
+    main.cpp
 )
 target_link_libraries(testSNARK Qt${QT_VERSION_MAJOR}::Core)
