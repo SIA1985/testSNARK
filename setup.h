@@ -4,19 +4,25 @@
 #include <circut.h>
 #include <unordered_map>
 
-typedef int W;
+typedef int w_t;
 
 template <typename V>
 class T {
 public:
     static T generate(const Circut<V> &circut);
 
-    V operator()(W w) const;
+    V operator()(w_t w) const;
 
 private:
-    T(const Circut<V> &circut);
+    T() = default;
 
-    std::unordered_map<W, V> m_map;
+    std::unordered_map<w_t, V> m_map;
+};
+
+template <typename V>
+class W {
+public:
+
 };
 
 #endif // SETUP_H
