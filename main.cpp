@@ -1,6 +1,9 @@
+#include "snark.h"
+
 int main(int argc, char *argv[])
 {
-
+    /*todo: пример из тетради проверить*/
+    snrk::setup<int>({});
 }
 
 /* ЭТАПЫ

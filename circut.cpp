@@ -1,5 +1,6 @@
 #include "circut.h"
 
+namespace snrk {
 
 template<typename V>
 Value<V>::Value(V)
@@ -39,4 +40,6 @@ template<typename V>
 std::size_t Circut<V>::degree() const
 {
     return 3 * size() + inputSize();
+}
+
 }

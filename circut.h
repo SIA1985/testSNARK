@@ -4,8 +4,10 @@
 #include <list>
 #include <memory>
 
+namespace snrk {
+
 template <typename V>
-struct Value {
+class Value {
     using D = std::shared_ptr<V>;
 
 
@@ -37,7 +39,7 @@ private:
 };
 
 template <typename V>
-struct Circut
+class Circut
 {
     using input_t = std::list<V>;
     using gates_t = std::list<Gate<V>>;
@@ -52,5 +54,7 @@ public:
 
     gates_t m_gates{};
 };
+
+}
 
 #endif // CIRCUT_H
