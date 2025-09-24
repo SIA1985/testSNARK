@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
-    snrk::setup<int>({});
+    snrk::Circut<int> c({5, 6}, {1});
 }
 
 /* ЭТАПЫ

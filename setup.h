@@ -1,7 +1,7 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-#include <circut.h>
+#include "circut.h"
 #include <unordered_map>
 #include <utility>
 #include <unordered_set>
