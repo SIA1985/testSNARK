@@ -34,7 +34,7 @@ typedef Value<ValueType> value_t;
 typedef std::list<value_t> values_t;
 
 class Gate {
-    using input_t = std::list<value_t>;
+    using input_t = struct{value_t a; value_t b;};
 
 public:
     enum type_t : char {

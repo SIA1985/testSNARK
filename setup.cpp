@@ -21,9 +21,9 @@ T T::generate(const witnesses_t &witnesses, const Circut &circut)
     fillMap(circut.m_inputW);
 
     for(const auto& gate : circut.m_gates) {
-        fillMap(gate.m_input);
-        t.m_map[*cw] = gate.m_output;
-        cw++;
+        t.m_map[*cw++] = gate.m_input.a;
+        t.m_map[*cw++] = gate.m_input.b;
+        t.m_map[*cw++] = gate.m_output;
     }
 
     return t;

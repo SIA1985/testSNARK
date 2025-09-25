@@ -9,13 +9,13 @@ int main(int argc, char *argv[])
 
     snrk::Circut c(inputX, inputW);
 
-    c.addGate({snrk::Gate::Sum, inputX, snrk::value_t(11)});
+    c.addGate({snrk::Gate::Sum, {*inputX.begin(), *(inputX.begin()++)}, snrk::value_t(11)});
 
     auto gp = snrk::setup(c);
 }
 
 /* ЭТАПЫ
- * []1. Получение С - скорее в табличном виде
+ * [V]1. Получение С - скорее в табличном виде
  * []2. (мб начать с этого?) Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
  * []3. P строит T(x) и получает comt
  * []4. T корректно кодирует входы
