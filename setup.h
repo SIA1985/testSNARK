@@ -5,29 +5,29 @@
 #include <unordered_map>
 #include <utility>
 #include <unordered_set>
+#include <algorithm>
 
 namespace snrk {
 
 typedef int witness_t;
+typedef std::list<witness_t> witnesses_t;
 
-template <typename V>
 class T {
 public:
-    static T generate(const std::list<witness_t> &witnesses, const Circut<V> &circut);
+    static T generate(const witnesses_t &witnesses, const Circut &circut);
 
-    V operator()(witness_t w) const;
+    value_t operator()(witness_t w) const;
 
 private:
     T() = default;
 
-    std::unordered_map<witness_t, V> m_map;
+    std::unordered_map<witness_t, value_t> m_map;
 };
 
-template <typename V>
 class W {
     using cond_t = std::unordered_set<witness_t>;
 public:
-    static W generate(const std::list<witness_t> &witnesses, const Circut<V> &circut);
+    static W generate(const witnesses_t &witnesses, const Circut &circut);
 
     /*todo: подумать, как проверить иначе T(y) = T(W(y))*/
     cond_t operator()(witness_t w) const;
@@ -37,17 +37,15 @@ private:
 
 };
 
-template <typename V>
 struct GlobalParams {
-    using ProverParams = std::pair<T<V>, W<V>>;
-    using VerifierParams = std::pair<int, int>; /*todo: func commit*/
+    using ProverParams = struct{T t; W w;};
+    using VerifierParams = struct{int comT; int comW;}; /*todo: func commit*/
 
     ProverParams pp;
     VerifierParams vp;
 };
 
-template <typename V>
-GlobalParams<V> setup(const Circut<V> &circut);
+GlobalParams setup(const Circut &circut);
 
 }
 

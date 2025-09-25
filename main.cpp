@@ -1,9 +1,17 @@
 #include "snark.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
-    snrk::Circut<int> c({5, 6}, {1});
+    snrk::values_t inputX = {5, 6};
+    snrk::values_t inputW = {1};
+
+    snrk::Circut c(inputX, inputW);
+
+    c.addGate({snrk::Gate::Sum, inputX, snrk::value_t(11)});
+
+    auto gp = snrk::setup(c);
 }
 
 /* ЭТАПЫ

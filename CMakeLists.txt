@@ -11,9 +11,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(testSNARK
+set(PROJECT_SOURCES
     snark.h
     circut.h circut.cpp
     setup.h setup.cpp
     main.cpp
 )
+
+add_executable(testSNARK
+    ${PROJECT_SOURCES})

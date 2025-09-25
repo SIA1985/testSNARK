@@ -4,13 +4,12 @@
 
 namespace snrk {
 
-template<typename V>
-T<V> T<V>::generate(const std::list<witness_t> &witnesses, const Circut<V> &circut)
+T T::generate(const witnesses_t &witnesses, const Circut &circut)
 {
     T t;
 
     auto cw = witnesses.cbegin();
-    auto fillMap = [&cw, &t](const std::list<V> &row)
+    auto fillMap = [&cw, &t](const values_t &row)
     {
         for(const auto &elment : row) {
             t.m_map[*cw] = elment;
@@ -30,24 +29,18 @@ T<V> T<V>::generate(const std::list<witness_t> &witnesses, const Circut<V> &circ
     return t;
 }
 
-template<typename V>
-V T<V>::operator()(witness_t w) const
+value_t T::operator()(witness_t w) const
 {
     return m_map.at(w);
 }
 
-template<typename V>
-W<V> W<V>::generate(const std::list<witness_t> &witnesses, const Circut<V> &circut)
+W W::generate(const witnesses_t &witnesses, const Circut &circut)
 {
-
+    return {};
 }
 
-template<typename V>
-GlobalParams<V> setup(const Circut<V> &circut)
+GlobalParams setup(const Circut &circut)
 {
-    using T_t = T<V>;
-    using W_t = W<V>;
-
     std::list<witness_t> witnesses;
     witnesses.resize(circut.degree());
 
@@ -58,8 +51,8 @@ GlobalParams<V> setup(const Circut<V> &circut)
         return wGenerator++;
     });
 
-    T_t t = T_t::generate(witnesses, circut);
-    W_t w = W_t::generate(witnesses, circut);
+    T t = T::generate(witnesses, circut);
+    W w = W::generate(witnesses, circut);
 
     return {.pp = {t, w}, .vp = {0, 0}};
 }
