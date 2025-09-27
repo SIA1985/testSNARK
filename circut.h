@@ -8,30 +8,16 @@ namespace snrk {
 
 #define ValueType int
 
-
-template <typename V>
-class Value {
-    using D = std::shared_ptr<V>;
-
-public:
-    Value() = default;
-
-    Value(V v)
-        : m_data{std::make_shared<V>(v)}
-    {
-    }
-
-    bool operator==(const Value &other)
-    {
-        return m_data == other.m_data;
-    }
-
-private:
-    D m_data;
-};
-
-typedef Value<ValueType> value_t;
+using value_t = std::shared_ptr<ValueType>;
 typedef std::list<value_t> values_t;
+
+template<typename V = ValueType>
+value_t newValue(V value)
+{
+    return std::make_shared<V>(value);
+}
+
+#define Value(v) snrk::newValue(v)
 
 class Gate {
     using input_t = struct{value_t a; value_t b;};
@@ -50,6 +36,7 @@ private:
     value_t m_output{0};
 
     friend class T;
+    friend class W;
 };
 
 class Circut
@@ -77,6 +64,7 @@ private:
     gates_t m_gates{};
 
     friend class T;
+    friend class W;
 };
 
 }

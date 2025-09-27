@@ -29,10 +29,11 @@ class W {
 public:
     static W generate(const witnesses_t &witnesses, const Circut &circut);
 
-    /*todo: подумать, как проверить иначе T(y) = T(W(y))*/
     cond_t operator()(witness_t w) const;
 
 private:
+    W() = default;
+
     std::list<cond_t> m_conditions;
 
 };

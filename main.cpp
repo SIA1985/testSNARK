@@ -4,12 +4,18 @@
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
-    snrk::values_t inputX = {5, 6};
-    snrk::values_t inputW = {1};
+    auto x1 = Value(5);
+    auto x2 = Value(6);
+    auto w1 = Value(1);
 
-    snrk::Circut c(inputX, inputW);
+    snrk::Circut c({x1, x2}, {w1});
 
-    c.addGate({snrk::Gate::Sum, {*inputX.begin(), *(inputX.begin()++)}, snrk::value_t(11)});
+    auto out1 = Value(11);
+    c.addGate({snrk::Gate::Sum, {x1, x2}, out1});
+    auto out2 = Value(7);
+    c.addGate({snrk::Gate::Sum, {x2, w1}, out2});
+    auto out3 = Value(77);
+    c.addGate({snrk::Gate::Product, {out1, out2}, {out3}});
 
     auto gp = snrk::setup(c);
 }
@@ -22,4 +28,5 @@ int main(int argc, char *argv[])
  * []5. Каждый вентиль корректно посчитан
  * []6. Стрелки соответствуют С
  * []7. Выход последнего вентиля =0
+ * []8. Оптимизации (сложностей О)
 */
