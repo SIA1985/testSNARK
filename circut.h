@@ -3,21 +3,16 @@
 
 #include <list>
 #include <memory>
+#include <any>
 
 namespace snrk {
 
-#define ValueType int
+#define ValueType std::any
 
 using value_t = std::shared_ptr<ValueType>;
 typedef std::list<value_t> values_t;
 
-template<typename V = ValueType>
-value_t newValue(V value)
-{
-    return std::make_shared<V>(value);
-}
-
-#define Value(v) snrk::newValue(v)
+#define Value(value) std::make_shared<ValueType>(value);
 
 class Gate {
     using input_t = struct{value_t a; value_t b;};
