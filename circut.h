@@ -1,16 +1,16 @@
 #ifndef CIRCUT_H
 #define CIRCUT_H
 
-#include <list>
+#include <vector>
 #include <memory>
 #include <any>
 
 namespace snrk {
 
-#define ValueType std::any
+#define ValueType int
 
 using value_t = std::shared_ptr<ValueType>;
-typedef std::list<value_t> values_t;
+typedef std::vector<value_t> values_t;
 
 #define Value(value) std::make_shared<ValueType>(value);
 
@@ -32,13 +32,14 @@ private:
 
     friend class T;
     friend class W;
+    friend class S;
 };
 
 class Circut
 {
-    using input_t = std::list<value_t>;
+    using input_t = std::vector<value_t>;
     using gate_t = Gate;
-    using gates_t = std::list<Gate>;
+    using gates_t = std::vector<Gate>;
 
 public:
     Circut(const input_t &inputX, const input_t &inputW);
@@ -60,6 +61,7 @@ private:
 
     friend class T;
     friend class W;
+    friend class S;
 };
 
 }

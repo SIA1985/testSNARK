@@ -10,7 +10,7 @@
 namespace snrk {
 
 typedef int witness_t;
-typedef std::list<witness_t> witnesses_t;
+typedef std::vector<witness_t> witnesses_t;
 
 class T {
 public:
@@ -24,6 +24,18 @@ private:
     std::unordered_map<witness_t, value_t> m_map;
 };
 
+class S {
+public:
+    static S generate(const Circut &circut);
+
+    Gate::type_t operator()(std::size_t gateNum);
+
+private:
+    S() = default;
+
+    std::unordered_map<witness_t, Gate::type_t> m_map;
+};
+
 class W {
     using cond_t = std::unordered_set<witness_t>;
 public:
@@ -34,13 +46,13 @@ public:
 private:
     W() = default;
 
-    std::list<cond_t> m_conditions;
+    std::unordered_map<witness_t, std::shared_ptr<cond_t>> m_map;
 
 };
 
 struct GlobalParams {
-    using ProverParams = struct{T t; W w;};
-    using VerifierParams = struct{int comT; int comW;}; /*todo: func commit*/
+    using ProverParams = struct{T t; S s; W w;};
+    using VerifierParams = struct{int comT; int comS; int comW;}; /*todo: func commit*/
 
     ProverParams pp;
     VerifierParams vp;
