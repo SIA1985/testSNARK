@@ -18,6 +18,8 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Gate::Product, {out1, out2}, {out3}});
 
     auto gp = snrk::setup(c);
+
+    auto funcT = snrk::lagrange<snrk::witness_t, snrk::value_t>::generate({});
 }
 
 /* ЭТАПЫ

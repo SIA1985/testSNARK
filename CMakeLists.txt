@@ -15,6 +15,7 @@ set(PROJECT_SOURCES
     snark.h
     circut.h circut.cpp
     setup.h setup.cpp
+    funciton.h funciton.cpp
     main.cpp
 )
 
