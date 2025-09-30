@@ -1,6 +1,10 @@
 #include "snark.h"
 #include <iostream>
 
+/*todo:*/
+int t = 1;
+int G = 2;
+
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
@@ -19,13 +23,15 @@ int main(int argc, char *argv[])
 
     auto gp = snrk::setup(c);
 
-    auto funcT = snrk::lagrange<snrk::witness_t, snrk::value_t>::generate({});
+    auto funcT = snrk::lagrange<int, int>::generate({{1, 3}, {2, 5}, {4, 2}});
+
+    std::cout << funcT.commit(t, G) << std::endl;
 }
 
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
- * []2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
- * []3. P строит T(x) и получает comt
+ * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
+ * [50/50]3. P строит T(x) и получает comt (Доразобраться с gp и сделать норм. commit)
  * []4. T корректно кодирует входы
  * []5. Каждый вентиль корректно посчитан
  * []6. Стрелки соответствуют С

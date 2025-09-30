@@ -3,30 +3,30 @@
 
 #include "circut.h"
 
+#include <functional>
+
 
 namespace snrk {
 
 template <typename X, typename Y>
-struct DotValue {
-    X x;
-    Y y;
-};
-
-template <typename X, typename Y>
 class polynom
-{   
+{
 public:
     polynom() = default;
     ~polynom() = default;
 
     virtual Y operator()(const X &x) = 0;
+
+    /*todo: передача gp*/
+    virtual Y commit(X t, int G) = 0;
 };
 
 template <typename X, typename Y>
 class lagrange : public polynom<X, Y>
 {
-    using dot_t = DotValue<X, Y>;
+    using dot_t = struct{X x; Y y;};
     using dots_t = std::vector<dot_t>;
+
 public:
     static lagrange generate(const dots_t &dots)
     {
@@ -39,24 +39,21 @@ public:
 
     virtual Y operator()(const X &x) override
     {
-        auto l = [this, &x](std::size_t i) -> X
-        {
-            X li;
-            for(std::size_t j = 0; j < m_dots.size(); j++) {
-                if (i == j) {
-                    continue;
-                }
-
-                li *= ((x - m_dots[j].x) / (m_dots[i].x - m_dots[j].x));
-            }
-
-            return li;
-        };
-
-        Y y;
+        Y y = 0;
 
         for(std::size_t i = 0; i < m_dots.size(); i++) {
-            y += (l(i) * m_dots[i].y);
+            y += (l(i, x) * m_dots[i].y);
+        }
+
+        return y;
+    }
+
+    virtual Y commit(X t, int G) override
+    {
+        /*пока = f(t)*G напрямую*/
+        Y y = 0;
+        for(std::size_t i = 0; i < m_dots.size(); i++) {
+            y += (l(i, t) * G * m_dots[i].y);
         }
 
         return y;
@@ -64,6 +61,20 @@ public:
 
 private:
     lagrange() = default;
+
+    X l(std::size_t i, const X &x)
+    {
+        X li = 1;
+        for(std::size_t j = 0; j < m_dots.size(); j++) {
+            if (i == j) {
+                continue;
+            }
+
+            li *= ((x - m_dots[j].x) / (m_dots[i].x - m_dots[j].x));
+        }
+
+        return li;
+    };
 
     dots_t m_dots;
 };
