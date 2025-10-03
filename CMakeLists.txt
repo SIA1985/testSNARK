@@ -16,6 +16,7 @@ set(PROJECT_SOURCES
     circut.h circut.cpp
     setup.h setup.cpp
     funciton.h funciton.cpp
+    proof.h proof.cpp
     main.cpp
 )
 

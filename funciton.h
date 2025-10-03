@@ -4,33 +4,39 @@
 #include "circut.h"
 
 #include <functional>
+#include <unordered_set>
 
 
 namespace snrk {
 
 template <typename X, typename Y>
-class polynom
+class Polynom
 {
 public:
-    polynom() = default;
-    ~polynom() = default;
+    Polynom() = default;
+    virtual ~Polynom() = default;
 
     virtual Y operator()(const X &x) = 0;
 
     /*todo: передача gp*/
-    virtual Y commit(X t, int G) = 0;
+    virtual Y commit(X t, int G)
+    {
+        /*пока = f(t)*G напрямую*/
+        return this->operator()(t) * G;
+
+    }
 };
 
 template <typename X, typename Y>
-class lagrange : public polynom<X, Y>
+class Lagrange : public Polynom<X, Y>
 {
     using dot_t = struct{X x; Y y;};
     using dots_t = std::vector<dot_t>;
 
 public:
-    static lagrange generate(const dots_t &dots)
+    static Lagrange generate(const dots_t &dots)
     {
-        lagrange l;
+        Lagrange l;
 
         l.m_dots = dots;
 
@@ -48,19 +54,8 @@ public:
         return y;
     }
 
-    virtual Y commit(X t, int G) override
-    {
-        /*пока = f(t)*G напрямую*/
-        Y y = 0;
-        for(std::size_t i = 0; i < m_dots.size(); i++) {
-            y += (l(i, t) * G * m_dots[i].y);
-        }
-
-        return y;
-    }
-
 private:
-    lagrange() = default;
+    Lagrange() = default;
 
     X l(std::size_t i, const X &x)
     {
@@ -75,6 +70,52 @@ private:
 
         return li;
     };
+
+    dots_t m_dots;
+};
+
+template <typename X, typename Y>
+class CustomPolynom : public Polynom<X, Y>
+{
+    using func_t = std::function<Y(X)>;
+public:
+    CustomPolynom(const func_t &customFunction)
+        : m_customFunction{customFunction}
+    {
+    }
+
+    virtual Y operator()(const X &x) override
+    {
+        return m_customFunction(x);
+    }
+
+private:
+    func_t m_customFunction;
+};
+
+template <typename X, typename Y>
+class ZeroPolynom : public Polynom<X, Y>
+{
+    using dot_t = struct{X x; Y y;};
+    using dots_t = std::unordered_set<dot_t>;
+
+public:
+    static ZeroPolynom generate(const dots_t &dots)
+    {
+        ZeroPolynom z;
+
+        z.m_dots = dots;
+
+        return z;
+    }
+
+    virtual Y operator()(const X &x) override
+    {
+        return (m_dots.count(x) > 0 ? 0 : -1);
+    }
+
+private:
+    ZeroPolynom() = default;
 
     dots_t m_dots;
 };

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
     auto gp = snrk::setup(c);
 
-    auto funcT = snrk::lagrange<int, int>::generate({{1, 3}, {2, 5}, {4, 2}});
+    auto funcT = snrk::Lagrange<int, int>::generate({{1, 3}, {2, 5}, {4, 2}});
 
     std::cout << funcT.commit(t, G) << std::endl;
 }
