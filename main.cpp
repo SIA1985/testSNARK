@@ -7,6 +7,9 @@ int G = 2;
 
 int main(int argc, char *argv[])
 {
+    using X = int;
+    using Y = int;
+
     /*todo: пример из тетради проверить*/
     auto x1 = Value(5);
     auto x2 = Value(6);
@@ -23,9 +26,16 @@ int main(int argc, char *argv[])
 
     auto gp = snrk::setup(c);
 
-    auto funcT = snrk::Lagrange<int, int>::generate({{1, 3}, {2, 5}, {4, 2}});
+    auto funcT = snrk::Lagrange<X, Y>::generate({{1, 3}, {2, 5}, {4, 2}});
+    auto funcQ = snrk::CustomPolynom<X, Y>::generate([&funcT](X x) -> Y
+    {
+        return funcT(x) / (x - 4);
+    });
 
-    std::cout << funcT.commit(t, G) << std::endl;
+
+    snrk::PolynomSubstitutionProof<X, Y> proof(funcT.commit(t, G), funcQ.commit(t, G), {.u = 4, .v = 2});
+
+    std::cout << proof.check() << std::endl;
 }
 
 /* ЭТАПЫ

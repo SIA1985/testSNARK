@@ -1,34 +1,52 @@
 #ifndef PROOF_H
 #define PROOF_H
 
-#include <memory>
+#include "funciton.h"
 
 namespace snrk {
 
-template <class Polynom>
 class Proof
 {
 public:
     Proof() = default;
     virtual ~Proof() = default;
 
-    virtual bool generate() = 0;
-
     virtual bool check() = 0;
 };
 
-template <class Polynom>
-class ZeroTestProof : public Proof<Polynom>
+template <typename X, typename Y>
+class PolynomSubstitutionProof : public Proof
 {
+    using commit_t = X;
+    using toProve_t = struct{X u; Y v;};
+
 public:
-    ZeroTestProof(Polynom *f)
-        : m_f{std::make_shared<Polynom>(f)}
+    PolynomSubstitutionProof(commit_t comF, commit_t comQ, toProve_t toProve)
+        : m_comF{comF}
+        , m_comQ{comQ}
+        , m_toProve{toProve}
     {
     }
 
+    void setGp(X t, int G)
+    {
+        m_t = t;
+        m_G = G;
+    }
+
+    virtual bool check() override
+    {
+        return (m_t - m_toProve.u) * m_comQ == m_comF - m_toProve.v * m_G;
+    }
+
 private:
-    std::shared_ptr<Polynom> m_f;
-    std::shared_ptr<Polynom> m_g;
+    commit_t m_comF;
+    commit_t m_comQ;
+
+    toProve_t m_toProve;
+
+    X m_t;
+    int m_G;
 };
 
 }

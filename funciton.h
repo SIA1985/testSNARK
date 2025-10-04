@@ -79,9 +79,13 @@ class CustomPolynom : public Polynom<X, Y>
 {
     using func_t = std::function<Y(X)>;
 public:
-    CustomPolynom(const func_t &customFunction)
-        : m_customFunction{customFunction}
+    static CustomPolynom generate(const func_t &customFunction)
     {
+        CustomPolynom c;
+
+        c.m_customFunction = customFunction;
+
+        return c;
     }
 
     virtual Y operator()(const X &x) override
