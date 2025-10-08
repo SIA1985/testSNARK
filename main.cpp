@@ -11,23 +11,23 @@ int G = 2;
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
-    auto x1 = Value(5);
-    auto x2 = Value(6);
-    auto w1 = Value(1);
+    auto x1 = snrk::Value(5);
+    auto x2 = snrk::Value(6);
+    auto w1 = snrk::Value(1);
 
     snrk::Circut c({x1, x2}, {w1});
 
-    auto out1 = Value(11);
+    auto out1 = snrk::Value(11);
     c.addGate({snrk::Gate::Sum, {x1, x2}, out1});
-    auto out2 = Value(7);
+    auto out2 = snrk::Value(7);
     c.addGate({snrk::Gate::Sum, {x2, w1}, out2});
-    auto out3 = Value(77);
+    auto out3 = snrk::Value(77);
     c.addGate({snrk::Gate::Product, {out1, out2}, {out3}});
 
-    auto gp = snrk::setup(c);
+    snrk::GlobalParams gp(c);
 
-    auto funcT = snrk::Lagrange<X, Y>::generate({{1, 3}, {2, 5}, {4, 2}});
-    auto funcQ = snrk::CustomPolynom<X, Y>::generate([&funcT](X x) -> Y
+    auto funcT = snrk::Lagrange::generate({{1, 3}, {2, 5}, {4, 2}});
+    auto funcQ = snrk::CustomPolynom::generate([&funcT](snrk::X_t x) -> snrk::Y_t
     {
         return (funcT(x) - 2) / (x - 4);
     });

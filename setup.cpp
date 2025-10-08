@@ -51,6 +51,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 }
 
 GlobalParams::GlobalParams(const Circut &circut)
+    : m_TG{1, 2}
 {
     witnesses_t witnesses;
     witnesses.resize(circut.degree());
@@ -68,25 +69,33 @@ GlobalParams::GlobalParams(const Circut &circut)
     generateW(witnesses, circut);
 }
 
-GlobalParams::ProverParams GlobalParams::PP() const
+GlobalParams::TG_t GlobalParams::TG()
 {
-
+    return m_TG;
 }
 
-GlobalParams::VerifierParams GlobalParams::VP() const
+GlobalParams::ProverParams_t GlobalParams::PP()
 {
+    /*todo: не копия*/
+    return {.t = m_T, .s = m_S, .w = m_W};
+}
 
+GlobalParams::VerifierParams_t GlobalParams::VP()
+{
+    return {.comT = m_T.commit(m_TG.t, m_TG.G),
+            .comS = m_S.commit(m_TG.t, m_TG.G),
+            .comW = 0};
 }
 
 void GlobalParams::generateT(const witnesses_t &witnesses, const Circut &circut)
 {
-    typename T_t::dots_t dots;
+    dots_t dots;
 
     auto cw = witnesses.cbegin();
     auto fillMap = [&cw, &dots](const values_t &row)
     {
-        for(const auto &elment : row) {
-            dots.push_back({*cw++, elment});
+        for(const auto& elment : row) {
+            dots.push_back({X_t(*cw++), Y_t(elment)});
         }
     };
 
@@ -94,28 +103,28 @@ void GlobalParams::generateT(const witnesses_t &witnesses, const Circut &circut)
     fillMap(circut.m_inputW);
 
     for(const auto& gate : circut.m_gates) {
-        dots.push_back({*cw++, gate.m_input.a});
-        dots.push_back({*cw++, gate.m_input.b});
-        dots.push_back({*cw++, gate.m_output});
+        dots.push_back({X_t(*cw++), Y_t(gate.m_input.a)});
+        dots.push_back({X_t(*cw++), Y_t(gate.m_input.b)});
+        dots.push_back({X_t(*cw++), Y_t(gate.m_output)});
     }
 
-    m_t = T_t::generate(dots);
+    m_T = T_t::generate(dots);
 }
 
 void GlobalParams::generateS(const Circut &circut)
 {
-    typename S_t::dots_t dots;
+    dots_t dots;
 
     for(int i = 0; i < circut.size(); i++) {
-        dots.push_back({i, circut.m_gates[i].m_type});
+        dots.push_back({X_t(i), Y_t(circut.m_gates[i].m_type)});
     }
 
-    m_s = S_t::generate(dots);
+    m_S = S_t::generate(dots);
 }
 
 void GlobalParams::generateW(const witnesses_t &witnesses, const Circut &circut)
 {
-    m_w = W_t::generate(witnesses, circut);
+    m_W = W_t::generate(witnesses, circut);
 }
 
 }

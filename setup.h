@@ -9,13 +9,13 @@
 #include <unordered_set>
 #include <algorithm>
 
-namespace snrk {
+namespace snrk { 
 
 typedef int witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
-typedef Lagrange<witness_t, value_t> T_t;
-typedef Lagrange<witness_t, Gate::type_t> S_t;
+typedef Lagrange T_t;
+typedef Lagrange S_t;
 
 class W_t {
     using cond_t = std::unordered_set<witness_t>;
@@ -30,15 +30,18 @@ private:
 };
 
 class GlobalParams {
-    using ProverParams = struct{T_t t; S_t s; W_t w;};
-    using VerifierParams = struct{int comT; int comS; int comW;}; /*todo: func commit*/
+    using ProverParams_t = struct{T_t t; S_t s; W_t w;};
+    using VerifierParams_t = struct{Y_t comT; Y_t comS; int comW;};
+    using TG_t = struct{value_t t; int G;};
 
 public:
     GlobalParams(const Circut &circut);
 
-    ProverParams PP() const;
+    TG_t TG();
 
-    VerifierParams VP() const;
+    ProverParams_t PP();
+
+    VerifierParams_t VP();
 
 private:
     void generateT(const witnesses_t &witnesses, const Circut &circut);
@@ -47,9 +50,11 @@ private:
 
     void generateW(const witnesses_t &witnesses, const Circut &circut);
 
-    T_t m_t;
-    S_t m_s;
-    W_t m_w;
+    TG_t m_TG;
+
+    T_t m_T;
+    S_t m_S;
+    W_t m_W;
 };
 
 }

@@ -10,117 +10,71 @@
 
 namespace snrk {
 
-template <typename X, typename Y>
+typedef ValueType X_t;
+typedef ValueType Y_t;
+
+struct dot_t {X_t x; Y_t y;};
+typedef std::vector<dot_t> dots_t;
+
 class Polynom
 {
 public:
     Polynom() = default;
     virtual ~Polynom() = default;
 
-    virtual Y operator()(const X &x) = 0;
+    virtual Y_t operator()(const X_t &x) = 0;
 
     /*todo: передача gp*/
-    virtual Y commit(X t, int G)
-    {
-        /*пока = f(t)*G напрямую*/
-        return this->operator()(t) * G;
-    }
+    virtual Y_t commit(X_t t, int G);
 };
 
 
 /*todo: порядок точек?*/
-template <typename X, typename Y>
-class Lagrange : public Polynom<X, Y>
+class Lagrange : public Polynom
 {
 public:
-    using dot_t = struct{X x; Y y;};
-    using dots_t = std::vector<dot_t>;
+    static Lagrange generate(const dots_t &dots);
 
-    static Lagrange generate(const dots_t &dots)
-    {
-        Lagrange l;
-
-        l.m_dots = dots;
-
-        return l;
-    }
-
-    virtual Y operator()(const X &x) override
-    {
-        Y y = 0;
-
-        for(std::size_t i = 0; i < m_dots.size(); i++) {
-            y += (l(i, x) * m_dots[i].y);
-        }
-
-        return y;
-    }
+    virtual Y_t operator()(const X_t &x) override;
 
 private:
-    X l(std::size_t i, const X &x)
-    {
-        X li = 1;
-        for(std::size_t j = 0; j < m_dots.size(); j++) {
-            if (i == j) {
-                continue;
-            }
-
-            li *= ((x - m_dots[j].x) / (m_dots[i].x - m_dots[j].x));
-        }
-
-        return li;
-    };
+    X_t l(std::size_t i, const X_t &x);
 
     dots_t m_dots;
 };
 
-template <typename X, typename Y>
-class CustomPolynom : public Polynom<X, Y>
+class CustomPolynom : public Polynom
 {
-    using func_t = std::function<Y(X)>;
+    using func_t = std::function<Y_t(X_t)>;
 public:
-    static CustomPolynom generate(const func_t &customFunction)
-    {
-        CustomPolynom c;
+    static CustomPolynom generate(const func_t &customFunction);
 
-        c.m_customFunction = customFunction;
-
-        return c;
-    }
-
-    virtual Y operator()(const X &x) override
-    {
-        return m_customFunction(x);
-    }
+    virtual Y_t operator()(const X_t &x) override;
 
 private:
     func_t m_customFunction;
 };
 
-template <typename X, typename Y>
-class ZeroPolynom : public Polynom<X, Y>
-{
-    using dot_t = struct{X x; Y y;};
-    using dots_t = std::unordered_set<dot_t>;
+//class ZeroPolynom : public Polynom
+//{
+//public:
+//    static ZeroPolynom generate(const dots_t &dots)
+//    {
+//        ZeroPolynom z;
 
-public:
-    static ZeroPolynom generate(const dots_t &dots)
-    {
-        ZeroPolynom z;
+//        z.m_dots = dots;
 
-        z.m_dots = dots;
+//        return z;
+//    }
 
-        return z;
-    }
+//    virtual Y_t operator()(const X_t &x) override
+//    {
+//        return (m_dots.count(x) > 0 ? 0 : -1);
+//    }
 
-    virtual Y operator()(const X &x) override
-    {
-        return (m_dots.count(x) > 0 ? 0 : -1);
-    }
-
-private:
-    dots_t m_dots;
-};
+//private:
+//    dots_t m_dots;
+//};
 
 }
 #endif // FUNCITON_H

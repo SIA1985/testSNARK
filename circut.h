@@ -7,12 +7,30 @@
 
 namespace snrk {
 
-#define ValueType int
+#define ValueType double
 
-using value_t = std::shared_ptr<ValueType>;
+class Value
+{
+public:
+    Value();
+
+    Value(ValueType value);
+
+    operator int() const;
+    operator double() const;
+
+    bool operator<(const Value &other);
+    bool operator==(const Value &other);
+
+private:
+    std::shared_ptr<ValueType> m_value{};
+};
+
+bool operator<(const Value &a, const Value &b);
+bool operator==(const Value &a, const Value &b);
+
+typedef Value value_t;
 typedef std::vector<value_t> values_t;
-
-#define Value(value) std::make_shared<ValueType>(value);
 
 class Gate {
     using input_t = struct{value_t a; value_t b;};
