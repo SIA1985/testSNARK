@@ -36,6 +36,7 @@ public:
 
     virtual bool check() override
     {
+        /*todo: сравнение float*/
         return (m_t - m_toProve.u) * m_comQ == m_comF - m_toProve.v * m_G;
     }
 

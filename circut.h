@@ -30,9 +30,8 @@ private:
     input_t m_input{};
     value_t m_output{0};
 
-    friend class T;
-    friend class W;
-    friend class S;
+    friend class GlobalParams;
+    friend class W_t;
 };
 
 class Circut
@@ -59,9 +58,8 @@ private:
 
     gates_t m_gates{};
 
-    friend class T;
-    friend class W;
-    friend class S;
+    friend class GlobalParams;
+    friend class W_t;
 };
 
 }

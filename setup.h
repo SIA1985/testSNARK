@@ -2,6 +2,8 @@
 #define SETUP_H
 
 #include "circut.h"
+#include "funciton.h"
+
 #include <unordered_map>
 #include <utility>
 #include <unordered_set>
@@ -12,53 +14,43 @@ namespace snrk {
 typedef int witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
-class T {
-public:
-    static T generate(const witnesses_t &witnesses, const Circut &circut);
+typedef Lagrange<witness_t, value_t> T_t;
+typedef Lagrange<witness_t, Gate::type_t> S_t;
 
-    value_t operator()(witness_t w) const;
-
-private:
-    T() = default;
-
-    std::unordered_map<witness_t, value_t> m_map;
-};
-
-class S {
-public:
-    static S generate(const Circut &circut);
-
-    Gate::type_t operator()(std::size_t gateNum);
-
-private:
-    S() = default;
-
-    std::unordered_map<witness_t, Gate::type_t> m_map;
-};
-
-class W {
+class W_t {
     using cond_t = std::unordered_set<witness_t>;
 public:
-    static W generate(const witnesses_t &witnesses, const Circut &circut);
+    static W_t generate(const witnesses_t &witnesses, const Circut &circut);
 
     cond_t operator()(witness_t w) const;
 
 private:
-    W() = default;
-
     std::unordered_map<witness_t, std::shared_ptr<cond_t>> m_map;
 
 };
 
-struct GlobalParams {
-    using ProverParams = struct{T t; S s; W w;};
+class GlobalParams {
+    using ProverParams = struct{T_t t; S_t s; W_t w;};
     using VerifierParams = struct{int comT; int comS; int comW;}; /*todo: func commit*/
 
-    ProverParams pp;
-    VerifierParams vp;
-};
+public:
+    GlobalParams(const Circut &circut);
 
-GlobalParams setup(const Circut &circut);
+    ProverParams PP() const;
+
+    VerifierParams VP() const;
+
+private:
+    void generateT(const witnesses_t &witnesses, const Circut &circut);
+
+    void generateS(const Circut &circut);
+
+    void generateW(const witnesses_t &witnesses, const Circut &circut);
+
+    T_t m_t;
+    S_t m_s;
+    W_t m_w;
+};
 
 }
 

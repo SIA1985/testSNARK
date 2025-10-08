@@ -5,54 +5,9 @@
 
 namespace snrk {
 
-T T::generate(const witnesses_t &witnesses, const Circut &circut)
+W_t W_t::generate(const witnesses_t &witnesses, const Circut &circut)
 {
-    T t;
-
-    auto cw = witnesses.cbegin();
-    auto fillMap = [&cw, &t](const values_t &row)
-    {
-        for(const auto &elment : row) {
-            t.m_map[*cw++] = elment;
-        }
-    };
-
-    fillMap(circut.m_inputX);
-    fillMap(circut.m_inputW);
-
-    for(const auto& gate : circut.m_gates) {
-        t.m_map[*cw++] = gate.m_input.a;
-        t.m_map[*cw++] = gate.m_input.b;
-        t.m_map[*cw++] = gate.m_output;
-    }
-
-    return t;
-}
-
-value_t T::operator()(witness_t w) const
-{
-    return m_map.at(w);
-}
-
-S S::generate(const Circut &circut)
-{
-    S s;
-
-    for(std::size_t i = 0; i < circut.size(); i++) {
-        s.m_map[i] = circut.m_gates[i].m_type;
-    }
-
-    return s;
-}
-
-Gate::type_t S::operator()(std::size_t gateNum)
-{
-    return m_map.at(gateNum);
-}
-
-W W::generate(const witnesses_t &witnesses, const Circut &circut)
-{
-    W w;
+    W_t w;
     std::map<value_t, std::shared_ptr<cond_t>> duplicates;
     auto insert = [&duplicates](value_t key, witness_t value)
     {
@@ -90,12 +45,12 @@ W W::generate(const witnesses_t &witnesses, const Circut &circut)
     return w;
 }
 
-W::cond_t W::operator()(witness_t w) const
+W_t::cond_t W_t::operator()(witness_t w) const
 {
     return *m_map.at(w);
 }
 
-GlobalParams setup(const Circut &circut)
+GlobalParams::GlobalParams(const Circut &circut)
 {
     witnesses_t witnesses;
     witnesses.resize(circut.degree());
@@ -108,11 +63,59 @@ GlobalParams setup(const Circut &circut)
     });
 
     /*кадый в отдельный поток, т.к. читаем witness и circut*/
-    T t = T::generate(witnesses, circut);
-    S s = S::generate(circut);
-    W w = W::generate(witnesses, circut);
+    generateT(witnesses, circut);
+    generateS(circut);
+    generateW(witnesses, circut);
+}
 
-    return {.pp = {t, s, w}, .vp = {0, 0, 0}};
+GlobalParams::ProverParams GlobalParams::PP() const
+{
+
+}
+
+GlobalParams::VerifierParams GlobalParams::VP() const
+{
+
+}
+
+void GlobalParams::generateT(const witnesses_t &witnesses, const Circut &circut)
+{
+    typename T_t::dots_t dots;
+
+    auto cw = witnesses.cbegin();
+    auto fillMap = [&cw, &dots](const values_t &row)
+    {
+        for(const auto &elment : row) {
+            dots.push_back({*cw++, elment});
+        }
+    };
+
+    fillMap(circut.m_inputX);
+    fillMap(circut.m_inputW);
+
+    for(const auto& gate : circut.m_gates) {
+        dots.push_back({*cw++, gate.m_input.a});
+        dots.push_back({*cw++, gate.m_input.b});
+        dots.push_back({*cw++, gate.m_output});
+    }
+
+    m_t = T_t::generate(dots);
+}
+
+void GlobalParams::generateS(const Circut &circut)
+{
+    typename S_t::dots_t dots;
+
+    for(int i = 0; i < circut.size(); i++) {
+        dots.push_back({i, circut.m_gates[i].m_type});
+    }
+
+    m_s = S_t::generate(dots);
+}
+
+void GlobalParams::generateW(const witnesses_t &witnesses, const Circut &circut)
+{
+    m_w = W_t::generate(witnesses, circut);
 }
 
 }

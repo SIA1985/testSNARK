@@ -2,14 +2,14 @@
 #include <iostream>
 
 /*todo:*/
-int t = 1;
+using X = float;
+using Y = float;
+
+X t = 1;
 int G = 2;
 
 int main(int argc, char *argv[])
 {
-    using X = int;
-    using Y = int;
-
     /*todo: пример из тетради проверить*/
     auto x1 = Value(5);
     auto x2 = Value(6);
@@ -29,11 +29,13 @@ int main(int argc, char *argv[])
     auto funcT = snrk::Lagrange<X, Y>::generate({{1, 3}, {2, 5}, {4, 2}});
     auto funcQ = snrk::CustomPolynom<X, Y>::generate([&funcT](X x) -> Y
     {
-        return funcT(x) / (x - 4);
+        return (funcT(x) - 2) / (x - 4);
     });
 
 
     snrk::PolynomSubstitutionProof<X, Y> proof(funcT.commit(t, G), funcQ.commit(t, G), {.u = 4, .v = 2});
+
+    proof.setGp(t, G);
 
     std::cout << proof.check() << std::endl;
 }

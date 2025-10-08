@@ -4,6 +4,7 @@
 #include "circut.h"
 
 #include <functional>
+#include <set>
 #include <unordered_set>
 
 
@@ -23,17 +24,18 @@ public:
     {
         /*пока = f(t)*G напрямую*/
         return this->operator()(t) * G;
-
     }
 };
 
+
+/*todo: порядок точек?*/
 template <typename X, typename Y>
 class Lagrange : public Polynom<X, Y>
 {
+public:
     using dot_t = struct{X x; Y y;};
     using dots_t = std::vector<dot_t>;
 
-public:
     static Lagrange generate(const dots_t &dots)
     {
         Lagrange l;
@@ -55,8 +57,6 @@ public:
     }
 
 private:
-    Lagrange() = default;
-
     X l(std::size_t i, const X &x)
     {
         X li = 1;
@@ -119,8 +119,6 @@ public:
     }
 
 private:
-    ZeroPolynom() = default;
-
     dots_t m_dots;
 };
 
