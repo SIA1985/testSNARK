@@ -7,6 +7,12 @@
 
 namespace snrk {
 
+enum GateType_t : char {
+    Unknown = 0,
+    Sum,
+    Product,
+};
+
 #define ValueType double
 
 class Value
@@ -18,16 +24,17 @@ public:
 
     operator int() const;
     operator double() const;
+    operator GateType_t() const;
 
     bool operator<(const Value &other);
-    bool operator==(const Value &other);
+//    bool operator==(const Value &other);
 
 private:
     std::shared_ptr<ValueType> m_value{};
 };
 
 bool operator<(const Value &a, const Value &b);
-bool operator==(const Value &a, const Value &b);
+//bool operator==(const Value &a, const Value &b);
 
 typedef Value value_t;
 typedef std::vector<value_t> values_t;
@@ -36,15 +43,11 @@ class Gate {
     using input_t = struct{value_t a; value_t b;};
 
 public:
-    enum type_t : char {
-        Sum = 0,
-        Product,
-    };
 
-    Gate(type_t type, input_t input, value_t output);
+    Gate(GateType_t type, input_t input, value_t output);
 
 private:
-    type_t m_type{};
+    GateType_t m_type{};
     input_t m_input{};
     value_t m_output{0};
 

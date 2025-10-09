@@ -22,6 +22,11 @@ Value::operator double() const
     return static_cast<double>(*m_value);
 }
 
+Value::operator GateType_t() const
+{
+    /*проверить, что близко == целому числу, только тогда приводим к энумум*/
+}
+
 bool Value::operator<(const Value &other)
 {
     return *m_value < *other.m_value;
@@ -32,17 +37,17 @@ bool operator<(const Value &a, const Value &b)
     return a < b;
 }
 
-bool Value::operator==(const Value &other)
-{
-    return m_value == other.m_value;
-}
+//bool Value::operator==(const Value &other)
+//{
+//    return m_value == other.m_value;
+//}
 
-bool operator==(const Value &a, const Value &b)
-{
-    return a == b;
-}
+//bool operator==(const Value &a, const Value &b)
+//{
+//    return a == b;
+//}
 
-Gate::Gate(type_t type, input_t input, value_t output)
+Gate::Gate(GateType_t type, input_t input, value_t output)
     : m_type{type}
     , m_input{input}
     , m_output{output}
