@@ -1,13 +1,6 @@
 #include "snark.h"
 #include <iostream>
 
-/*todo:*/
-using X = float;
-using Y = float;
-
-X t = 1;
-int G = 2;
-
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
@@ -18,22 +11,24 @@ int main(int argc, char *argv[])
     snrk::Circut c({x1, x2}, {w1});
 
     auto out1 = snrk::Value(11);
-    c.addGate({snrk::Gate::Sum, {x1, x2}, out1});
+    c.addGate({snrk::Sum, {x1, x2}, out1});
     auto out2 = snrk::Value(7);
-    c.addGate({snrk::Gate::Sum, {x2, w1}, out2});
+    c.addGate({snrk::Sum, {x2, w1}, out2});
     auto out3 = snrk::Value(77);
-    c.addGate({snrk::Gate::Product, {out1, out2}, {out3}});
+    c.addGate({snrk::Product, {out1, out2}, {out3}});
 
     snrk::GlobalParams gp(c);
 
-    auto funcT = snrk::Lagrange::generate({{1, 3}, {2, 5}, {4, 2}});
-    auto funcQ = snrk::CustomPolynom::generate([&funcT](snrk::X_t x) -> snrk::Y_t
+    auto funcT = gp.PP().t;
+    snrk::dot_t dot{0, 5};
+    auto funcQ = snrk::CustomPolynom::generate([&funcT, &dot](snrk::X_t x) -> snrk::Y_t
     {
-        return (funcT(x) - 2) / (x - 4);
+        return (funcT(x) - dot.y) / (x - dot.x);
     });
 
+    auto [t, G] = gp.TG();
 
-    snrk::PolynomSubstitutionProof<X, Y> proof(funcT.commit(t, G), funcQ.commit(t, G), {.u = 4, .v = 2});
+    snrk::PolynomSubstitutionProof proof(funcT.commit(t, G), funcQ.commit(t, G), dot);
 
     proof.setGp(t, G);
 

@@ -26,11 +26,10 @@ public:
     operator double() const;
     operator GateType_t() const;
 
-    bool operator<(const Value &other);
-//    bool operator==(const Value &other);
-
 private:
     std::shared_ptr<ValueType> m_value{};
+
+    friend bool operator<(const Value &a, const Value &b);
 };
 
 bool operator<(const Value &a, const Value &b);

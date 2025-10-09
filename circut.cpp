@@ -1,5 +1,7 @@
 #include "circut.h"
 
+#include <cmath>
+
 namespace snrk {
 
 Value::Value()
@@ -24,23 +26,17 @@ Value::operator double() const
 
 Value::operator GateType_t() const
 {
-    /*проверить, что близко == целому числу, только тогда приводим к энумум*/
-}
+    if (floor(*m_value) != *m_value) {
+        return Unknown;
+    }
 
-bool Value::operator<(const Value &other)
-{
-    return *m_value < *other.m_value;
+    return static_cast<GateType_t>(*m_value);
 }
 
 bool operator<(const Value &a, const Value &b)
 {
-    return a < b;
+    return *a.m_value < *b.m_value;
 }
-
-//bool Value::operator==(const Value &other)
-//{
-//    return m_value == other.m_value;
-//}
 
 //bool operator==(const Value &a, const Value &b)
 //{

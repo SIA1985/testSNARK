@@ -26,7 +26,6 @@ public:
 
 private:
     std::unordered_map<witness_t, std::shared_ptr<cond_t>> m_map;
-
 };
 
 class GlobalParams {

@@ -51,7 +51,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 }
 
 GlobalParams::GlobalParams(const Circut &circut)
-    : m_TG{1, 2}
+    : m_TG{10, 2}
 {
     witnesses_t witnesses;
     witnesses.resize(circut.degree());
