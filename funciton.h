@@ -15,6 +15,7 @@ typedef ValueType Y_t;
 
 struct dot_t {X_t x; Y_t y;};
 typedef std::vector<dot_t> dots_t;
+struct TG_t{X_t t; int G;};
 
 class Polynom
 {
@@ -25,7 +26,7 @@ public:
     virtual Y_t operator()(const X_t &x) = 0;
 
     /*todo: передача gp*/
-    virtual Y_t commit(X_t t, int G);
+    virtual Y_t commit(TG_t tG);
 };
 
 

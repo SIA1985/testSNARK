@@ -2,6 +2,7 @@
 #define PROOF_H
 
 #include "funciton.h"
+#include "setup.h"
 
 namespace snrk {
 
@@ -17,22 +18,23 @@ public:
 class PolynomSubstitutionProof : public Proof
 {
     using commit_t = X_t;
+    using ptr_t = std::shared_ptr<PolynomSubstitutionProof>;
 
 public:
-    PolynomSubstitutionProof(commit_t comF, commit_t comQ, dot_t toProve);
-
-    void setGp(X_t t, int G);
+    static ptr_t forProver(Polynom &f, dot_t toProve, TG_t tG);
+    static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG);
 
     virtual bool check() override;
 
 private:
+    PolynomSubstitutionProof() = default;
+
     commit_t m_comF;
     commit_t m_comQ;
 
     dot_t m_toProve;
 
-    X_t m_t;
-    int m_G;
+    TG_t m_tG;
 };
 
 }

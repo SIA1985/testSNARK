@@ -69,7 +69,7 @@ GlobalParams::GlobalParams(const Circut &circut)
     generateW(witnesses, circut);
 }
 
-GlobalParams::TG_t GlobalParams::TG()
+TG_t GlobalParams::TG()
 {
     return m_TG;
 }
@@ -78,13 +78,6 @@ GlobalParams::ProverParams_t GlobalParams::PP()
 {
     /*todo: не копия*/
     return {.t = m_T, .s = m_S, .w = m_W};
-}
-
-GlobalParams::VerifierParams_t GlobalParams::VP()
-{
-    return {.comT = m_T.commit(m_TG.t, m_TG.G),
-            .comS = m_S.commit(m_TG.t, m_TG.G),
-            .comW = 0};
 }
 
 void GlobalParams::generateT(const witnesses_t &witnesses, const Circut &circut)

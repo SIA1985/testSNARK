@@ -30,8 +30,6 @@ private:
 
 class GlobalParams {
     using ProverParams_t = struct{T_t t; S_t s; W_t w;};
-    using VerifierParams_t = struct{Y_t comT; Y_t comS; int comW;};
-    using TG_t = struct{value_t t; int G;};
 
 public:
     GlobalParams(const Circut &circut);
@@ -39,8 +37,6 @@ public:
     TG_t TG();
 
     ProverParams_t PP();
-
-    VerifierParams_t VP();
 
 private:
     void generateT(const witnesses_t &witnesses, const Circut &circut);

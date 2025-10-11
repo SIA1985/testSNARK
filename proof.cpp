@@ -1,21 +1,48 @@
 #include "proof.h"
 
-snrk::PolynomSubstitutionProof::PolynomSubstitutionProof(commit_t comF, commit_t comQ, dot_t toProve)
-    : m_comF{comF}
-    , m_comQ{comQ}
-    , m_toProve{toProve}
-{
+#include <cmath>
 
+namespace snrk {
+
+bool equal(double a, double b, double eps = 1e-9)
+{
+    return std::fabs(a - b) <= eps;
 }
 
-void snrk::PolynomSubstitutionProof::setGp(X_t t, int G)
+PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
-    m_t = t;
-    m_G = G;
+    auto ptr = ptr_t(new PolynomSubstitutionProof);
+
+    auto q = snrk::CustomPolynom::generate([&f, u = toProve.x](snrk::X_t x) -> snrk::Y_t
+    {
+        return (f(x) - f(u)) / (x - u);
+    });
+
+    ptr->m_comF = f.commit(tG);
+    ptr->m_comQ = q.commit(tG);
+    ptr->m_toProve = toProve;
+    ptr->m_tG = tG;
+
+    return ptr;
 }
 
-bool snrk::PolynomSubstitutionProof::check()
+PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG)
 {
-    /*todo: сравнение double*/
-    return (m_t - m_toProve.x) * m_comQ == m_comF - m_toProve.y * m_G;
+    auto ptr = ptr_t(new PolynomSubstitutionProof);
+
+    ptr->m_comF = comF;
+    ptr->m_comQ = comQ;
+    ptr->m_toProve = toProve;
+    ptr->m_tG = tG;
+
+    return ptr;
+}
+
+bool PolynomSubstitutionProof::check()
+{
+    auto a = (m_tG.t - m_toProve.x) * m_comQ;
+    auto b = m_comF - m_toProve.y * m_tG.G;
+    return equal(a, b);
+}
+
 }

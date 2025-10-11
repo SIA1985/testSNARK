@@ -1,9 +1,9 @@
 #include "funciton.h"
 
-snrk::Y_t snrk::Polynom::commit(X_t t, int G)
+snrk::Y_t snrk::Polynom::commit(TG_t tG)
 {
     /*пока = f(t)*G напрямую*/
-    return this->operator()(t) * G;
+    return this->operator()(tG.t) * tG.G;
 }
 
 snrk::Lagrange snrk::Lagrange::generate(const dots_t &dots)

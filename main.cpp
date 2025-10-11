@@ -20,21 +20,17 @@ int main(int argc, char *argv[])
     snrk::GlobalParams gp(c);
 
     auto funcT = gp.PP().t;
-    snrk::dot_t dot{-3, 5};
-    auto funcQ = snrk::CustomPolynom::generate([&funcT, u = dot.x](snrk::X_t x) -> snrk::Y_t
-    {
-        return (funcT(x) - funcT(u)) / (x - u);
-    });
+    snrk::dot_t dot{1, 6};
 
-    auto [t, G] = gp.TG();
+    auto proof = snrk::PolynomSubstitutionProof::forProver(funcT, dot, gp.TG());
 
-    snrk::PolynomSubstitutionProof proof(funcT.commit(t, G), funcQ.commit(t, G), dot);
 
-    proof.setGp(t, G);
-
-    std::cout << proof.check() << std::endl;
+    std::cout << proof->check() << " " << funcT(dot.x) << std::endl;
 }
 
+/*todo:
+ * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
+*/
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
  * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
