@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
     snrk::GlobalParams gp(c);
 
     auto funcT = gp.PP().t;
-    snrk::dot_t dot{0, 5};
-    auto funcQ = snrk::CustomPolynom::generate([&funcT, &dot](snrk::X_t x) -> snrk::Y_t
+    snrk::dot_t dot{-3, 5};
+    auto funcQ = snrk::CustomPolynom::generate([&funcT, u = dot.x](snrk::X_t x) -> snrk::Y_t
     {
-        return (funcT(x) - dot.y) / (x - dot.x);
+        return (funcT(x) - funcT(u)) / (x - u);
     });
 
     auto [t, G] = gp.TG();
