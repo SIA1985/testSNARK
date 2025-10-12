@@ -45,4 +45,11 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
+bool ZeroTestProof::check()
+{
+    //check PSP f(r)
+    //check PSP q(r)
+    //check f(r) == q(r) * Z(r)
+}
+
 }

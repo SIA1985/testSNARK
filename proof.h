@@ -37,6 +37,23 @@ private:
     TG_t m_tG;
 };
 
+class ZeroTestProof : public Proof
+{
+    using commit_t = X_t;
+    using ptr_t = std::shared_ptr<ZeroTestProof>;
+
+public:
+    /*todo: откуда брать r?*/
+    /*check: f = y -> f - y = 0*/
+    static ptr_t forProver(Polynom &g, Polynom &p, TG_t tG);
+    static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
+
+    virtual bool check() override;
+
+private:
+    ZeroTestProof() = default;
+};
+
 }
 
 #endif // PROOF_H
