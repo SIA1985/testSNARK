@@ -44,7 +44,7 @@ class ZeroTestProof : public Proof
 
 public:
     /*todo: откуда брать r?*/
-    /*check: f = y -> f - y = 0*/
+    /*check: f = p -> f - p = 0*/
     static ptr_t forProver(Polynom &g, Polynom &p, TG_t tG);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
@@ -52,6 +52,9 @@ public:
 
 private:
     ZeroTestProof() = default;
+
+    commit_t m_comF;
+    commit_t m_comQ;
 };
 
 }

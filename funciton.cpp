@@ -1,12 +1,35 @@
 #include "funciton.h"
 
-snrk::Y_t snrk::Polynom::commit(TG_t tG)
+namespace snrk {
+
+Y_t Polynom::commit(TG_t tG)
 {
     /*пока = f(t)*G напрямую*/
     return this->operator()(tG.t) * tG.G;
 }
 
-snrk::Lagrange snrk::Lagrange::generate(const dots_t &dots)
+CustomPolynom CustomPolynom::generate(const func_t &customFunction)
+{
+    CustomPolynom c;
+
+    c.m_customFunction = customFunction;
+
+    return c;
+}
+
+Y_t CustomPolynom::operator()(const X_t &x)
+{
+    return m_customFunction(x);
+}
+
+CustomPolynom polynomDevide(const Polynom &a, const Polynom &b)
+{
+    //1. При построении полинома найти корни (когда == 0)
+    //2. Если корни совпадают, то удалить совпадения
+    //3. Вернуть CustomPolynom
+}
+
+Lagrange Lagrange::generate(const dots_t &dots)
 {
     Lagrange l;
 
@@ -15,7 +38,7 @@ snrk::Lagrange snrk::Lagrange::generate(const dots_t &dots)
     return l;
 }
 
-snrk::Y_t snrk::Lagrange::operator()(const X_t &x)
+Y_t Lagrange::operator()(const X_t &x)
 {
     Y_t y = 0;
 
@@ -26,7 +49,7 @@ snrk::Y_t snrk::Lagrange::operator()(const X_t &x)
     return y;
 }
 
-snrk::X_t snrk::Lagrange::l(std::size_t i, const X_t &x)
+X_t Lagrange::l(std::size_t i, const X_t &x)
 {
     X_t li = 1;
     for(std::size_t j = 0; j < m_dots.size(); j++) {
@@ -40,16 +63,4 @@ snrk::X_t snrk::Lagrange::l(std::size_t i, const X_t &x)
     return li;
 }
 
-snrk::CustomPolynom snrk::CustomPolynom::generate(const func_t &customFunction)
-{
-    CustomPolynom c;
-
-    c.m_customFunction = customFunction;
-
-    return c;
-}
-
-snrk::Y_t snrk::CustomPolynom::operator()(const X_t &x)
-{
-    return m_customFunction(x);
 }

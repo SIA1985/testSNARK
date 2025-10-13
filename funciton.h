@@ -29,6 +29,19 @@ public:
     virtual Y_t commit(TG_t tG);
 };
 
+class CustomPolynom : public Polynom
+{
+    using func_t = std::function<Y_t(X_t)>;
+public:
+    static CustomPolynom generate(const func_t &customFunction);
+
+    virtual Y_t operator()(const X_t &x) override;
+
+private:
+    func_t m_customFunction;
+};
+
+CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
 
 /*todo: порядок точек?*/
 class Lagrange : public Polynom
@@ -42,40 +55,32 @@ private:
     X_t l(std::size_t i, const X_t &x);
 
     dots_t m_dots;
+
+
+    friend CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
 };
 
-class CustomPolynom : public Polynom
+class ZeroPolynom : public Polynom
 {
-    using func_t = std::function<Y_t(X_t)>;
+    using xs_t = std::set<X_t>;
 public:
-    static CustomPolynom generate(const func_t &customFunction);
+    static ZeroPolynom generate(const xs_t &xs)
+    {
+        ZeroPolynom z;
 
-    virtual Y_t operator()(const X_t &x) override;
+        z.m_xs = xs;
+
+        return z;
+    }
+
+    virtual Y_t operator()(const X_t &x) override
+    {
+        return (m_xs.count(x) > 0 ? 0 : -1);
+    }
 
 private:
-    func_t m_customFunction;
+    xs_t m_xs;
 };
-
-//class ZeroPolynom : public Polynom
-//{
-//public:
-//    static ZeroPolynom generate(const dots_t &dots)
-//    {
-//        ZeroPolynom z;
-
-//        z.m_dots = dots;
-
-//        return z;
-//    }
-
-//    virtual Y_t operator()(const X_t &x) override
-//    {
-//        return (m_dots.count(x) > 0 ? 0 : -1);
-//    }
-
-//private:
-//    dots_t m_dots;
-//};
 
 }
 #endif // FUNCITON_H

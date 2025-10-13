@@ -45,6 +45,21 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
+ZeroTestProof::ptr_t ZeroTestProof::forProver(Polynom &g, Polynom &p, TG_t tG)
+{
+    auto ptr = ptr_t(new ZeroTestProof);
+
+    auto f = CustomPolynom::generate([&g, &p](X_t x) -> Y_t
+    {
+        return g(x) - p(x);
+    });
+
+    ptr->m_comF = f.commit(tG);
+
+
+    return ptr;
+}
+
 bool ZeroTestProof::check()
 {
     //check PSP f(r)
