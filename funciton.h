@@ -64,19 +64,9 @@ class ZeroPolynom : public Polynom
 {
     using xs_t = std::set<X_t>;
 public:
-    static ZeroPolynom generate(const xs_t &xs)
-    {
-        ZeroPolynom z;
+    static ZeroPolynom generate(const xs_t &xs);
 
-        z.m_xs = xs;
-
-        return z;
-    }
-
-    virtual Y_t operator()(const X_t &x) override
-    {
-        return (m_xs.count(x) > 0 ? 0 : -1);
-    }
+    virtual Y_t operator()(const X_t &x) override;
 
 private:
     xs_t m_xs;

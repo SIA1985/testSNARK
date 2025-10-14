@@ -63,4 +63,18 @@ X_t Lagrange::l(std::size_t i, const X_t &x)
     return li;
 }
 
+ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
+{
+    ZeroPolynom z;
+
+    z.m_xs = xs;
+
+    return z;
+}
+
+Y_t ZeroPolynom::operator()(const X_t &x)
+{
+    return (m_xs.count(x) > 0 ? 0 : -1);
+}
+
 }

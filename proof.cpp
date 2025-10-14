@@ -64,6 +64,7 @@ bool ZeroTestProof::check()
 {
     //check PSP f(r)
     //check PSP q(r)
+    //построение Z(x) на основании размерности поля w (1, w, w^2...)
     //check f(r) == q(r) * Z(r)
 }
 
