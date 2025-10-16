@@ -33,7 +33,6 @@ ClassicPolynom ClassicPolynom::generate(coefs_t coefs)
     return c;
 }
 
-/*todo: тест*/
 Y_t ClassicPolynom::operator()(const X_t &x)
 {
     Y_t y = 0;
@@ -45,15 +44,15 @@ Y_t ClassicPolynom::operator()(const X_t &x)
     return y;
 }
 
-/*todo: тест*/
 CustomPolynom ClassicPolynom::operator/(ClassicPolynom &other)
 {
-    std::size_t k,j;
+    int k,j;
 
     std::size_t n = m_coefs.size() - 1;
     std::size_t nOther = other.m_coefs.size() - 1;
 
-    ClassicPolynom res(n - nOther), rem(n - nOther);
+    /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
+    ClassicPolynom res(n + 1), rem(n + 1);
 
     for(j = 0; j <= n; j++) {
             rem[j] = (*this)[j];
