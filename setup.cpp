@@ -53,20 +53,24 @@ W_t::cond_t W_t::operator()(witness_t w) const
 GlobalParams::GlobalParams(const Circut &circut)
     : m_TG{10, 2}
 {
-    witnesses_t witnesses;
-    witnesses.resize(circut.degree());
+    m_witnesses.resize(circut.degree());
 
-    witness_t wGenerator = -circut.inputSize();
-    std::generate(witnesses.begin(), witnesses.end(),
+    witness_t wGenerator = 1;//-circut.inputSize();
+    std::generate(m_witnesses.begin(), m_witnesses.end(),
     [&wGenerator]() -> witness_t
     {
         return wGenerator++;
     });
 
     /*кадый в отдельный поток, т.к. читаем witness и circut*/
-    generateT(witnesses, circut);
+    generateT(circut);
     generateS(circut);
-    generateW(witnesses, circut);
+    generateW(circut);
+}
+
+witnesses_t GlobalParams::witnesses() const
+{
+    return m_witnesses;
 }
 
 TG_t GlobalParams::TG()
@@ -80,11 +84,11 @@ GlobalParams::ProverParams_t GlobalParams::PP()
     return {.t = m_T, .s = m_S, .w = m_W};
 }
 
-void GlobalParams::generateT(const witnesses_t &witnesses, const Circut &circut)
+void GlobalParams::generateT(const Circut &circut)
 {
     dots_t dots;
 
-    auto cw = witnesses.cbegin();
+    auto cw = m_witnesses.cbegin();
     auto fillMap = [&cw, &dots](const values_t &row)
     {
         for(const auto& elment : row) {
@@ -115,9 +119,9 @@ void GlobalParams::generateS(const Circut &circut)
     m_S = S_t::generate(dots);
 }
 
-void GlobalParams::generateW(const witnesses_t &witnesses, const Circut &circut)
+void GlobalParams::generateW(const Circut &circut)
 {
-    m_W = W_t::generate(witnesses, circut);
+    m_W = W_t::generate(m_witnesses, circut);
 }
 
 }

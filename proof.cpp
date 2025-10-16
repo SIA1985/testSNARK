@@ -57,6 +57,15 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(Polynom &g, Polynom &p, TG_t tG)
     ptr->m_comF = f.commit(tG);
 
 
+    auto z = ZeroPolynom::generate({});
+
+    auto q = CustomPolynom::generate([&f, &z](X_t x) -> Y_t
+    {
+        return f(x) / z(x);
+    });
+
+    ptr->m_comQ = q.commit(tG);
+
     return ptr;
 }
 

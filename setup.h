@@ -11,7 +11,7 @@
 
 namespace snrk { 
 
-typedef int witness_t;
+typedef unsigned int witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
 typedef Lagrange T_t;
@@ -34,16 +34,20 @@ class GlobalParams {
 public:
     GlobalParams(const Circut &circut);
 
+    witnesses_t witnesses() const;
+
     TG_t TG();
 
     ProverParams_t PP();
 
 private:
-    void generateT(const witnesses_t &witnesses, const Circut &circut);
+    void generateT(const Circut &circut);
 
     void generateS(const Circut &circut);
 
-    void generateW(const witnesses_t &witnesses, const Circut &circut);
+    void generateW(const Circut &circut);
+
+    witnesses_t m_witnesses;
 
     TG_t m_TG;
 

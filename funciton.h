@@ -41,9 +41,27 @@ private:
     func_t m_customFunction;
 };
 
-CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
+class ClassicPolynom : public Polynom
+{
+    using coefs_t = std::vector<ValueType>;
+public:
+    static ClassicPolynom generate(coefs_t coefs);
 
-/*todo: порядок точек?*/
+    virtual Y_t operator()(const X_t &x) override;
+
+    CustomPolynom operator/(ClassicPolynom &other);
+
+    ValueType &operator[](std::size_t i);
+
+private:
+    ClassicPolynom() = default;
+    ClassicPolynom(std::size_t n);
+
+    /*x0, x1 .. xn*/
+    coefs_t m_coefs;
+};
+
+
 class Lagrange : public Polynom
 {
 public:
@@ -51,7 +69,7 @@ public:
 
     virtual Y_t operator()(const X_t &x) override;
 
-private:
+protected:
     X_t l(std::size_t i, const X_t &x);
 
     dots_t m_dots;
@@ -60,16 +78,11 @@ private:
     friend CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
 };
 
-class ZeroPolynom : public Polynom
+class ZeroPolynom : public Lagrange
 {
     using xs_t = std::set<X_t>;
 public:
     static ZeroPolynom generate(const xs_t &xs);
-
-    virtual Y_t operator()(const X_t &x) override;
-
-private:
-    xs_t m_xs;
 };
 
 }

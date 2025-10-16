@@ -1,5 +1,7 @@
 #include "funciton.h"
 
+#include <cmath>
+
 namespace snrk {
 
 Y_t Polynom::commit(TG_t tG)
@@ -22,12 +24,68 @@ Y_t CustomPolynom::operator()(const X_t &x)
     return m_customFunction(x);
 }
 
-CustomPolynom polynomDevide(const Polynom &a, const Polynom &b)
+ClassicPolynom ClassicPolynom::generate(coefs_t coefs)
 {
-    //1. При построении полинома найти корни (когда == 0)
-    //2. Если корни совпадают, то удалить совпадения
-    //3. Вернуть CustomPolynom
+    ClassicPolynom c;
+
+    c.m_coefs = coefs;
+
+    return c;
 }
+
+/*todo: тест*/
+Y_t ClassicPolynom::operator()(const X_t &x)
+{
+    Y_t y = 0;
+
+    for(std::size_t i = 0; i < m_coefs.size(); i++) {
+        y += m_coefs[i] * std::pow(x, i);
+    }
+
+    return y;
+}
+
+/*todo: тест*/
+CustomPolynom ClassicPolynom::operator/(ClassicPolynom &other)
+{
+    std::size_t k,j;
+
+    std::size_t n = m_coefs.size() - 1;
+    std::size_t nOther = other.m_coefs.size() - 1;
+
+    ClassicPolynom res(n - nOther), rem(n - nOther);
+
+    for(j = 0; j <= n; j++) {
+            rem[j] = (*this)[j];
+            res[j]=0.0;
+    }
+    for(k = n - nOther; k >= 0; k--) {
+        res[k] = rem[nOther+k] / other[nOther];
+
+        for(j = nOther + k - 1; j >= k; j--) {
+            rem[j] -= res[k] * other[j-k];
+        }
+    }
+    for(j = nOther; j <= n; j++) {
+        rem[j] = 0.0;
+    }
+
+    return CustomPolynom::generate([res, rem](X_t x) mutable -> Y_t
+    {
+        return res(x) + rem(x);
+    });
+}
+
+ValueType &ClassicPolynom::operator[](std::size_t i)
+{
+    return m_coefs[i];
+}
+
+ClassicPolynom::ClassicPolynom(std::size_t n)
+{
+    m_coefs.resize(n, ValueType(0));
+}
+
 
 Lagrange Lagrange::generate(const dots_t &dots)
 {
@@ -67,14 +125,11 @@ ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 {
     ZeroPolynom z;
 
-    z.m_xs = xs;
+    for(const auto &x : xs) {
+        z.m_dots.push_back({x, Y_t(0)});
+    }
 
     return z;
-}
-
-Y_t ZeroPolynom::operator()(const X_t &x)
-{
-    return (m_xs.count(x) > 0 ? 0 : -1);
 }
 
 }
