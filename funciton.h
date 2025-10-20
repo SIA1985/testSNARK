@@ -41,44 +41,47 @@ private:
     func_t m_customFunction;
 };
 
-class ClassicPolynom : public Polynom
+class CanonicPolynom : public Polynom
 {
     using coefs_t = std::vector<ValueType>;
 public:
-    static ClassicPolynom generate(coefs_t coefs);
+    static CanonicPolynom generate(coefs_t coefs);
 
     virtual Y_t operator()(const X_t &x) override;
 
-    CustomPolynom operator/(ClassicPolynom &other);
+    CustomPolynom operator/(CanonicPolynom &other);
+
+    CanonicPolynom operator-(CanonicPolynom &other);
 
     ValueType &operator[](std::size_t i);
 
 private:
-    ClassicPolynom() = default;
-    ClassicPolynom(std::size_t n);
+    CanonicPolynom() = default;
+    CanonicPolynom(std::size_t n);
 
     /*x0, x1 .. xn*/
     coefs_t m_coefs;
 };
 
 
-class Lagrange : public Polynom
+class InterpolationPolynom : public Polynom
 {
+    using coefs_t = std::vector<ValueType>;
 public:
-    static Lagrange generate(const dots_t &dots);
+    static InterpolationPolynom generate(const dots_t &dots);
 
     virtual Y_t operator()(const X_t &x) override;
 
+    CanonicPolynom toClassicPolynom() const;
+
 protected:
-    X_t l(std::size_t i, const X_t &x);
-
     dots_t m_dots;
-
+    coefs_t m_newtonCoefs;
 
     friend CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
 };
 
-class ZeroPolynom : public Lagrange
+class ZeroPolynom : public InterpolationPolynom
 {
     using xs_t = std::set<X_t>;
 public:

@@ -14,8 +14,8 @@ namespace snrk {
 typedef unsigned int witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
-typedef Lagrange T_t;
-typedef Lagrange S_t;
+typedef InterpolationPolynom T_t;
+typedef InterpolationPolynom S_t;
 
 class W_t {
     using cond_t = std::unordered_set<witness_t>;

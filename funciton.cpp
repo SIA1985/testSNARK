@@ -24,16 +24,16 @@ Y_t CustomPolynom::operator()(const X_t &x)
     return m_customFunction(x);
 }
 
-ClassicPolynom ClassicPolynom::generate(coefs_t coefs)
+CanonicPolynom CanonicPolynom::generate(coefs_t coefs)
 {
-    ClassicPolynom c;
+    CanonicPolynom c;
 
     c.m_coefs = coefs;
 
     return c;
 }
 
-Y_t ClassicPolynom::operator()(const X_t &x)
+Y_t CanonicPolynom::operator()(const X_t &x)
 {
     Y_t y = 0;
 
@@ -44,7 +44,7 @@ Y_t ClassicPolynom::operator()(const X_t &x)
     return y;
 }
 
-CustomPolynom ClassicPolynom::operator/(ClassicPolynom &other)
+CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 {
     int k,j;
 
@@ -52,7 +52,7 @@ CustomPolynom ClassicPolynom::operator/(ClassicPolynom &other)
     std::size_t nOther = other.m_coefs.size() - 1;
 
     /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
-    ClassicPolynom res(n + 1), rem(n + 1);
+    CanonicPolynom res(n + 1), rem(n + 1);
 
     for(j = 0; j <= n; j++) {
             rem[j] = (*this)[j];
@@ -75,28 +75,68 @@ CustomPolynom ClassicPolynom::operator/(ClassicPolynom &other)
     });
 }
 
-ValueType &ClassicPolynom::operator[](std::size_t i)
+/*todo: */
+CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
+{
+    return {};
+}
+
+ValueType &CanonicPolynom::operator[](std::size_t i)
 {
     return m_coefs[i];
 }
 
-ClassicPolynom::ClassicPolynom(std::size_t n)
+CanonicPolynom::CanonicPolynom(std::size_t n)
 {
     m_coefs.resize(n, ValueType(0));
 }
 
 
-Lagrange Lagrange::generate(const dots_t &dots)
+InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
-    Lagrange l;
+    auto newtonCoefs = [](const dots_t& points) -> coefs_t {
+        int n = points.size();
+        coefs_t f(n);
+        for (int i = 0; i < n; ++i) {
+            f[i] = points[i].y;
+        }
+
+        coefs_t coefficients(n);
+        coefficients[0] = f[0];
+
+        for (int i = 1; i < n; ++i) {
+            for (int j = 0; j < n - i; ++j) {
+                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
+            }
+            coefficients[i] = f[0];
+        }
+        return coefficients;
+    };
+
+    InterpolationPolynom l;
 
     l.m_dots = dots;
+    l.m_newtonCoefs = newtonCoefs(dots);
 
     return l;
 }
 
-Y_t Lagrange::operator()(const X_t &x)
+Y_t InterpolationPolynom::operator()(const X_t &x)
 {
+    auto l = [this](std::size_t i, const X_t &x)
+    {
+        X_t li = 1;
+        for(std::size_t j = 0; j < m_dots.size(); j++) {
+            if (i == j) {
+                continue;
+            }
+
+            li *= ((x - m_dots[j].x) / (m_dots[i].x - m_dots[j].x));
+        }
+
+        return li;
+    };
+
     Y_t y = 0;
 
     for(std::size_t i = 0; i < m_dots.size(); i++) {
@@ -106,18 +146,30 @@ Y_t Lagrange::operator()(const X_t &x)
     return y;
 }
 
-X_t Lagrange::l(std::size_t i, const X_t &x)
+CanonicPolynom InterpolationPolynom::toClassicPolynom() const
 {
-    X_t li = 1;
-    for(std::size_t j = 0; j < m_dots.size(); j++) {
-        if (i == j) {
-            continue;
-        }
+    int n = m_newtonCoefs.size();
+    coefs_t canonicalCoeffs(n, 0.0);
+    coefs_t p(n, 0.0);
+    coefs_t prev(n, 0.0);
 
-        li *= ((x - m_dots[j].x) / (m_dots[i].x - m_dots[j].x));
+    // Коэффициент при x^0
+    p[0] = 1.0;
+    canonicalCoeffs[0] = m_newtonCoefs[0] * p[0];
+
+    // Вычисление остальных коэффициентов
+    for (int i = 1; i < n; ++i) {
+        prev = p;
+        p[0] = -m_dots[i - 1].x * prev[0];
+        canonicalCoeffs[0] += m_newtonCoefs[i] * p[0];
+
+        for (int j = 1; j <= i; ++j) {
+            p[j] = prev[j-1] - m_dots[i-1].x * prev[j];
+            canonicalCoeffs[j] += m_newtonCoefs[i] * p[j];
+        }
     }
 
-    return li;
+    return CanonicPolynom::generate(canonicalCoeffs);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
@@ -130,5 +182,43 @@ ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 
     return z;
 }
+
+/*
+// Функция для вычисления коэффициентов Ньютона (разделённых разностей)
+
+
+// Функция для преобразования полинома Ньютона в канонический вид
+std::vector<double> newtonToCanonical(const std::vector<double>& c, const std::vector<Point>& points) {
+
+    return canonical_coeffs;
+}
+
+ * @brief Вычисляет значение полинома Ньютона в заданной точке.
+ *
+ * @param newtonCoeffs Вектор коэффициентов Ньютона.
+ * @param points Вектор узловых точек, использованных для построения полинома.
+ * @param x_eval Точка, в которой нужно вычислить значение полинома.
+ * @return Значение полинома в точке x_eval.
+ *
+double evaluateNewtonPolynomial(const std::vector<double>& newtonCoeffs, const std::vector<Point>& points, double x_eval) {
+    int n = newtonCoeffs.size();
+    double result = newtonCoeffs[n - 1];
+
+    for (int i = n - 2; i >= 0; --i) {
+        result = result * (x_eval - points[i].x) + newtonCoeffs[i];
+    }
+
+    return result;
+}
+
+int main() {
+    // Узловые точки
+    std::vector<Point> points = {
+        {0, 2},
+        {5, -2},
+        {10, 7}
+    };
+
+*/
 
 }

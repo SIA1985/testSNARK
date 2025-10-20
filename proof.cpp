@@ -45,36 +45,48 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(Polynom &g, Polynom &p, TG_t tG)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG)
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
-    auto f = CustomPolynom::generate([&g, &p](X_t x) -> Y_t
-    {
-        return g(x) - p(x);
-    });
+    ptr->m_tG = tG;
+
+    auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
 
+    /*todo: */
+    auto z = ZeroPolynom::generate({}).toClassicPolynom();
 
-    auto z = ZeroPolynom::generate({});
-
-    auto q = CustomPolynom::generate([&f, &z](X_t x) -> Y_t
-    {
-        return f(x) / z(x);
-    });
+    auto q = f / z;
 
     ptr->m_comQ = q.commit(tG);
+
+    /*todo: */
+    ptr->m_r = 15;
+    ptr->m_fR = f(ptr->m_r);
+    ptr->m_qR = q(ptr->m_r);
+
+    ptr->m_fRproof = *PolynomSubstitutionProof::forProver(f, {ptr->m_r, ptr->m_fR}, ptr->m_tG);
+    ptr->m_qRproof = *PolynomSubstitutionProof::forProver(q, {ptr->m_r, ptr->m_qR}, ptr->m_tG);
 
     return ptr;
 }
 
 bool ZeroTestProof::check()
 {
-    //check PSP f(r)
-    //check PSP q(r)
-    //построение Z(x) на основании размерности поля w (1, w, w^2...)
-    //check f(r) == q(r) * Z(r)
+    if (!m_fRproof.check()) {
+        return false;
+    }
+
+    if (!m_qRproof.check()) {
+        return false;
+    }
+
+    /*todo: */
+    auto z = ZeroPolynom::generate({}).toClassicPolynom();
+
+    return m_fR == m_qR * z(m_r);
 }
 
 }

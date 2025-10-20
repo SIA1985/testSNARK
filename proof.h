@@ -35,6 +35,8 @@ private:
     dot_t m_toProve;
 
     TG_t m_tG;
+
+    friend class ZeroTestProof;
 };
 
 class ZeroTestProof : public Proof
@@ -45,7 +47,7 @@ class ZeroTestProof : public Proof
 public:
     /*todo: откуда брать r?*/
     /*check: f = p -> f - p = 0*/
-    static ptr_t forProver(Polynom &g, Polynom &p, TG_t tG);
+    static ptr_t forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
     virtual bool check() override;
@@ -53,8 +55,16 @@ public:
 private:
     ZeroTestProof() = default;
 
+    TG_t m_tG;
+
     commit_t m_comF;
+    PolynomSubstitutionProof m_fRproof;
+
     commit_t m_comQ;
+    PolynomSubstitutionProof m_qRproof;
+
+    X_t m_r;
+    Y_t m_fR, m_qR;
 };
 
 }
