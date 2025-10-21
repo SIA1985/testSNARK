@@ -65,6 +65,8 @@ private:
 
     X_t m_r;
     Y_t m_fR, m_qR;
+
+    std::size_t m_witnessCount;
 };
 
 }

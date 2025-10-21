@@ -75,15 +75,45 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
     });
 }
 
-/*todo: */
+/*todo: рефакторинг other = -1 * other*/
+/*this - other*/
 CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
 {
-    return {};
+    std::size_t n = m_coefs.size();
+    std::size_t nOther = other.m_coefs.size();
+    coefs_t diff;
+
+    if (n > nOther) {
+        diff.resize(n, 0);
+
+        for(std::size_t i = 0; i < nOther; i++) {
+            diff[i] = m_coefs[i] - other.m_coefs[i];
+        }
+        for(std::size_t i = nOther; i < n; i++) {
+            diff[i] = m_coefs[i];
+        }
+    } else {
+        diff.resize(nOther, 0);
+
+        for(std::size_t i = 0; i < n; i++) {
+            diff[i] = m_coefs[i] - other.m_coefs[i];
+        }
+        for(std::size_t i = n; i < nOther; i++) {
+            diff[i] = -other.m_coefs[i];
+        }
+    }
+
+    return CanonicPolynom::generate(diff);
 }
 
 ValueType &CanonicPolynom::operator[](std::size_t i)
 {
     return m_coefs[i];
+}
+
+std::size_t CanonicPolynom::degree() const
+{
+    return m_coefs.size() - 1;
 }
 
 CanonicPolynom::CanonicPolynom(std::size_t n)

@@ -16,6 +16,7 @@ typedef ValueType Y_t;
 struct dot_t {X_t x; Y_t y;};
 typedef std::vector<dot_t> dots_t;
 struct TG_t{X_t t; int G;};
+typedef std::set<X_t> xs_t;
 
 class Polynom
 {
@@ -55,6 +56,8 @@ public:
 
     ValueType &operator[](std::size_t i);
 
+    std::size_t degree() const;
+
 private:
     CanonicPolynom() = default;
     CanonicPolynom(std::size_t n);
@@ -83,7 +86,6 @@ protected:
 
 class ZeroPolynom : public InterpolationPolynom
 {
-    using xs_t = std::set<X_t>;
 public:
     static ZeroPolynom generate(const xs_t &xs);
 };

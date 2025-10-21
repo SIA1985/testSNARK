@@ -9,6 +9,17 @@ bool equal(double a, double b, double eps = 1e-9)
     return std::fabs(a - b) <= eps;
 }
 
+xs_t genWitnessXs(std::size_t count)
+{
+    xs_t witnesses;
+
+    for(std::size_t i = 1; i <= count; i++) {
+        witnesses.insert(i);
+    }
+
+    return witnesses;
+}
+
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
@@ -54,9 +65,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
+    ptr->m_witnessCount = f.degree();
 
-    /*todo: */
-    auto z = ZeroPolynom::generate({}).toClassicPolynom();
+    auto z = ZeroPolynom::generate(genWitnessXs(ptr->m_witnessCount)).toClassicPolynom();
 
     auto q = f / z;
 
@@ -83,8 +94,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    /*todo: */
-    auto z = ZeroPolynom::generate({}).toClassicPolynom();
+    auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount)).toClassicPolynom();
 
     return m_fR == m_qR * z(m_r);
 }
