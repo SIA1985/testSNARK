@@ -19,18 +19,12 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    auto funcT = gp.PP().t;
-//    snrk::dot_t dot{1, 6};
+    auto funcT = gp.PP().t.toClassicPolynom();
+    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}, {3, 1}}).toClassicPolynom();
 
-//    auto proof = snrk::PolynomSubstitutionProof::forProver(funcT, dot, gp.TG());
+    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, gp.TG());
 
-
-//    std::cout << proof->check() << " " << funcT(dot.x) << std::endl;
-
-    auto f = funcT.toClassicPolynom();
-//    auto v = snrk::ClassicPolynom::generate({5, 2, 2, 3, 4, 5, 6});
-
-    std::cout << f(12) << std::endl;
+    std::cout << proof->check() << std::endl;
 }
 
 /*todo:

@@ -78,10 +78,10 @@ public:
     CanonicPolynom toClassicPolynom() const;
 
 protected:
+    coefs_t newtonCoefs(const dots_t& points);
+
     dots_t m_dots;
     coefs_t m_newtonCoefs;
-
-    friend CustomPolynom polynomDevide(const Polynom &a, const Polynom &b);
 };
 
 class ZeroPolynom : public InterpolationPolynom

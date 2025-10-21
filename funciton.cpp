@@ -124,29 +124,10 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
 
 InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
-    auto newtonCoefs = [](const dots_t& points) -> coefs_t {
-        int n = points.size();
-        coefs_t f(n);
-        for (int i = 0; i < n; ++i) {
-            f[i] = points[i].y;
-        }
-
-        coefs_t coefficients(n);
-        coefficients[0] = f[0];
-
-        for (int i = 1; i < n; ++i) {
-            for (int j = 0; j < n - i; ++j) {
-                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
-            }
-            coefficients[i] = f[0];
-        }
-        return coefficients;
-    };
-
     InterpolationPolynom l;
 
     l.m_dots = dots;
-    l.m_newtonCoefs = newtonCoefs(dots);
+    l.m_newtonCoefs = l.newtonCoefs(dots);
 
     return l;
 }
@@ -202,6 +183,25 @@ CanonicPolynom InterpolationPolynom::toClassicPolynom() const
     return CanonicPolynom::generate(canonicalCoeffs);
 }
 
+InterpolationPolynom::coefs_t InterpolationPolynom::newtonCoefs(const dots_t& points) {
+        int n = points.size();
+        coefs_t f(n);
+        for (int i = 0; i < n; ++i) {
+            f[i] = points[i].y;
+        }
+
+        coefs_t coefficients(n);
+        coefficients[0] = f[0];
+
+        for (int i = 1; i < n; ++i) {
+            for (int j = 0; j < n - i; ++j) {
+                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
+            }
+            coefficients[i] = f[0];
+        }
+        return coefficients;
+    };
+
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 {
     ZeroPolynom z;
@@ -209,6 +209,8 @@ ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
     for(const auto &x : xs) {
         z.m_dots.push_back({x, Y_t(0)});
     }
+
+    z.m_newtonCoefs = z.newtonCoefs(z.m_dots);
 
     return z;
 }
