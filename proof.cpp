@@ -65,9 +65,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
-    ptr->m_witnessCount = f.degree();
+    ptr->m_witnessCount = p.degree() + 1;
 
-    auto z = ZeroPolynom::generate(genWitnessXs(ptr->m_witnessCount)).toClassicPolynom();
+    auto z = ZeroPolynom::generate(genWitnessXs(ptr->m_witnessCount));
 
     auto q = f / z;
 
@@ -94,9 +94,11 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount)).toClassicPolynom();
+    auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount));
 
-    return m_fR == m_qR * z(m_r);
+    auto a = m_fR / z(m_r);
+    auto b = m_qR;
+    return equal(a, b);
 }
 
 }

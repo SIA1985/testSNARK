@@ -20,7 +20,11 @@ int main(int argc, char *argv[])
     snrk::GlobalParams gp(c);
 
     auto funcT = gp.PP().t.toClassicPolynom();
-    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}, {3, 1}}).toClassicPolynom();
+    /*todo: чем ближе к funcT, тем хуже точность*/
+    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}/*, {3, 1}, {4, 5}, {5, 6}, {6, 11}*/}).toClassicPolynom();
+
+//    auto funcT = snrk::InterpolationPolynom::generate({{1, 2}, {2, 5}, {3, 4}, {4, 6}}).toClassicPolynom();
+//    auto funcV = snrk::InterpolationPolynom::generate({{1, 2}, {2, 5}, {3, 4}}).toClassicPolynom();
 
     auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, gp.TG());
 

@@ -33,6 +33,24 @@ CanonicPolynom CanonicPolynom::generate(coefs_t coefs)
     return c;
 }
 
+CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
+{
+    CanonicPolynom result(0 + 1); // Начинаем с полинома p(x) = 1
+    result[0] = 1.0;
+
+    for (const auto &root : roots) {
+        // Создаем полином-двучлен (x - root)
+        CanonicPolynom binomial(1 + 1);
+        binomial[0] = -root;
+        binomial[1] = 1.0;
+
+        // Умножаем текущий результат на новый двучлен
+        result = result * binomial;
+    }
+
+    return result.m_coefs;
+}
+
 Y_t CanonicPolynom::operator()(const X_t &x)
 {
     Y_t y = 0;
@@ -106,6 +124,19 @@ CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
     return CanonicPolynom::generate(diff);
 }
 
+CanonicPolynom CanonicPolynom::operator*(CanonicPolynom &other)
+{
+    std::size_t newDegree = m_coefs.size() + other.m_coefs.size() - 1;
+    CanonicPolynom result(newDegree);
+
+    for(std::size_t i = 0; i < m_coefs.size(); i++) {
+        for(std::size_t j = 0; j < other.m_coefs.size(); j++) {
+            result[i + j] += m_coefs[i] * other.m_coefs[j];
+        }
+    }
+    return result;
+}
+
 ValueType &CanonicPolynom::operator[](std::size_t i)
 {
     return m_coefs[i];
@@ -124,10 +155,29 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
 
 InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
+    auto newtonCoefs = [](const dots_t& points) -> coefs_t {
+        int n = points.size();
+        coefs_t f(n);
+        for (int i = 0; i < n; ++i) {
+            f[i] = points[i].y;
+        }
+
+        coefs_t coefficients(n);
+        coefficients[0] = f[0];
+
+        for (int i = 1; i < n; ++i) {
+            for (int j = 0; j < n - i; ++j) {
+                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
+            }
+            coefficients[i] = f[0];
+        }
+        return coefficients;
+    };
+
     InterpolationPolynom l;
 
     l.m_dots = dots;
-    l.m_newtonCoefs = l.newtonCoefs(dots);
+    l.m_newtonCoefs = newtonCoefs(dots);
 
     return l;
 }
@@ -183,48 +233,16 @@ CanonicPolynom InterpolationPolynom::toClassicPolynom() const
     return CanonicPolynom::generate(canonicalCoeffs);
 }
 
-InterpolationPolynom::coefs_t InterpolationPolynom::newtonCoefs(const dots_t& points) {
-        int n = points.size();
-        coefs_t f(n);
-        for (int i = 0; i < n; ++i) {
-            f[i] = points[i].y;
-        }
-
-        coefs_t coefficients(n);
-        coefficients[0] = f[0];
-
-        for (int i = 1; i < n; ++i) {
-            for (int j = 0; j < n - i; ++j) {
-                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
-            }
-            coefficients[i] = f[0];
-        }
-        return coefficients;
-    };
-
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 {
     ZeroPolynom z;
 
-    for(const auto &x : xs) {
-        z.m_dots.push_back({x, Y_t(0)});
-    }
-
-    z.m_newtonCoefs = z.newtonCoefs(z.m_dots);
+    z.m_coefs = coefsFromRoots(xs);
 
     return z;
 }
 
 /*
-// Функция для вычисления коэффициентов Ньютона (разделённых разностей)
-
-
-// Функция для преобразования полинома Ньютона в канонический вид
-std::vector<double> newtonToCanonical(const std::vector<double>& c, const std::vector<Point>& points) {
-
-    return canonical_coeffs;
-}
-
  * @brief Вычисляет значение полинома Ньютона в заданной точке.
  *
  * @param newtonCoeffs Вектор коэффициентов Ньютона.

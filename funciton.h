@@ -45,8 +45,11 @@ private:
 class CanonicPolynom : public Polynom
 {
     using coefs_t = std::vector<ValueType>;
+    using roots_t = std::set<X_t>;
 public:
     static CanonicPolynom generate(coefs_t coefs);
+
+    static coefs_t coefsFromRoots(roots_t roots);
 
     virtual Y_t operator()(const X_t &x) override;
 
@@ -54,11 +57,13 @@ public:
 
     CanonicPolynom operator-(CanonicPolynom &other);
 
+    CanonicPolynom operator*(CanonicPolynom &other);
+
     ValueType &operator[](std::size_t i);
 
     std::size_t degree() const;
 
-private:
+protected:
     CanonicPolynom() = default;
     CanonicPolynom(std::size_t n);
 
@@ -78,13 +83,11 @@ public:
     CanonicPolynom toClassicPolynom() const;
 
 protected:
-    coefs_t newtonCoefs(const dots_t& points);
-
     dots_t m_dots;
     coefs_t m_newtonCoefs;
 };
 
-class ZeroPolynom : public InterpolationPolynom
+class ZeroPolynom : public CanonicPolynom
 {
 public:
     static ZeroPolynom generate(const xs_t &xs);
