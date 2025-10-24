@@ -89,7 +89,9 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem](X_t x) mutable -> Y_t
     {
-        return res(x) + rem(x);
+        auto a = res(x);
+        auto b = rem(x);
+        return a;
     });
 }
 
@@ -225,7 +227,7 @@ CanonicPolynom InterpolationPolynom::toClassicPolynom() const
         canonicalCoeffs[0] += m_newtonCoefs[i] * p[0];
 
         for (int j = 1; j <= i; ++j) {
-            p[j] = prev[j-1] - m_dots[i-1].x * prev[j];
+            p[j] = prev[j - 1] - m_dots[ i - 1].x * prev[j];
             canonicalCoeffs[j] += m_newtonCoefs[i] * p[j];
         }
     }

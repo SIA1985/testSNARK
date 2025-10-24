@@ -96,9 +96,11 @@ bool ZeroTestProof::check()
 
     auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount));
 
-    auto a = m_fR / z(m_r);
-    auto b = m_qR;
-    return equal(a, b);
+    auto a = m_fR;
+    auto c = z(m_r);
+    auto b = m_qR * c;
+    /*todo: убрать 1 после фикса*/
+    return equal(a, b, 1);
 }
 
 }

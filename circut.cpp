@@ -9,7 +9,7 @@ Value::Value()
 {
 }
 
-Value::Value(double value)
+Value::Value(ValueType value)
     : m_value{std::make_shared<ValueType>(value)}
 {
 }
