@@ -16,12 +16,12 @@ Value::Value(ValueType value)
 
 Value::operator int() const
 {
-    return static_cast<int>(*m_value);
+    return static_cast<int>(m_value->get_si());
 }
 
 Value::operator double() const
 {
-    return static_cast<double>(*m_value);
+    return m_value->get_d();
 }
 
 Value::operator GateType_t() const
@@ -30,7 +30,12 @@ Value::operator GateType_t() const
         return Unknown;
     }
 
-    return static_cast<GateType_t>(*m_value);
+    return static_cast<GateType_t>(m_value->get_ui());
+}
+
+Value::operator ValueType() const
+{
+    return *m_value;
 }
 
 bool operator<(const Value &a, const Value &b)

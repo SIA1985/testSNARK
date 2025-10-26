@@ -22,3 +22,5 @@ set(PROJECT_SOURCES
 
 add_executable(testSNARK
     ${PROJECT_SOURCES})
+
+target_link_libraries(testSNARK PUBLIC gmp gmpxx)

@@ -80,7 +80,7 @@ public:
 
     virtual Y_t operator()(const X_t &x) override;
 
-    CanonicPolynom toClassicPolynom() const;
+    CanonicPolynom toCanonicPolynom() const;
 
 protected:
     dots_t m_dots;

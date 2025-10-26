@@ -1,13 +1,9 @@
 #include "proof.h"
 
 #include <cmath>
+#include <iostream>
 
 namespace snrk {
-
-bool equal(double a, double b, double eps = 1e-9)
-{
-    return std::fabs(a - b) <= eps;
-}
 
 xs_t genWitnessXs(std::size_t count)
 {
@@ -51,9 +47,9 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
 
 bool PolynomSubstitutionProof::check()
 {
-    auto a = (m_tG.t - m_toProve.x) * m_comQ;
-    auto b = m_comF - m_toProve.y * m_tG.G;
-    return equal(a, b);
+    std::cout << (m_tG.t - m_toProve.x) * m_comQ;
+    std::cout << m_comF - m_toProve.y * m_tG.G;
+    return (m_tG.t - m_toProve.x) * m_comQ == m_comF - m_toProve.y * m_tG.G;
 }
 
 ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG)
@@ -63,6 +59,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     ptr->m_tG = tG;
 
     auto f = g - p;
+
+    //t ~ 0, так как перевод в каноник с погрешностью
+    //auto t = f(1);
 
     ptr->m_comF = f.commit(tG);
     ptr->m_witnessCount = p.degree() + 1;
@@ -96,11 +95,7 @@ bool ZeroTestProof::check()
 
     auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount));
 
-    auto a = m_fR;
-    auto c = z(m_r);
-    auto b = m_qR * c;
-    /*todo: убрать 1 после фикса*/
-    return equal(a, b, 1);
+    return m_fR == m_qR * z(m_r);
 }
 
 }

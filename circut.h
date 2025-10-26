@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <any>
+#include <gmpxx.h>
 
 namespace snrk {
 
@@ -13,7 +14,7 @@ enum GateType_t : char {
     Product,
 };
 
-#define ValueType double
+#define ValueType mpf_class
 
 class Value
 {
@@ -25,6 +26,7 @@ public:
     operator int() const;
     operator double() const;
     operator GateType_t() const;
+    operator ValueType() const;
 
 private:
     std::shared_ptr<ValueType> m_value{};
