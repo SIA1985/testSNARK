@@ -5,6 +5,11 @@
 
 namespace snrk {
 
+bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
+{
+    return std::fabs(a.get_d() - b.get_d()) <= eps;
+}
+
 xs_t genWitnessXs(std::size_t count)
 {
     xs_t witnesses;
@@ -47,9 +52,9 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
 
 bool PolynomSubstitutionProof::check()
 {
-    std::cout << (m_tG.t - m_toProve.x) * m_comQ;
-    std::cout << m_comF - m_toProve.y * m_tG.G;
-    return (m_tG.t - m_toProve.x) * m_comQ == m_comF - m_toProve.y * m_tG.G;
+    ValueType a = (m_tG.t - m_toProve.x) * m_comQ;
+    ValueType b = m_comF - m_toProve.y * m_tG.G;
+    return equal(a, b);
 }
 
 ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG)
@@ -95,7 +100,8 @@ bool ZeroTestProof::check()
 
     auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount));
 
-    return m_fR == m_qR * z(m_r);
+    ValueType b = m_qR * z(m_r);
+    return equal(m_fR, b);
 }
 
 }

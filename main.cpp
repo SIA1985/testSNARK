@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     snrk::GlobalParams gp(c);
 
     auto funcT = gp.PP().t.toCanonicPolynom();
-    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}, {3, 1}, {4, 5}, {5, 6}, {6, 11}, {7, 6}, {8, 1}, {9, 7}, {10, 11}, {11, 7}/*, {12, 77}*/}).toCanonicPolynom();
+    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}, {3, 1}, {4, 5}, {5, 6}, {6, 11}, {7, 6}, {8, 1}, {9, 7}, {10, 11}, {11, 7}, {12, 77}}).toCanonicPolynom();
 
 //    auto funcT = snrk::InterpolationPolynom::generate({{1, 0}, {2, 2}, {3, 5}, {4, 70}}).toCanonicPolynom();
 //    auto funcV = snrk::InterpolationPolynom::generate({{1, 2}, {2, 5}, {3, 4}}).toCanonicPolynom();
@@ -34,11 +34,6 @@ int main(int argc, char *argv[])
 
 /*todo:
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
- * 2. Погрешность вычисления (ZeroTestProof::check) растёт с количеством точек, может быть дело в использовании интеполяционного полинома?
- * -> попробовать другой метод перевода в канонический полином из интерполяционного
- * -> !скорее всего дело в том, что полином f не делится без остатка, хотя должен
- * (возможножно из-за погрешности в интерполяционом полиноме) ДА
- * -> Если закомментировать функцию остатка, то всё работает!
  *
 */
 /* ЭТАПЫ
