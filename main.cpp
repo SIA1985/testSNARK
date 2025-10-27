@@ -1,10 +1,23 @@
 #include "snark.h"
 #include <iostream>
 
+bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
+{
+    auto funcT = t.toCanonicPolynom();
+
+    snrk::dots_t inputsW;
+    for(std::size_t i = 0; i < inputs.size(); i++) {
+        inputsW.push_back({i + 1, inputs[i]});
+    }
+    auto funcV = snrk::InterpolationPolynom::generate(inputsW).toCanonicPolynom();
+
+    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG);
+
+    return proof->check();
+}
+
 int main(int argc, char *argv[])
 {
-    mpf_set_default_prec(256);
-
     /*todo: пример из тетради проверить*/
     auto x1 = snrk::Value(5);
     auto x2 = snrk::Value(6);
@@ -21,28 +34,27 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    auto funcT = gp.PP().t.toCanonicPolynom();
-    auto funcV = snrk::InterpolationPolynom::generate({{1, 5}, {2, 6}, {3, 1}, {4, 5}, {5, 6}, {6, 11}, {7, 6}, {8, 1}, {9, 7}, {10, 11}, {11, 7}, {12, 77}}).toCanonicPolynom();
+    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
-//    auto funcT = snrk::InterpolationPolynom::generate({{1, 0}, {2, 2}, {3, 5}, {4, 70}}).toCanonicPolynom();
-//    auto funcV = snrk::InterpolationPolynom::generate({{1, 2}, {2, 5}, {3, 4}}).toCanonicPolynom();
-
-    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, gp.TG());
-
-    std::cout << proof->check() << std::endl;
+    std::cout << "Ok!"  << std::endl;
 }
 
 /*todo:
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
+ * 2. Генерация свидетелей в ZeroTestProof с 1, если для 7 этапа, то нужно передать номер свидетеля, либо сделать отдельный класс Proof
  *
+ * (мало ли mpf_set_default_prec(256);)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
  * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
  * [50/50]3. P строит T(x) и получает comt (Доразобраться с gp и сделать норм. commit)
- * []4. T корректно кодирует входы
+ * [V]4. T корректно кодирует входы
  * []5. Каждый вентиль корректно посчитан
  * []6. Стрелки соответствуют С
- * []7. Выход последнего вентиля =0
+ * []7. Выход последнего вентиля =0 (как-то через ZeroTest?)
  * []8. Оптимизации (сложностей О)
 */

@@ -35,16 +35,15 @@ CanonicPolynom CanonicPolynom::generate(coefs_t coefs)
 
 CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
 {
-    CanonicPolynom result(0 + 1); // Начинаем с полинома p(x) = 1
+    CanonicPolynom result(1); // Начинаем с полинома p(x) = 1
     result[0] = 1.0;
 
     for (const auto &root : roots) {
         // Создаем полином-двучлен (x - root)
-        CanonicPolynom binomial(1 + 1);
+        CanonicPolynom binomial(2);
         binomial[0] = -root;
         binomial[1] = 1.0;
 
-        // Умножаем текущий результат на новый двучлен
         result = result * binomial;
     }
 
@@ -79,10 +78,10 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
             res[j]=0.0;
     }
     for(k = n - nOther; k >= 0; k--) {
-        res[k] = rem[nOther+k] / other[nOther];
+        res[k] = rem[nOther + k] / other[nOther];
 
         for(j = nOther + k - 1; j >= k; j--) {
-            rem[j] -= res[k] * other[j-k];
+            rem[j] -= res[k] * other[j - k];
         }
     }
     for(j = nOther; j <= n; j++) {
@@ -91,9 +90,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem](X_t x) mutable -> Y_t
     {
-        auto a = res(x);
-        auto b = rem(x);
-        return a /*+ b*/;
+        return res(x) + rem(x);
     });
 }
 
@@ -103,7 +100,6 @@ CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
     size_t max_size = std::max(m_coefs.size(), other.m_coefs.size());
     diff.resize(max_size, 0.0);
 
-    // Вычитание коэффициентов
     for (size_t i = 0; i < max_size; ++i) {
         ValueType c1 = (i < m_coefs.size()) ? m_coefs[i] : 0.0;
         ValueType c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : 0.0;
@@ -144,29 +140,9 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
 
 InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
-    auto newtonCoefs = [](const dots_t& points) -> coefs_t {
-        int n = points.size();
-        coefs_t f(n);
-        for (int i = 0; i < n; ++i) {
-            f[i] = points[i].y;
-        }
-
-        coefs_t coefficients(n);
-        coefficients[0] = f[0];
-
-        for (int i = 1; i < n; ++i) {
-            for (int j = 0; j < n - i; ++j) {
-                f[j] = (f[j + 1] - f[j]) / (points[j + i].x - points[j].x);
-            }
-            coefficients[i] = f[0];
-        }
-        return coefficients;
-    };
-
     InterpolationPolynom l;
 
     l.m_dots = dots;
-    l.m_newtonCoefs = newtonCoefs(dots);
 
     return l;
 }
@@ -204,54 +180,54 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     }
 
     // Шаг 1: Вычисление разделённых разностей
-    std::vector<std::vector<ValueType>> div_diff(n, std::vector<ValueType>(n));
+    std::vector<std::vector<ValueType>> divDiff(n, std::vector<ValueType>(n));
     for (int i = 0; i < n; ++i) {
-        div_diff[i][0] = m_dots[i].y;
+        divDiff[i][0] = m_dots[i].y;
     }
 
     for (int j = 1; j < n; ++j) {
         for (int i = j; i < n; ++i) {
-            div_diff[i][j] = (div_diff[i][j-1] - div_diff[i-1][j-1]) / (m_dots[i].x - m_dots[i-j].x);
+            divDiff[i][j] = (divDiff[i][j-1] - divDiff[i-1][j-1]) / (m_dots[i].x - m_dots[i-j].x);
         }
     }
 
     // Шаг 2: Получение коэффициентов полинома Ньютона (диагональные элементы)
-    std::vector<ValueType> newton_coeffs(n);
+    std::vector<ValueType> newtonCoeffs(n);
     for (int i = 0; i < n; ++i) {
-        newton_coeffs[i] = div_diff[i][i];
+        newtonCoeffs[i] = divDiff[i][i];
     }
 
     // Шаг 3: Преобразование в каноническую форму
-    std::vector<ValueType> canonical_coeffs(n, 0.0);
+    std::vector<ValueType> canonicalCoeffs(n, 0.0);
 
     // Инициализация первого коэффициента
-    canonical_coeffs[0] = newton_coeffs[0];
+    canonicalCoeffs[0] = newtonCoeffs[0];
 
     // Вспомогательный полином для раскрытия скобок
-    std::vector<ValueType> newton_basis_poly(n, 0.0);
-    newton_basis_poly[0] = 1.0;
+    std::vector<ValueType> newtonBasisPoly(n, 0.0);
+    newtonBasisPoly[0] = 1.0;
 
     for (int i = 1; i < n; ++i) {
         // Умножение текущего базисного полинома на (x - x_{i-1})
-        std::vector<ValueType> next_basis_poly(n, 0.0);
+        std::vector<ValueType> nextBasisPoly(n, 0.0);
 
         // Член x * newton_basis_poly
         for (int k = 0; k < i; ++k) {
-            next_basis_poly[k+1] += newton_basis_poly[k];
+            nextBasisPoly[k+1] += newtonBasisPoly[k];
         }
         // Член -x_{i-1} * newton_basis_poly
         for (int k = 0; k < i; ++k) {
-            next_basis_poly[k] -= newton_basis_poly[k] * m_dots[i-1].x;
+            nextBasisPoly[k] -= newtonBasisPoly[k] * m_dots[i-1].x;
         }
-        newton_basis_poly = next_basis_poly;
+        newtonBasisPoly = nextBasisPoly;
 
         // Добавление к каноническому полиному
         for (int j = 0; j <= i; ++j) {
-            canonical_coeffs[j] += newton_coeffs[i] * newton_basis_poly[j];
+            canonicalCoeffs[j] += newtonCoeffs[i] * newtonBasisPoly[j];
         }
     }
 
-    return CanonicPolynom::generate(canonical_coeffs);
+    return CanonicPolynom::generate(canonicalCoeffs);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
@@ -262,34 +238,5 @@ ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 
     return z;
 }
-
-/*
- * @brief Вычисляет значение полинома Ньютона в заданной точке.
- *
- * @param newtonCoeffs Вектор коэффициентов Ньютона.
- * @param points Вектор узловых точек, использованных для построения полинома.
- * @param x_eval Точка, в которой нужно вычислить значение полинома.
- * @return Значение полинома в точке x_eval.
- *
-ValueType evaluateNewtonPolynomial(const std::vector<ValueType>& newtonCoeffs, const std::vector<Point>& points, ValueType x_eval) {
-    int n = newtonCoeffs.size();
-    ValueType result = newtonCoeffs[n - 1];
-
-    for (int i = n - 2; i >= 0; --i) {
-        result = result * (x_eval - points[i].x) + newtonCoeffs[i];
-    }
-
-    return result;
-}
-
-int main() {
-    // Узловые точки
-    std::vector<Point> points = {
-        {0, 2},
-        {5, -2},
-        {10, 7}
-    };
-
-*/
 
 }

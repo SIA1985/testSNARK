@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <map>
+#include <thread>
 
 namespace snrk {
 
@@ -51,21 +52,24 @@ W_t::cond_t W_t::operator()(witness_t w) const
 }
 
 GlobalParams::GlobalParams(const Circut &circut)
-    : m_TG{1, 2}
+    : m_TG{10, 20}
 {
     m_witnesses.resize(circut.degree());
 
-    witness_t wGenerator = 1;//-circut.inputSize();
+    witness_t wGenerator = 1;
     std::generate(m_witnesses.begin(), m_witnesses.end(),
     [&wGenerator]() -> witness_t
     {
         return wGenerator++;
     });
 
-    /*кадый в отдельный поток, т.к. читаем witness и circut*/
-    generateT(circut);
-    generateS(circut);
-    generateW(circut);
+    std::thread tT(&GlobalParams::generateT, this, std::ref(circut));
+    std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
+    std::thread tW(&GlobalParams::generateW, this, std::ref(circut));
+
+    tT.join();
+    tS.join();
+    tW.join();
 }
 
 witnesses_t GlobalParams::witnesses() const

@@ -45,7 +45,7 @@ private:
 class CanonicPolynom : public Polynom
 {
     using coefs_t = std::vector<ValueType>;
-    using roots_t = std::set<X_t>;
+    using roots_t = xs_t;
 public:
     static CanonicPolynom generate(coefs_t coefs);
 
@@ -84,7 +84,6 @@ public:
 
 protected:
     dots_t m_dots;
-    coefs_t m_newtonCoefs;
 };
 
 class ZeroPolynom : public CanonicPolynom

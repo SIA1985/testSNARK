@@ -65,9 +65,6 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
 
     auto f = g - p;
 
-    //t ~ 0, так как перевод в каноник с погрешностью
-    //auto t = f(1);
-
     ptr->m_comF = f.commit(tG);
     ptr->m_witnessCount = p.degree() + 1;
 
