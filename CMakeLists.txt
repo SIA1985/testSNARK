@@ -17,6 +17,7 @@ set(PROJECT_SOURCES
     setup.h setup.cpp
     funciton.h funciton.cpp
     proof.h proof.cpp
+    operation.h operation.cpp
     main.cpp
 )
 

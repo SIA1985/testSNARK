@@ -11,7 +11,20 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toCanonicPolynom();
 
-    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG);
+    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, snrk::wGeneratorDefault);
+
+    return proof->check();
+}
+
+bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
+{
+    /* До этого t и s перевести в Canonic !
+     * auto funcF = [s(x) == Sum]*(t(x) + t(x+1)) + [s(x) == Product]*(t(x) * t(x+1)) */;
+    /*[s(x) == Sum] <=> InterpolationPolynom({{Sum, 1}, {Product, 0}}) либо отдельный тип полинома (по сути конструктор для операций)*/
+
+    auto funcG = s.toCanonicPolynom();
+
+    auto proof = snrk::ZeroTestProof::forProver(funcF, funcG, tG);
 
     return proof->check();
 }
@@ -39,7 +52,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::cout << "Ok!"  << std::endl;
+    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+        std::cout << std::endl;
+        return 1;
+    }
+
+    std::cout << "Ok!" << std::endl;
 }
 
 /*todo:

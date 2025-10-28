@@ -10,6 +10,7 @@ namespace snrk {
 
 enum GateType_t : char {
     Unknown = 0,
+
     Sum,
     Product,
 };
@@ -41,10 +42,9 @@ typedef Value value_t;
 typedef std::vector<value_t> values_t;
 
 class Gate {
+
     using input_t = struct{value_t a; value_t b;};
-
 public:
-
     Gate(GateType_t type, input_t input, value_t output);
 
 private:

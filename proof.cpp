@@ -10,7 +10,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
     return std::fabs(a.get_d() - b.get_d()) <= eps;
 }
 
-xs_t genWitnessXs(std::size_t count)
+wGenerator_t wGeneratorDefault = [](std::size_t count)
 {
     xs_t witnesses;
 
@@ -19,7 +19,7 @@ xs_t genWitnessXs(std::size_t count)
     }
 
     return witnesses;
-}
+};
 
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
@@ -50,14 +50,14 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
     return ptr;
 }
 
-bool PolynomSubstitutionProof::check()
+bool PolynomSubstitutionProof::check(wGenerator_t wGenerator)
 {
     ValueType a = (m_tG.t - m_toProve.x) * m_comQ;
     ValueType b = m_comF - m_toProve.y * m_tG.G;
     return equal(a, b);
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, wGenerator_t wGenerator)
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
@@ -68,7 +68,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     ptr->m_comF = f.commit(tG);
     ptr->m_witnessCount = p.degree() + 1;
 
-    auto z = ZeroPolynom::generate(genWitnessXs(ptr->m_witnessCount));
+    auto z = ZeroPolynom::generate(wGenerator(ptr->m_witnessCount));
 
     auto q = f / z;
 
@@ -85,7 +85,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     return ptr;
 }
 
-bool ZeroTestProof::check()
+bool ZeroTestProof::check(wGenerator_t wGenerator)
 {
     if (!m_fRproof.check()) {
         return false;
@@ -95,7 +95,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom::generate(genWitnessXs(m_witnessCount));
+    auto z = ZeroPolynom::generate(wGenerator(m_witnessCount));
 
     ValueType b = m_qR * z(m_r);
     return equal(m_fR, b);

@@ -55,6 +55,7 @@ public:
 
     CustomPolynom operator/(CanonicPolynom &other);
 
+    /*todo: operator+ и через него operator-*/
     CanonicPolynom operator-(CanonicPolynom &other);
 
     CanonicPolynom operator*(CanonicPolynom &other);
