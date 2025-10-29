@@ -5,5 +5,6 @@
 #include "setup.h"
 #include "funciton.h"
 #include "proof.h"
+#include "operation.h"
 
 #endif // SNARK_H

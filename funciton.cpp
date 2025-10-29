@@ -56,7 +56,7 @@ Y_t CanonicPolynom::operator()(const X_t &x)
     X_t xPow = 1;
 
     for(std::size_t i = 0; i < m_coefs.size(); i++) {
-        y += m_coefs[i] * xPow;
+        y += xPow * m_coefs[i];
         xPow *= x;
     }
 
@@ -94,6 +94,21 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
     });
 }
 
+CanonicPolynom CanonicPolynom::operator+(const CanonicPolynom &other) const
+{
+    coefs_t diff;
+    size_t max_size = std::max(m_coefs.size(), other.m_coefs.size());
+    diff.resize(max_size, 0.0);
+
+    for (size_t i = 0; i < max_size; ++i) {
+        ValueType c1 = (i < m_coefs.size()) ? m_coefs[i] : 0.0;
+        ValueType c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : 0.0;
+        diff[i] = c1 + c2;
+    }
+
+    return CanonicPolynom::generate(diff);
+}
+
 CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
 {
     coefs_t diff;
@@ -109,7 +124,7 @@ CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
     return CanonicPolynom::generate(diff);
 }
 
-CanonicPolynom CanonicPolynom::operator*(CanonicPolynom &other)
+CanonicPolynom CanonicPolynom::operator*(const CanonicPolynom &other) const
 {
     std::size_t newDegree = m_coefs.size() + other.m_coefs.size() - 1;
     CanonicPolynom result(newDegree);
@@ -120,6 +135,40 @@ CanonicPolynom CanonicPolynom::operator*(CanonicPolynom &other)
         }
     }
     return result;
+}
+
+CanonicPolynom CanonicPolynom::operator*(const ValueType value) const
+{
+    coefs_t result(m_coefs.size(), 0);
+
+    for(std::size_t i = 0; i < m_coefs.size(); i++) {
+        result[i] = m_coefs[i] * value;
+    }
+
+    return CanonicPolynom::generate(result);
+}
+
+void CanonicPolynom::operator+=(const CanonicPolynom &other)
+{
+    m_coefs = (*this + other).m_coefs;
+}
+
+void CanonicPolynom::operator*=(const CanonicPolynom &other)
+{
+    m_coefs = (*this * other).m_coefs;
+}
+
+CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
+{
+    CanonicPolynom y = CanonicPolynom::generate({0});
+    CanonicPolynom xPow = CanonicPolynom::generate({0});
+
+    for(std::size_t i = 0; i < m_coefs.size(); i++) {
+        y += xPow * m_coefs[i];
+        xPow *= other;
+    }
+
+    return y;
 }
 
 ValueType &CanonicPolynom::operator[](std::size_t i)
@@ -228,6 +277,17 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     }
 
     return CanonicPolynom::generate(canonicalCoeffs);
+}
+
+InterpolationPolynom InterpolationPolynom::moveByX(X_t delta) const
+{
+    auto dots = m_dots;
+
+    for(auto &dot : dots) {
+        dot.x += delta;
+    }
+
+    return InterpolationPolynom::generate(dots);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)

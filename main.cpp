@@ -22,9 +22,46 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
      * auto funcF = [s(x) == Sum]*(t(x) + t(x+1)) + [s(x) == Product]*(t(x) * t(x+1)) */;
     /*[s(x) == Sum] <=> InterpolationPolynom({{Sum, 1}, {Product, 0}}) либо отдельный тип полинома (по сути конструктор для операций)*/
 
-    auto funcG = s.toCanonicPolynom();
+    auto tCanonic = t.toCanonicPolynom();
+    auto tDeltedCanonic = t.moveByX(+1).toCanonicPolynom();
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, funcG, tG);
+    auto funcF = snrk::CanonicPolynom::generate({0});
+    auto sCanonic = s.toCanonicPolynom();
+
+    FOROPS {
+        auto correctOperation = operation;
+
+        snrk::dots_t dots;
+        FOROPS {
+            dots.push_back(correctOperation == operation ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
+        }
+
+        auto isOperation = snrk::InterpolationPolynom::generate(dots).toCanonicPolynom();
+
+        switch(correctOperation) {
+        case snrk::Sum: {
+            funcF += (tCanonic + tDeltedCanonic) * isOperation(sCanonic);
+            break;
+        }
+        case snrk::Product: {
+            funcF += (tCanonic * tDeltedCanonic) * isOperation(sCanonic);
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    auto proof = snrk::ZeroTestProof::forProver(funcF, sCanonic, tG,
+    [](std::size_t n) -> snrk::xs_t
+    {
+        snrk::xs_t xs;
+        for(std::size_t i = 0; i < n; i++) {
+            xs.insert(3 * i);
+        }
+
+        return xs;
+    });
 
     return proof->check();
 }
@@ -53,7 +90,7 @@ int main(int argc, char *argv[])
     }
 
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-        std::cout << std::endl;
+        std::cout << "Некорректные переходы!" << std::endl;
         return 1;
     }
 

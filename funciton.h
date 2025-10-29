@@ -55,10 +55,19 @@ public:
 
     CustomPolynom operator/(CanonicPolynom &other);
 
-    /*todo: operator+ и через него operator-*/
+    CanonicPolynom operator+(const CanonicPolynom &other) const;
+
     CanonicPolynom operator-(CanonicPolynom &other);
 
-    CanonicPolynom operator*(CanonicPolynom &other);
+    CanonicPolynom operator*(const CanonicPolynom &other) const;
+
+    CanonicPolynom operator*(const ValueType value) const;
+
+    void operator+=(const CanonicPolynom &other);
+
+    void operator*=(const CanonicPolynom &other);
+
+    CanonicPolynom operator()(const CanonicPolynom &other) const;
 
     ValueType &operator[](std::size_t i);
 
@@ -82,6 +91,8 @@ public:
     virtual Y_t operator()(const X_t &x) override;
 
     CanonicPolynom toCanonicPolynom() const;
+
+    InterpolationPolynom moveByX(X_t delta) const;
 
 protected:
     dots_t m_dots;

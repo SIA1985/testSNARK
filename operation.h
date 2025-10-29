@@ -19,25 +19,9 @@ private:
     opFunc_t m_opFunc;
 };
 
-#define OPHEADER [](Operation::input_t input) -> ValueType
-#define OP(code) {OPHEADER code}
-std::unordered_map<GateType_t, Operation> Operate =
-{
-    {Sum, OP({
-        return input.a + input.b;
-    })
-    },
-    {Product, OP({
-         return input.a * input.b;
-     })
+extern std::unordered_map<GateType_t, Operation> Operate;
 
-    }
-};
-
-#undef OPHEADER
-#undef OP
-
-#define FOROPS for(const auto &[operation, _] : Operate)
+#define FOROPS for(const auto &[operation, _] : snrk::Operate)
 
 }
 
