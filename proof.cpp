@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 namespace snrk {
 
@@ -98,6 +99,7 @@ bool ZeroTestProof::check(wGenerator_t wGenerator)
     auto z = ZeroPolynom::generate(wGenerator(m_witnessCount));
 
     ValueType b = m_qR * z(m_r);
+    std::cout << std::setprecision(12) << b << " " << m_fR << "" << std::endl;
     return equal(m_fR, b);
 }
 

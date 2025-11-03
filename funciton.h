@@ -92,7 +92,7 @@ public:
 
     CanonicPolynom toCanonicPolynom() const;
 
-    InterpolationPolynom moveByX(X_t delta) const;
+    InterpolationPolynom ProductOX(X_t delta) const;
 
 protected:
     dots_t m_dots;

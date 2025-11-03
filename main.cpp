@@ -11,34 +11,30 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toCanonicPolynom();
 
-    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, snrk::wGeneratorDefault);
+    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG);
 
     return proof->check();
 }
 
 bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
-    /* До этого t и s перевести в Canonic !
-     * auto funcF = [s(x) == Sum]*(t(x) + t(x+1)) + [s(x) == Product]*(t(x) * t(x+1)) */;
-    /*[s(x) == Sum] <=> InterpolationPolynom({{Sum, 1}, {Product, 0}}) либо отдельный тип полинома (по сути конструктор для операций)*/
-
     auto tCanonic = t.toCanonicPolynom();
-    auto tDeltedCanonic = t.moveByX(+1).toCanonicPolynom();
+    auto tDeltedCanonic = t.ProductOX(0.5).toCanonicPolynom();
 
     auto funcF = snrk::CanonicPolynom::generate({0});
     auto sCanonic = s.toCanonicPolynom();
 
     FOROPS {
-        auto correctOperation = operation;
+        auto currentOperation = operation;
 
         snrk::dots_t dots;
         FOROPS {
-            dots.push_back(correctOperation == operation ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
+            dots.push_back(currentOperation == operation ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
         }
 
         auto isOperation = snrk::InterpolationPolynom::generate(dots).toCanonicPolynom();
 
-        switch(correctOperation) {
+        switch(currentOperation) {
         case snrk::Sum: {
             funcF += (tCanonic + tDeltedCanonic) * isOperation(sCanonic);
             break;
@@ -52,16 +48,7 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
         }
     }
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, sCanonic, tG,
-    [](std::size_t n) -> snrk::xs_t
-    {
-        snrk::xs_t xs;
-        for(std::size_t i = 0; i < n; i++) {
-            xs.insert(3 * i);
-        }
-
-        return xs;
-    });
+    auto proof = snrk::ZeroTestProof::forProver(funcF, sCanonic, tG);
 
     return proof->check();
 }

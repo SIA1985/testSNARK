@@ -50,7 +50,7 @@ class ZeroTestProof : public Proof
 public:
     /*todo: откуда брать r?*/
     /*check: f = p -> f - p = 0*/
-    static ptr_t forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, wGenerator_t wGenerator);
+    static ptr_t forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, wGenerator_t wGenerator = wGeneratorDefault);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
     virtual bool check(wGenerator_t wGenerator = wGeneratorDefault) override;

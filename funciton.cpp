@@ -1,6 +1,7 @@
 #include "funciton.h"
 
 #include <cmath>
+#include <iostream>
 
 namespace snrk {
 
@@ -160,10 +161,13 @@ void CanonicPolynom::operator*=(const CanonicPolynom &other)
 
 CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
 {
-    CanonicPolynom y = CanonicPolynom::generate({0});
-    CanonicPolynom xPow = CanonicPolynom::generate({0});
+    if (m_coefs.size() <= 0) {
+        return CanonicPolynom::generate({});
+    }
+    CanonicPolynom y = CanonicPolynom::generate({m_coefs[0]});
+    auto xPow = other;
 
-    for(std::size_t i = 0; i < m_coefs.size(); i++) {
+    for(std::size_t i = 1; i < m_coefs.size(); i++) {
         y += xPow * m_coefs[i];
         xPow *= other;
     }
@@ -279,12 +283,12 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     return CanonicPolynom::generate(canonicalCoeffs);
 }
 
-InterpolationPolynom InterpolationPolynom::moveByX(X_t delta) const
+InterpolationPolynom InterpolationPolynom::ProductOX(X_t delta) const
 {
     auto dots = m_dots;
 
     for(auto &dot : dots) {
-        dot.x += delta;
+        dot.x *= delta;
     }
 
     return InterpolationPolynom::generate(dots);
