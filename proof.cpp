@@ -11,17 +11,6 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
     return std::fabs(a.get_d() - b.get_d()) <= eps;
 }
 
-wGenerator_t wGeneratorDefault = [](std::size_t count)
-{
-    xs_t witnesses;
-
-    for(std::size_t i = 1; i <= count; i++) {
-        witnesses.insert(i);
-    }
-
-    return witnesses;
-};
-
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
@@ -51,14 +40,14 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
     return ptr;
 }
 
-bool PolynomSubstitutionProof::check(wGenerator_t wGenerator)
+bool PolynomSubstitutionProof::check()
 {
     ValueType a = (m_tG.t - m_toProve.x) * m_comQ;
     ValueType b = m_comF - m_toProve.y * m_tG.G;
     return equal(a, b);
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, wGenerator_t wGenerator)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, xs_t witness)
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
@@ -67,9 +56,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
-    ptr->m_witnessCount = p.degree() + 1;
+    ptr->m_witness = witness;
 
-    auto z = ZeroPolynom::generate(wGenerator(ptr->m_witnessCount));
+    auto z = ZeroPolynom::generate(ptr->m_witness);
 
     auto q = f / z;
 
@@ -86,7 +75,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom 
     return ptr;
 }
 
-bool ZeroTestProof::check(wGenerator_t wGenerator)
+bool ZeroTestProof::check()
 {
     if (!m_fRproof.check()) {
         return false;
@@ -96,10 +85,11 @@ bool ZeroTestProof::check(wGenerator_t wGenerator)
         return false;
     }
 
-    auto z = ZeroPolynom::generate(wGenerator(m_witnessCount));
+    auto z = ZeroPolynom::generate(m_witness);
 
+    /*мб некорректное умножение?*/
     ValueType b = m_qR * z(m_r);
-    std::cout << std::setprecision(12) << b << " " << m_fR << "" << std::endl;
+    std::cout << std::setprecision(20) << b << " " << m_fR << " " << m_qR << std::endl;
     return equal(m_fR, b);
 }
 

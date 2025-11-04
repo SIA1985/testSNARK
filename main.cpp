@@ -11,7 +11,12 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toCanonicPolynom();
 
-    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG);
+    snrk::xs_t witness;
+    for(std::size_t i = 1; i <= funcV.degree() + 1; i++) {
+        witness.insert(i);
+    }
+
+    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, witness);
 
     return proof->check();
 }
@@ -50,11 +55,12 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
         }
     }
 
-    auto a = 3;
-    std::cout << tCanonic3wPlus1(a) + tCanonic3wPlus2(a) << " " << tCanonic3wPlus3(a) << std::endl;
-    std::cout << funcF(a) << " " << tCanonic3wPlus3(a) << std::endl;
+    snrk::xs_t witness;
+    for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
+        witness.insert(i);
+    }
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG);
+    auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
 
     return proof->check();
 }

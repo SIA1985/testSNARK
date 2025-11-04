@@ -6,16 +6,13 @@
 
 namespace snrk {
 
-typedef std::function<xs_t(std::size_t)> wGenerator_t;
-extern wGenerator_t wGeneratorDefault;
-
 class Proof
 {
 public:
     Proof() = default;
     virtual ~Proof() = default;
 
-    virtual bool check(wGenerator_t wGenerator = wGeneratorDefault) = 0;
+    virtual bool check() = 0;
 };
 
 class PolynomSubstitutionProof : public Proof
@@ -27,7 +24,7 @@ public:
     static ptr_t forProver(Polynom &f, dot_t toProve, TG_t tG);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG);
 
-    virtual bool check(wGenerator_t wGenerator = wGeneratorDefault) override;
+    virtual bool check() override;
 
 private:
     PolynomSubstitutionProof() = default;
@@ -50,10 +47,10 @@ class ZeroTestProof : public Proof
 public:
     /*todo: откуда брать r?*/
     /*check: f = p -> f - p = 0*/
-    static ptr_t forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, wGenerator_t wGenerator = wGeneratorDefault);
+    static ptr_t forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, xs_t witness);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
-    virtual bool check(wGenerator_t wGenerator = wGeneratorDefault) override;
+    virtual bool check() override;
 
 private:
     ZeroTestProof() = default;
@@ -69,7 +66,7 @@ private:
     X_t m_r;
     Y_t m_fR, m_qR;
 
-    std::size_t m_witnessCount;
+    xs_t m_witness;
 };
 
 }
