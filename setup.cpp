@@ -116,8 +116,8 @@ void GlobalParams::generateS(const Circut &circut)
 {
     dots_t dots;
 
-    for(int i = 0; i < circut.size(); i++) {
-        dots.push_back({X_t(3 * (i + 1)), Y_t(circut.m_gates[i].m_type)});
+    for(std::size_t i = 0; i < circut.size(); i++) {
+        dots.push_back({X_t(i + 1), Y_t(circut.m_gates[i].m_type)});
     }
 
     m_S = S_t::generate(dots);

@@ -21,10 +21,12 @@ typedef std::set<X_t> xs_t;
 class Polynom
 {
 public:
+    using xProc_t = std::function<void(X_t&)>;
+
     Polynom() = default;
     virtual ~Polynom() = default;
 
-    virtual Y_t operator()(const X_t &x) = 0;
+    virtual Y_t operator()(X_t x) = 0;
 
     /*todo: передача gp*/
     virtual Y_t commit(TG_t tG);
@@ -36,7 +38,7 @@ class CustomPolynom : public Polynom
 public:
     static CustomPolynom generate(const func_t &customFunction);
 
-    virtual Y_t operator()(const X_t &x) override;
+    virtual Y_t operator()(X_t x) override;
 
 private:
     func_t m_customFunction;
@@ -51,7 +53,7 @@ public:
 
     static coefs_t coefsFromRoots(roots_t roots);
 
-    virtual Y_t operator()(const X_t &x) override;
+    virtual Y_t operator()(X_t x) override;
 
     CustomPolynom operator/(CanonicPolynom &other);
 
@@ -88,11 +90,9 @@ class InterpolationPolynom : public Polynom
 public:
     static InterpolationPolynom generate(const dots_t &dots);
 
-    virtual Y_t operator()(const X_t &x) override;
+    virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom toCanonicPolynom() const;
-
-    InterpolationPolynom ProductOX(X_t delta) const;
 
 protected:
     dots_t m_dots;

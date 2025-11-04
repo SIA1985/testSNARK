@@ -20,7 +20,7 @@ CustomPolynom CustomPolynom::generate(const func_t &customFunction)
     return c;
 }
 
-Y_t CustomPolynom::operator()(const X_t &x)
+Y_t CustomPolynom::operator()(X_t x)
 {
     return m_customFunction(x);
 }
@@ -51,7 +51,7 @@ CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
     return result.m_coefs;
 }
 
-Y_t CanonicPolynom::operator()(const X_t &x)
+Y_t CanonicPolynom::operator()(X_t x)
 {
     Y_t y = 0;
     X_t xPow = 1;
@@ -164,6 +164,7 @@ CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
     if (m_coefs.size() <= 0) {
         return CanonicPolynom::generate({});
     }
+
     CanonicPolynom y = CanonicPolynom::generate({m_coefs[0]});
     auto xPow = other;
 
@@ -200,7 +201,7 @@ InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
     return l;
 }
 
-Y_t InterpolationPolynom::operator()(const X_t &x)
+Y_t InterpolationPolynom::operator()(X_t x)
 {
     auto l = [this](std::size_t i, const X_t &x)
     {
@@ -281,17 +282,6 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     }
 
     return CanonicPolynom::generate(canonicalCoeffs);
-}
-
-InterpolationPolynom InterpolationPolynom::ProductOX(X_t delta) const
-{
-    auto dots = m_dots;
-
-    for(auto &dot : dots) {
-        dot.x *= delta;
-    }
-
-    return InterpolationPolynom::generate(dots);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)

@@ -19,7 +19,9 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
     auto tCanonic = t.toCanonicPolynom();
-    auto tDeltedCanonic = t.ProductOX(0.5).toCanonicPolynom();
+    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
+    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
+    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3}));
 
     auto funcF = snrk::CanonicPolynom::generate({0});
     auto sCanonic = s.toCanonicPolynom();
@@ -36,11 +38,11 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 
         switch(currentOperation) {
         case snrk::Sum: {
-            funcF += (tCanonic + tDeltedCanonic) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation(sCanonic);
             break;
         }
         case snrk::Product: {
-            funcF += (tCanonic * tDeltedCanonic) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation(sCanonic);
             break;
         }
         default:
@@ -48,7 +50,11 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
         }
     }
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, sCanonic, tG);
+    auto a = 3;
+    std::cout << tCanonic3wPlus1(a) + tCanonic3wPlus2(a) << " " << tCanonic3wPlus3(a) << std::endl;
+    std::cout << funcF(a) << " " << tCanonic3wPlus3(a) << std::endl;
+
+    auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG);
 
     return proof->check();
 }
@@ -81,12 +87,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+//    std::cout << (snrk::CanonicPolynom::generate({1, 2, 3}) + snrk::CanonicPolynom::generate({-1, -2, -3}))(1) << std::endl;
+
     std::cout << "Ok!" << std::endl;
 }
 
 /*todo:
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
  * 2. Генерация свидетелей в ZeroTestProof с 1, если для 7 этапа, то нужно передать номер свидетеля, либо сделать отдельный класс Proof
+ * 3. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  *
  * (мало ли mpf_set_default_prec(256);)
 */
