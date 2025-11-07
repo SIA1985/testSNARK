@@ -51,6 +51,15 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
             funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation(sCanonic);
             break;
         }
+        case snrk::Minus: {
+            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation(sCanonic);
+            break;
+        }
+            //todo: после деления имеем CustomPolynom
+//        case snrk::Devide: {
+//            funcF += (tCanonic3wPlus1 / tCanonic3wPlus2) * isOperation(sCanonic);
+//            break;
+//        }
         default:
             break;
         }
@@ -119,13 +128,14 @@ int main(int argc, char *argv[])
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
  * 2. Генерация свидетелей в ZeroTestProof с 1, если для 7 этапа, то нужно передать номер свидетеля, либо сделать отдельный класс Proof
  * 3. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
+ * 4. Доразобраться с gp и сделать норм. commit
  *
  * (мало ли mpf_set_default_prec(256);)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
  * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
- * [50/50]3. P строит T(x) и получает comt (Доразобраться с gp и сделать норм. commit)
+ * [V]3. P строит T(x) и получает comt
  * [V]4. T корректно кодирует входы
  * []5. Каждый вентиль корректно посчитан
  * []6. Стрелки соответствуют С

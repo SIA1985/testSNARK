@@ -13,6 +13,8 @@ enum GateType_t : char {
 
     Sum,
     Product,
+    Minus,
+    Devide,
 };
 
 #define ValueType mpf_class
