@@ -8,7 +8,14 @@ namespace snrk {
 
 bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
 {
-    return std::fabs(a.get_d() - b.get_d()) <= eps;
+    ValueType c = a - b;
+    if(c < 0) {
+        c = -c;
+    }
+
+    std::cout << "diff " << c << std::endl;
+
+    return c <= eps;
 }
 
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
@@ -87,9 +94,7 @@ bool ZeroTestProof::check()
 
     auto z = ZeroPolynom::generate(m_witness);
 
-    /*мб некорректное умножение?*/
     ValueType b = m_qR * z(m_r);
-    std::cout << std::setprecision(20) << b << " " << m_fR << " " << m_qR << std::endl;
     return equal(m_fR, b);
 }
 

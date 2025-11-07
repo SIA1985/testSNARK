@@ -1,5 +1,6 @@
 #include "snark.h"
 #include <iostream>
+#include <iomanip>
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 {
@@ -58,9 +59,20 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
         witness.insert(i);
+        std::cout << std::setprecision(20) << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
     }
 
+    //todo: дело определённо в полиноме funcF, так как при вычисление с большей точностью все работает (долнжо по к.м.)
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
+
+    return proof->check();
+}
+
+bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
+    auto tCanonic = t.toCanonicPolynom();
+    auto outputDot = snrk::dot_t{tCanonic.degree() + 1, output};
+
+    auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 
     return proof->check();
 }
@@ -93,7 +105,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-//    std::cout << (snrk::CanonicPolynom::generate({1, 2, 3}) + snrk::CanonicPolynom::generate({-1, -2, -3}))(1) << std::endl;
+    //todo: 6.
+
+    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return 1;
+    }
 
     std::cout << "Ok!" << std::endl;
 }
@@ -112,6 +129,6 @@ int main(int argc, char *argv[])
  * [V]4. T корректно кодирует входы
  * []5. Каждый вентиль корректно посчитан
  * []6. Стрелки соответствуют С
- * []7. Выход последнего вентиля =0 (как-то через ZeroTest?)
+ * [V]7. Выход последнего вентиля =0 (как-то через ZeroTest?, скорее через Substitution)
  * []8. Оптимизации (сложностей О)
 */

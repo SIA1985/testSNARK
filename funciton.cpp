@@ -165,15 +165,29 @@ CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
         return CanonicPolynom::generate({});
     }
 
+    // Начинаем с последнего коэффициента (a_n)
+    CanonicPolynom result = CanonicPolynom::generate({m_coefs.back()});
+
+    // Идем с конца до второго элемента (индекс 1, пропуская a_0)
+    for (int i = m_coefs.size() - 2; i >= 0; --i) {
+        // Умножаем текущий результат на Q(x)
+        result *= other;
+        // Добавляем следующий коэффициент (a_{n-1}, a_{n-2}, ...)
+        result += CanonicPolynom::generate({m_coefs[i]});
+    }
+    // В конце получаем полный P(Q(x))
+
+    /*
     CanonicPolynom y = CanonicPolynom::generate({m_coefs[0]});
     auto xPow = other;
 
     for(std::size_t i = 1; i < m_coefs.size(); i++) {
         y += xPow * m_coefs[i];
         xPow *= other;
-    }
+    }*/
 
-    return y;
+
+    return result;
 }
 
 ValueType &CanonicPolynom::operator[](std::size_t i)
