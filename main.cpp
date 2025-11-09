@@ -24,6 +24,25 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 
 bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
+    /*Работало с 3мя точками
+    auto tCanonic = t.toCanonicPolynom();
+
+    auto sCanonic = s.toCanonicPolynom();
+
+    snrk::dots_t dots3wPlus1, dots3wPlus2, dots3wPlus3;
+    for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
+        dots3wPlus1.push_back({i, t(3*i + 1)});
+        dots3wPlus2.push_back({i, t(3*i + 2)});
+        dots3wPlus3.push_back({i, t(3*i + 3)});
+    }
+
+    auto tCanonic3wPlus1 = snrk::InterpolationPolynom::generate(dots3wPlus1).toCanonicPolynom();
+    auto tCanonic3wPlus2 = snrk::InterpolationPolynom::generate(dots3wPlus2).toCanonicPolynom();
+    auto tCanonic3wPlus3 = snrk::InterpolationPolynom::generate(dots3wPlus3).toCanonicPolynom();
+
+    + аналогичное с isOperation (проходимся по S и где операторы совпадают -> 1, иначе -> 0)
+    */
+
     auto tCanonic = t.toCanonicPolynom();
     auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
     auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
@@ -129,7 +148,7 @@ int main(int argc, char *argv[])
  * 2. Генерация свидетелей в ZeroTestProof с 1, если для 7 этапа, то нужно передать номер свидетеля, либо сделать отдельный класс Proof
  * 3. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 4. Доразобраться с gp и сделать норм. commit
- *
+ * !5. Заменить (но не удалить, а на его основе) CanonicPolynom на кубические сплайны (сначала попробовать имеющимися средствами, потом из примера в ИИ)!
  * (мало ли mpf_set_default_prec(256);)
 */
 /* ЭТАПЫ
