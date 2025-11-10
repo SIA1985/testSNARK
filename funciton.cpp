@@ -8,7 +8,7 @@ namespace snrk {
 
 bool operator<(const dot_t &a, const dot_t &b)
 {
-    return a.x < b.x;
+    return cmp(a.x, b.x) != 1;
 }
 
 Y_t Polynom::commit(TG_t tG)
@@ -211,11 +211,6 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
     m_coefs.resize(n, ValueType(0));
 }
 
-bool operator<(const Range &a, const Range &b)
-{
-    return a.rightBound() <= b.leftBound();
-}
-
 InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
     InterpolationPolynom l;
@@ -314,17 +309,17 @@ PartedCanonicPloynom InterpolationPolynom::toPartedCanonicPolynom() const
 
     PartedCanonicPloynom::RangeMap map;
     for(auto it = sortedDots.begin(); it != sortedDots.end();) {
-        auto itStart = it;
+        dots_t dots;
         for(int i = 0; i < PartedCanonicPloynom::partition; i++) {
+            dots.push_back(*it);
+
             it++;
             if (it == sortedDots.end()) {
                 break;
             }
         }
 
-        dots_t dots(itStart, it);
-
-        map.insert({itStart->x, it->x}, InterpolationPolynom::generate(dots).toCanonicPolynom());
+        map.insert({dots.front().x, dots.back().x}, InterpolationPolynom::generate(dots).toCanonicPolynom());
     }
 
     return PartedCanonicPloynom::generate(map);
@@ -343,15 +338,15 @@ Range::Range(X_t left, X_t right)
     : m_left{left}
     , m_right{right}
 {
-    assert(right < left);
+    assert(cmp(right, left) != -1);
 }
 
 int Range::inRange(X_t x) const
 {
-    if (m_left < x) {
+    if (cmp(m_left, x) == 1) {
         return -1;
     }
-    else if (m_right > x) {
+    else if (cmp(m_right, x) == -1) {
         return 1;
     }
 
@@ -368,13 +363,17 @@ X_t Range::rightBound() const
     return m_right;
 }
 
+bool operator<(const Range &a, const Range &b)
+{
+    return cmp(a.rightBound(), b.leftBound()) <= 0;
+}
+
 CanonicPolynom PartedCanonicPloynom::RangeMap::operator[](X_t x)
 {
     auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
     [](const std::pair<Range, CanonicPolynom> &keyValue, X_t x) -> bool
     {
-        //todo
-        return keyValue.first.inRange(x) < 1;
+        return keyValue.first.rightBound() < x;
     });
 
     if (found == m_map.end()) {

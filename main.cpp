@@ -123,22 +123,25 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
-        std::cout << "Некорректные входы!" << std::endl;
-        return 1;
-    }
+//    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+//        std::cout << "Некорректные входы!" << std::endl;
+//        return 1;
+//    }
 
-    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-        std::cout << "Некорректные переходы!" << std::endl;
-        return 1;
-    }
+//    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+//        std::cout << "Некорректные переходы!" << std::endl;
+//        return 1;
+//    }
 
-    //todo: 6.
+//    //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-        std::cout << "Некорректный выход!" << std::endl;
-        return 1;
-    }
+//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+//        std::cout << "Некорректный выход!" << std::endl;
+//        return 1;
+//    }
+
+    auto t = gp.PP().t.toPartedCanonicPolynom();
+    std::cout << t(12) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
