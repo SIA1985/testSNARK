@@ -4,6 +4,7 @@
 #include "circut.h"
 
 #include <functional>
+#include <map>
 #include <set>
 #include <unordered_set>
 
@@ -83,6 +84,45 @@ protected:
     coefs_t m_coefs;
 };
 
+/* [left, right] */
+class Range
+{
+public:
+    Range(X_t left, X_t right);
+
+    int inRange(X_t x) const;
+
+    X_t leftBound() const;
+    X_t rightBound() const;
+
+private:
+    X_t m_left;
+    X_t m_right;
+};
+
+bool operator<(const Range &a, const Range &b);
+
+class PartedCanonicPloynom : public Polynom
+{
+    class RangeMap
+    {
+    public:
+        CanonicPolynom operator[](X_t x);
+
+        void insert(Range range, CanonicPolynom polynom);
+
+    private:
+        std::map<Range, CanonicPolynom> m_map;
+    };
+
+public:
+    static PartedCanonicPloynom generate();
+
+    virtual Y_t operator()(X_t x) override;
+
+private:
+    RangeMap m_map;
+};
 
 class InterpolationPolynom : public Polynom
 {
@@ -93,6 +133,7 @@ public:
     virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom toCanonicPolynom() const;
+    PartedCanonicPloynom toPartedCanonicPolynom() const;
 
 protected:
     dots_t m_dots;

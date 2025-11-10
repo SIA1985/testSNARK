@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <cassert>
 
 namespace snrk {
 
@@ -205,6 +206,10 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
     m_coefs.resize(n, ValueType(0));
 }
 
+bool operator<(const Range &a, const Range &b)
+{
+    return a.rightBound() <= b.leftBound();
+}
 
 InterpolationPolynom InterpolationPolynom::generate(const dots_t &dots)
 {
@@ -298,6 +303,13 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     return CanonicPolynom::generate(canonicalCoeffs);
 }
 
+PartedCanonicPloynom InterpolationPolynom::toPartedCanonicPolynom() const
+{
+    PartedCanonicPloynom p;
+
+    return p;
+}
+
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
 {
     ZeroPolynom z;
@@ -305,6 +317,66 @@ ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
     z.m_coefs = coefsFromRoots(xs);
 
     return z;
+}
+
+Range::Range(X_t left, X_t right)
+    : m_left{left}
+    , m_right{right}
+{
+    assert(right < left);
+}
+
+int Range::inRange(X_t x) const
+{
+    if (m_left < x) {
+        return -1;
+    }
+    else if (m_right > x) {
+        return 1;
+    }
+
+    return 0;
+}
+
+X_t Range::leftBound() const
+{
+    return m_left;
+}
+
+X_t Range::rightBound() const
+{
+    return m_right;
+}
+
+CanonicPolynom PartedCanonicPloynom::RangeMap::operator[](X_t x)
+{
+    auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
+    [](const std::pair<Range, CanonicPolynom> &keyValue, X_t x) -> bool
+    {
+        //todo
+        return keyValue.first.inRange(x) < 1;
+    });
+
+    if (found == m_map.end()) {
+        return CanonicPolynom::generate({});
+    }
+
+    return found->second;
+}
+
+void PartedCanonicPloynom::RangeMap::insert(Range range, CanonicPolynom polynom)
+{
+    m_map.insert({range, polynom});
+}
+
+PartedCanonicPloynom PartedCanonicPloynom::generate()
+{
+
+}
+
+Y_t PartedCanonicPloynom::operator()(X_t x)
+{
+    return m_map[x](x);
 }
 
 }
