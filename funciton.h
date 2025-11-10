@@ -15,6 +15,7 @@ typedef ValueType X_t;
 typedef ValueType Y_t;
 
 struct dot_t {X_t x; Y_t y;};
+bool operator<(const dot_t &a, const dot_t &b);
 typedef std::vector<dot_t> dots_t;
 struct TG_t{X_t t; int G;};
 typedef std::set<X_t> xs_t;
@@ -104,6 +105,7 @@ bool operator<(const Range &a, const Range &b);
 
 class PartedCanonicPloynom : public Polynom
 {
+public:
     class RangeMap
     {
     public:
@@ -115,12 +117,15 @@ class PartedCanonicPloynom : public Polynom
         std::map<Range, CanonicPolynom> m_map;
     };
 
-public:
-    static PartedCanonicPloynom generate();
+    static PartedCanonicPloynom generate(RangeMap map);
 
     virtual Y_t operator()(X_t x) override;
 
+    const static int partition;
+
 private:
+    PartedCanonicPloynom() = default;
+
     RangeMap m_map;
 };
 

@@ -6,6 +6,11 @@
 
 namespace snrk {
 
+bool operator<(const dot_t &a, const dot_t &b)
+{
+    return a.x < b.x;
+}
+
 Y_t Polynom::commit(TG_t tG)
 {
     /*пока = f(t)*G напрямую*/
@@ -305,9 +310,24 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
 
 PartedCanonicPloynom InterpolationPolynom::toPartedCanonicPolynom() const
 {
-    PartedCanonicPloynom p;
+    std::set<dot_t> sortedDots(m_dots.begin(), m_dots.end());
 
-    return p;
+    PartedCanonicPloynom::RangeMap map;
+    for(auto it = sortedDots.begin(); it != sortedDots.end();) {
+        auto itStart = it;
+        for(int i = 0; i < PartedCanonicPloynom::partition; i++) {
+            it++;
+            if (it == sortedDots.end()) {
+                break;
+            }
+        }
+
+        dots_t dots(itStart, it);
+
+        map.insert({itStart->x, it->x}, InterpolationPolynom::generate(dots).toCanonicPolynom());
+    }
+
+    return PartedCanonicPloynom::generate(map);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
@@ -369,14 +389,20 @@ void PartedCanonicPloynom::RangeMap::insert(Range range, CanonicPolynom polynom)
     m_map.insert({range, polynom});
 }
 
-PartedCanonicPloynom PartedCanonicPloynom::generate()
+PartedCanonicPloynom PartedCanonicPloynom::generate(RangeMap map)
 {
+    PartedCanonicPloynom p;
 
+    p.m_map = map;
+
+    return p;
 }
 
 Y_t PartedCanonicPloynom::operator()(X_t x)
 {
     return m_map[x](x);
 }
+
+const int PartedCanonicPloynom::partition = 3;
 
 }

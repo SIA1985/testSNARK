@@ -24,8 +24,15 @@ std::unordered_map<GateType_t, Operation> Operate =
     },
     {Product, OP({
          return input.a * input.b;
-     })
-
+    })
+    },
+    {Minus, OP({
+         return input.a - input.b;
+    })
+    },
+    {Devide, OP({
+         return input.a / input.b;
+    })
     }
 };
 
