@@ -8,6 +8,7 @@
 #include <set>
 #include <unordered_set>
 #include <iostream>
+#include <cassert>
 
 
 namespace snrk {
@@ -105,6 +106,7 @@ private:
 
 bool operator<(const Range &a, const Range &b);
 
+/*Непрерывный диапазон с одинаковым шагом*/
 template<typename T>
 class RangeMap
 {
@@ -147,15 +149,14 @@ public:
         return m_map[r];
     }
 
+    /*Непрерывное заполнение*/
     void insert(const Range &range, const T &polynom)
     {
-        m_map.insert({range, polynom});
-    }
+        assert(m_map.size() == 0 ||
+               range.leftBound() == (--m_map.end())->first.rightBound() &&
+               range.rightBound() == m_map.begin()->first.leftBound());
 
-    RangeMap merge(RangeMap other) const
-    {
-        //todo
-        return {};
+        m_map.insert({range, polynom});
     }
 
     const_iterator cbegin() const

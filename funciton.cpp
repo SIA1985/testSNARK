@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <cassert>
 
 namespace snrk {
 
@@ -461,9 +460,7 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
-    //todo: assert(m_map == other.m_map);
-    assert(m_map.size() == other.m_map.size());
-
+    // Предполагаем, что все диапазоны имеют один шаг[v], есть (даже при продолжении) диапазон проходящий через 1[? - % шаг], нет пробелов в диапазонах [v]
     for(auto it = m_map.cbegin(), itOther = other.m_map.cbegin(); it != m_map.cend();) {
 
         pred(it, itOther);

@@ -140,13 +140,6 @@ int main(int argc, char *argv[])
 //        return 1;
 //    }
 
-    snrk::RangeMap<snrk::CanonicPolynom> m;
-    m.insert({1, 3}, snrk::CanonicPolynom::generate({1}));
-    m.insert({3, 5}, snrk::CanonicPolynom::generate({2}));
-    m.insert({5, 7}, snrk::CanonicPolynom::generate({3}));
-
-    std::cout << m[snrk::Range{-1, 1}](1) << std::endl;
-
     std::cout << "Ok!" << std::endl;
 }
 
