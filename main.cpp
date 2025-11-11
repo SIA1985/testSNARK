@@ -87,7 +87,8 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
         witness.insert(i);
-        std::cout << std::setprecision(20) << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
+        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " ";
+        std::cout << std::setprecision(20) << funcF(i) << std::endl;
     }
 
     //todo: дело определённо в полиноме funcF, так как при вычисление с большей точностью все работает (долнжо по к.м.)
@@ -123,22 +124,22 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-//    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
-//    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-//        std::cout << "Некорректные переходы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+        std::cout << "Некорректные переходы!" << std::endl;
+        return 1;
+    }
 
-//    //todo: 6.
+    //todo: 6.
 
-//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-//        std::cout << "Некорректный выход!" << std::endl;
-//        return 1;
-//    }
+    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return 1;
+    }
 
     std::cout << "Ok!" << std::endl;
 }

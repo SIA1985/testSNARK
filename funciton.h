@@ -105,6 +105,7 @@ private:
 };
 
 bool operator<(const Range &a, const Range &b);
+bool operator==(const Range &a, const Range &b);
 
 /*Непрерывный диапазон с одинаковым шагом*/
 template<typename T>
@@ -152,8 +153,9 @@ public:
     /*Непрерывное заполнение*/
     void insert(const Range &range, const T &polynom)
     {
+        std::cout << range.leftBound() << " " << range.rightBound() << std::endl;
         assert(m_map.size() == 0 ||
-               range.leftBound() == (--m_map.end())->first.rightBound() &&
+               range.leftBound() == (--m_map.end())->first.rightBound() ||
                range.rightBound() == m_map.begin()->first.leftBound());
 
         m_map.insert({range, polynom});

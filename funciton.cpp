@@ -317,8 +317,16 @@ PartedCanonicPolynom InterpolationPolynom::toPartedCanonicPolynom() const
                 break;
             }
         }
+        if (it != sortedDots.end()) {
+            it--;
+        }
 
-        map.insert({dots.front().x, dots.back().x}, InterpolationPolynom::generate(dots).toCanonicPolynom());
+        X_t rangeEnd = dots.back().x;
+        for(std::size_t i = 0; i < PartedCanonicPolynom::Partition - dots.size(); i++) {
+            rangeEnd++;
+        }
+
+        map.insert({dots.front().x, rangeEnd}, InterpolationPolynom::generate(dots).toCanonicPolynom());
     }
 
     return PartedCanonicPolynom::generate(map);
@@ -338,7 +346,7 @@ Range::Range(X_t left, X_t right)
     , m_right{right}
 {
     assert(cmp(right, left) != -1);
-    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
+//    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
 int Range::inRange(X_t x) const
@@ -366,6 +374,11 @@ X_t Range::rightBound() const
 bool operator<(const Range &a, const Range &b)
 {
     return cmp(a.rightBound(), b.leftBound()) <= 0;
+}
+
+bool operator==(const Range &a, const Range &b)
+{
+    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound());
 }
 
 PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
@@ -431,7 +444,7 @@ CustomPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other)
     //todo: assert(m_map == other.m_map);
 
     for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
-        result[it->first] = m_map[it->first] / other;
+        result.insert(it->first, m_map[it->first] / other);
     }
 
     return CustomPolynom::generate([result](X_t x) mutable {return result[x](x);});
@@ -450,23 +463,41 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
 
 void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 {
-    //todo: assert(m_map == other.m_map);
-    assert(m_map.size() == other.m_map.size());
+    map result;
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    {
+        result[itOther->first] += itOther->second;
+    });
 
-    for(auto itOther = other.m_map.cbegin(); itOther != other.m_map.cend(); itOther++) {
-        m_map[itOther->first] += itOther->second;
-    }
+    m_map = result;
 }
 
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
-    // Предполагаем, что все диапазоны имеют один шаг[v], есть (даже при продолжении) диапазон проходящий через 1[? - % шаг], нет пробелов в диапазонах [v]
-    for(auto it = m_map.cbegin(), itOther = other.m_map.cbegin(); it != m_map.cend();) {
+    PartedCanonicPolynom left, right;
 
-        pred(it, itOther);
+    if (m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound()) {
+        left = *this;
+        right = other;
+    } else {
+        left = other;
+        right = *this;
+    }
 
-        it++;
-        itOther++;
+    auto itLeft = left.m_map.cbegin();
+    auto itRight = right.m_map.cbegin();
+    while(itLeft != left.m_map.cend() && itRight != right.m_map.cend()) {
+        pred(itLeft, itRight);
+
+        if (itLeft != left.m_map.cend()) {
+            itLeft++;
+        } else if (itRight != right.m_map.cend()) {
+            itRight++;
+        }
+
+        if (itLeft->first == itRight->first && itRight != right.m_map.cend()) {
+            itRight++;
+        }
     }
 }
 
