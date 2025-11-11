@@ -51,6 +51,8 @@ class CanonicPolynom : public Polynom
     using coefs_t = std::vector<ValueType>;
     using roots_t = xs_t;
 public:
+    CanonicPolynom() = default;
+
     static CanonicPolynom generate(coefs_t coefs);
 
     static coefs_t coefsFromRoots(roots_t roots);
@@ -61,7 +63,7 @@ public:
 
     CanonicPolynom operator+(const CanonicPolynom &other) const;
 
-    CanonicPolynom operator-(CanonicPolynom &other);
+    CanonicPolynom operator-(const CanonicPolynom &other) const;
 
     CanonicPolynom operator*(const CanonicPolynom &other) const;
 
@@ -78,7 +80,6 @@ public:
     std::size_t degree() const;
 
 protected:
-    CanonicPolynom() = default;
     CanonicPolynom(std::size_t n);
 
     /*x0, x1 .. xn*/
@@ -103,30 +104,88 @@ private:
 
 bool operator<(const Range &a, const Range &b);
 
-class PartedCanonicPloynom : public Polynom
+template<typename T>
+class RangeMap
 {
 public:
-    class RangeMap
+    using const_iterator = typename std::map<Range, T>::const_iterator;
+
+    T operator[](X_t x)
     {
-    public:
-        CanonicPolynom operator[](X_t x);
+        auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
+        [](const std::pair<Range, T> &keyValue, X_t x) -> bool
+        {
+            return keyValue.first.rightBound() < x;
+        });
 
-        void insert(Range range, CanonicPolynom polynom);
+        if (found == m_map.end()) {
+            return T::generate({});
+        }
 
-    private:
-        std::map<Range, CanonicPolynom> m_map;
-    };
+        return found->second;
+    }
 
-    static PartedCanonicPloynom generate(RangeMap map);
+    T &operator[](Range r)
+    {
+        return m_map[r];
+    }
+
+    void insert(const Range &range, const T &polynom)
+    {
+        m_map.insert({range, polynom});
+    }
+
+    const_iterator cbegin() const
+    {
+        return m_map.cbegin();
+    }
+
+    const_iterator cend() const
+    {
+        return m_map.cend();
+    }
+
+    std::size_t size() const
+    {
+        return m_map.size();
+    }
+
+private:
+    std::map<Range, T> m_map;
+};
+
+class PartedCanonicPolynom : public Polynom
+{
+public:
+    using map = RangeMap<CanonicPolynom>;
+
+    static PartedCanonicPolynom generate(RangeMap<CanonicPolynom> map);
 
     virtual Y_t operator()(X_t x) override;
 
-    const static int partition;
+    PartedCanonicPolynom operator()(const CanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator()(const PartedCanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator+(const PartedCanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator-(const PartedCanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator*(const PartedCanonicPolynom &other) const;
+
+    CustomPolynom operator/(CanonicPolynom &other);
+
+    void operator+=(const PartedCanonicPolynom &other);
+
+    const static int Partition;
 
 private:
-    PartedCanonicPloynom() = default;
+    PartedCanonicPolynom() = default;
 
-    RangeMap m_map;
+    using operatorPred_t = std::function<void(RangeMap<CanonicPolynom>::const_iterator it, RangeMap<CanonicPolynom>::const_iterator itOther)>;
+    void operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const;
+
+     map m_map;
 };
 
 class InterpolationPolynom : public Polynom
@@ -138,7 +197,7 @@ public:
     virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom toCanonicPolynom() const;
-    PartedCanonicPloynom toPartedCanonicPolynom() const;
+    PartedCanonicPolynom toPartedCanonicPolynom() const;
 
 protected:
     dots_t m_dots;

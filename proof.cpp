@@ -54,7 +54,7 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(CanonicPolynom &g, CanonicPolynom &p, TG_t tG, xs_t witness)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
 {
     auto ptr = ptr_t(new ZeroTestProof);
 

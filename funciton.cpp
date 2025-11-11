@@ -116,7 +116,7 @@ CanonicPolynom CanonicPolynom::operator+(const CanonicPolynom &other) const
     return CanonicPolynom::generate(diff);
 }
 
-CanonicPolynom CanonicPolynom::operator-(CanonicPolynom &other)
+CanonicPolynom CanonicPolynom::operator-(const CanonicPolynom &other) const
 {
     coefs_t diff;
     size_t max_size = std::max(m_coefs.size(), other.m_coefs.size());
@@ -303,14 +303,14 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     return CanonicPolynom::generate(canonicalCoeffs);
 }
 
-PartedCanonicPloynom InterpolationPolynom::toPartedCanonicPolynom() const
+PartedCanonicPolynom InterpolationPolynom::toPartedCanonicPolynom() const
 {
     std::set<dot_t> sortedDots(m_dots.begin(), m_dots.end());
 
-    PartedCanonicPloynom::RangeMap map;
+    PartedCanonicPolynom::map map;
     for(auto it = sortedDots.begin(); it != sortedDots.end();) {
         dots_t dots;
-        for(int i = 0; i < PartedCanonicPloynom::partition; i++) {
+        for(int i = 0; i < PartedCanonicPolynom::Partition; i++) {
             dots.push_back(*it);
 
             it++;
@@ -322,7 +322,7 @@ PartedCanonicPloynom InterpolationPolynom::toPartedCanonicPolynom() const
         map.insert({dots.front().x, dots.back().x}, InterpolationPolynom::generate(dots).toCanonicPolynom());
     }
 
-    return PartedCanonicPloynom::generate(map);
+    return PartedCanonicPolynom::generate(map);
 }
 
 ZeroPolynom ZeroPolynom::generate(const xs_t &xs)
@@ -368,40 +368,110 @@ bool operator<(const Range &a, const Range &b)
     return cmp(a.rightBound(), b.leftBound()) <= 0;
 }
 
-CanonicPolynom PartedCanonicPloynom::RangeMap::operator[](X_t x)
+PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
 {
-    auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
-    [](const std::pair<Range, CanonicPolynom> &keyValue, X_t x) -> bool
-    {
-        return keyValue.first.rightBound() < x;
-    });
-
-    if (found == m_map.end()) {
-        return CanonicPolynom::generate({});
-    }
-
-    return found->second;
-}
-
-void PartedCanonicPloynom::RangeMap::insert(Range range, CanonicPolynom polynom)
-{
-    m_map.insert({range, polynom});
-}
-
-PartedCanonicPloynom PartedCanonicPloynom::generate(RangeMap map)
-{
-    PartedCanonicPloynom p;
+    PartedCanonicPolynom p;
 
     p.m_map = map;
 
     return p;
 }
 
-Y_t PartedCanonicPloynom::operator()(X_t x)
+Y_t PartedCanonicPolynom::operator()(X_t x)
 {
     return m_map[x](x);
 }
 
-const int PartedCanonicPloynom::partition = 3;
+PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &other) const
+{
+    map result;
+    for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
+        result.insert(it->first, it->second(other));
+    }
+
+    return PartedCanonicPolynom::generate(result);
+}
+
+PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom &other) const
+{
+    map result;
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    {
+        result.insert(it->first, it->second(itOther->second));
+    });
+
+    return PartedCanonicPolynom::generate(result);
+}
+
+PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
+{
+    map result;
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    {
+        result.insert(it->first, it->second + itOther->second);
+    });
+
+    return PartedCanonicPolynom::generate(result);
+}
+
+PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom &other) const
+{
+    map result;
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    {
+        result.insert(it->first, it->second * itOther->second);
+    });
+
+    return PartedCanonicPolynom::generate(result);
+}
+
+CustomPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other)
+{
+    RangeMap<CustomPolynom> result;
+    //todo: assert(m_map == other.m_map);
+
+    for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
+        result[it->first] = m_map[it->first] / other;
+    }
+
+    return CustomPolynom::generate([result](X_t x) mutable {return result[x](x);});
+}
+
+PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom &other) const
+{
+    map result;
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    {
+        result.insert(it->first, it->second - itOther->second);
+    });
+
+    return PartedCanonicPolynom::generate(result);
+}
+
+void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
+{
+    //todo: assert(m_map == other.m_map);
+    assert(m_map.size() == other.m_map.size());
+
+    for(auto itOther = other.m_map.cbegin(); itOther != other.m_map.cend(); itOther++) {
+        m_map[itOther->first] += itOther->second;
+    }
+}
+
+void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
+{
+    //todo: assert(m_map == other.m_map);
+    assert(m_map.size() == other.m_map.size());
+
+    for(auto it = m_map.cbegin(), itOther = other.m_map.cbegin(); it != m_map.cend();) {
+
+        pred(it, itOther);
+
+        it++;
+        itOther++;
+    }
+}
+
+const int PartedCanonicPolynom::Partition = 3;
 
 }

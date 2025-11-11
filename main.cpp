@@ -4,16 +4,16 @@
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 {
-    auto funcT = t.toCanonicPolynom();
+    auto funcT = t.toPartedCanonicPolynom();
 
     snrk::dots_t inputsW;
     for(std::size_t i = 0; i < inputs.size(); i++) {
         inputsW.push_back({i + 1, inputs[i]});
     }
-    auto funcV = snrk::InterpolationPolynom::generate(inputsW).toCanonicPolynom();
+    auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
 
     snrk::xs_t witness;
-    for(std::size_t i = 1; i <= funcV.degree() + 1; i++) {
+    for(std::size_t i = 1; i <= inputs.size() + 1; i++) {
         witness.insert(i);
     }
 
@@ -43,12 +43,12 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     + аналогичное с isOperation (проходимся по S и где операторы совпадают -> 1, иначе -> 0)
     */
 
-    auto tCanonic = t.toCanonicPolynom();
+    auto tCanonic = t.toPartedCanonicPolynom();
     auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
     auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
     auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3}));
 
-    auto funcF = snrk::CanonicPolynom::generate({0});
+    auto funcF = snrk::PartedCanonicPolynom::generate({});
     auto sCanonic = s.toCanonicPolynom();
 
     FOROPS {
@@ -59,7 +59,7 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
             dots.push_back(currentOperation == operation ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
         }
 
-        auto isOperation = snrk::InterpolationPolynom::generate(dots).toCanonicPolynom();
+        auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
 
         switch(currentOperation) {
         case snrk::Sum: {
@@ -123,25 +123,22 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-//    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
-//    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-//        std::cout << "Некорректные переходы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+        std::cout << "Некорректные переходы!" << std::endl;
+        return 1;
+    }
 
-//    //todo: 6.
+    //todo: 6.
 
-//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-//        std::cout << "Некорректный выход!" << std::endl;
-//        return 1;
-//    }
-
-    auto t = gp.PP().t.toPartedCanonicPolynom();
-    std::cout << t(12) << std::endl;
+    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return 1;
+    }
 
     std::cout << "Ok!" << std::endl;
 }
