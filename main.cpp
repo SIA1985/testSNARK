@@ -13,7 +13,7 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
 
     snrk::xs_t witness;
-    for(std::size_t i = 1; i <= inputs.size() + 1; i++) {
+    for(std::size_t i = 1; i <= inputs.size(); i++) {
         witness.insert(i);
     }
 
@@ -123,22 +123,29 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
-        std::cout << "Некорректные входы!" << std::endl;
-        return 1;
-    }
+//    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+//        std::cout << "Некорректные входы!" << std::endl;
+//        return 1;
+//    }
 
-    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-        std::cout << "Некорректные переходы!" << std::endl;
-        return 1;
-    }
+//    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+//        std::cout << "Некорректные переходы!" << std::endl;
+//        return 1;
+//    }
 
-    //todo: 6.
+//    //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-        std::cout << "Некорректный выход!" << std::endl;
-        return 1;
-    }
+//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+//        std::cout << "Некорректный выход!" << std::endl;
+//        return 1;
+//    }
+
+    snrk::RangeMap<snrk::CanonicPolynom> m;
+    m.insert({1, 3}, snrk::CanonicPolynom::generate({1}));
+    m.insert({3, 5}, snrk::CanonicPolynom::generate({2}));
+    m.insert({5, 7}, snrk::CanonicPolynom::generate({3}));
+
+    std::cout << m[snrk::Range{-1, 1}](1) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
@@ -151,6 +158,7 @@ int main(int argc, char *argv[])
  * !5. Заменить (но не удалить, а на его основе) CanonicPolynom на кубические сплайны (сначала попробовать имеющимися средствами, потом из примера в ИИ)!
  * (мало ли mpf_set_default_prec(256);)
  * 6. generate -> constructor
+ * 7. Вынести типы в types.h
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

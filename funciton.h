@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <iostream>
 
 
 namespace snrk {
@@ -118,21 +119,43 @@ public:
             return keyValue.first.rightBound() < x;
         });
 
-        if (found == m_map.end()) {
-            return T::generate({});
+        if (found != m_map.end()) {
+            return found->second;
         }
 
-        return found->second;
+        if (cmp(m_map.begin()->first.leftBound(), x) == 1) {
+            return m_map.begin()->second;
+        }
+
+        return (--m_map.end())->second;
     }
 
     T &operator[](Range r)
     {
+        if (r < m_map.begin()->first) {
+            auto leftF = m_map.begin()->second;
+            m_map[r] = leftF;
+            return m_map[r];
+        }
+
+        if  ((--m_map.end())->first < r) {
+            auto rigthF = (--m_map.end())->second;
+            m_map[r] = rigthF;
+            return m_map[r];
+        }
+
         return m_map[r];
     }
 
     void insert(const Range &range, const T &polynom)
     {
         m_map.insert({range, polynom});
+    }
+
+    RangeMap merge(RangeMap other) const
+    {
+        //todo
+        return {};
     }
 
     const_iterator cbegin() const

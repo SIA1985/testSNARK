@@ -339,6 +339,7 @@ Range::Range(X_t left, X_t right)
     , m_right{right}
 {
     assert(cmp(right, left) != -1);
+    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
 int Range::inRange(X_t x) const
