@@ -153,10 +153,17 @@ public:
     /*Непрерывное заполнение*/
     void insert(const Range &range, const T &polynom)
     {
-        std::cout << range.leftBound() << " " << range.rightBound() << std::endl;
-        assert(m_map.size() == 0 ||
-               range.leftBound() == (--m_map.end())->first.rightBound() ||
-               range.rightBound() == m_map.begin()->first.leftBound());
+//        std::cout <<  "cho " << range.leftBound() << " " <<  m_map.begin()->first.leftBound() << std::endl;
+//        bool i1 = m_map.size() == 0;
+//        bool i2 = range.leftBound() == (--m_map.end())->first.rightBound();
+//        bool i3 = range.rightBound() == m_map.begin()->first.leftBound();
+//        bool i4 = range == m_map.begin()->first;
+//        bool i5 = range == (--m_map.end())->first;
+//        assert(m_map.size() == 0 ||
+//               range.leftBound() == (--m_map.end())->first.rightBound() ||
+//               range.rightBound() == m_map.begin()->first.leftBound() ||
+//               range == m_map.begin()->first ||
+//               range == (--m_map.end())->first);
 
         m_map.insert({range, polynom});
     }

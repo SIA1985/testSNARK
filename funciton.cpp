@@ -346,7 +346,7 @@ Range::Range(X_t left, X_t right)
     , m_right{right}
 {
     assert(cmp(right, left) != -1);
-//    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
+    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
 int Range::inRange(X_t x) const
@@ -486,8 +486,17 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
     auto itLeft = left.m_map.cbegin();
     auto itRight = right.m_map.cbegin();
-    while(itLeft != left.m_map.cend() && itRight != right.m_map.cend()) {
-        pred(itLeft, itRight);
+    while(itLeft != left.m_map.cend() || itRight != right.m_map.cend()) {
+        if (m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound()) {
+            pred(itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft,
+                 itRight == right.m_map.cend() ? --right.m_map.cend() : itRight);
+        } else {
+            pred(itRight == right.m_map.cend() ? --right.m_map.cend() : itRight,
+                 itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft);
+        }
+
+//        std::cout << "left {" << itLeft->first.leftBound() << ", " << itLeft->first.rightBound() << "}" << std::endl;
+//        std::cout << "right {" << itRight->first.leftBound() << ", " << itRight->first.rightBound() << "}" << std::endl;
 
         if (itLeft != left.m_map.cend()) {
             itLeft++;
