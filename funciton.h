@@ -153,6 +153,7 @@ public:
     /*Непрерывное заполнение*/
     void insert(const Range &range, const T &polynom)
     {
+        //todo:
 //        std::cout <<  "cho " << range.leftBound() << " " <<  m_map.begin()->first.leftBound() << std::endl;
 //        bool i1 = m_map.size() == 0;
 //        bool i2 = range.leftBound() == (--m_map.end())->first.rightBound();
@@ -215,7 +216,9 @@ public:
 private:
     PartedCanonicPolynom() = default;
 
-    using operatorPred_t = std::function<void(RangeMap<CanonicPolynom>::const_iterator it, RangeMap<CanonicPolynom>::const_iterator itOther)>;
+    using operatorPred_t = std::function<void(RangeMap<CanonicPolynom>::const_iterator it,
+                                              RangeMap<CanonicPolynom>::const_iterator itOther,
+                                              Range currentRange)>;
     void operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const;
 
      map m_map;

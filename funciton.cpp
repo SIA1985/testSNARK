@@ -475,8 +475,9 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
     PartedCanonicPolynom left, right;
+    bool meLeft = m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound();
 
-    if (m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound()) {
+    if (meLeft) {
         left = *this;
         right = other;
     } else {
@@ -487,16 +488,17 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     auto itLeft = left.m_map.cbegin();
     auto itRight = right.m_map.cbegin();
     while(itLeft != left.m_map.cend() || itRight != right.m_map.cend()) {
-        if (m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound()) {
-            pred(itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft,
-                 itRight == right.m_map.cend() ? --right.m_map.cend() : itRight);
-        } else {
-            pred(itRight == right.m_map.cend() ? --right.m_map.cend() : itRight,
-                 itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft);
-        }
+        auto leftVal = (itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft);
+        auto rightVal = (itRight == right.m_map.cend() ? --right.m_map.cend() : itRight);
 
-//        std::cout << "left {" << itLeft->first.leftBound() << ", " << itLeft->first.rightBound() << "}" << std::endl;
-//        std::cout << "right {" << itRight->first.leftBound() << ", " << itRight->first.rightBound() << "}" << std::endl;
+        //todo: currentRange
+        if (meLeft) {
+            pred(leftVal,
+                 rightVal);
+        } else {
+            pred(rightVal,
+                 leftVal);
+        }
 
         if (itLeft != left.m_map.cend()) {
             itLeft++;
@@ -504,7 +506,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             itRight++;
         }
 
-        if (itLeft->first == itRight->first && itRight != right.m_map.cend()) {
+        if ((leftVal->first < rightVal->first || leftVal->first == rightVal->first) && itRight != right.m_map.cend()) {
             itRight++;
         }
     }

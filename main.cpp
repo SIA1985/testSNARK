@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     auto b = snrk::PartedCanonicPolynom::generate(m2);
 
     //todo: неверно справа сложилось
-    std::cout << (a + b)(5.5) << std::endl;
+    std::cout << (b)(5.5) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
