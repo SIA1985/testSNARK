@@ -87,7 +87,7 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
         witness.insert(i);
-        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " " << funcF(i) << std::endl;
+        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " " << funcF(i) << tCanonic(i) << std::endl;
     }
 
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
@@ -122,8 +122,6 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    //todo: проверить деление и др. операции с PartedCanonic, тесты со степенью > 1
-
     if (!correctInputs(gp.PP().t, {x1, x2, {2}}, gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
@@ -143,13 +141,18 @@ int main(int argc, char *argv[])
 
     //todo: нет assert на размер диапазона
 //    snrk::PartedCanonicPolynom::map m;
-//    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1}));
-//    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({3}));
+//    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1, 1}));
+//    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({3, 3}));
 
-//    auto a = snrk::CanonicPolynom::generate({3});
-//    auto b = snrk::CanonicPolynom::generate({2, 1});
+//    auto a = snrk::PartedCanonicPolynom::generate(m);
 
-//    std::cout << (a / b)(4) << std::endl;
+//    snrk::PartedCanonicPolynom::map m2;
+//    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1, 3})); //4*4 + 4*6 == 40
+//    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4, 5}));
+
+//    auto b = snrk::PartedCanonicPolynom::generate(m2);
+
+//    std::cout << a(b)(4) << " " << 3 + 3*b(4) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
@@ -163,6 +166,7 @@ int main(int argc, char *argv[])
  * (мало ли mpf_set_default_prec(256);)
  * 6. generate -> constructor
  * 7. Вынести типы в types.h
+ * 8. В операторах PartedCanonic пересечение проходится 2-жды
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

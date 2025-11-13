@@ -13,7 +13,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
         c = -c;
     }
 
-    std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
+//    std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
 
     return c <= eps;
 }

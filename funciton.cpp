@@ -502,13 +502,7 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
         return;
     }
 
-    map result = m_map;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
-    {
-        result[currentRange] += itOther->second;
-    });
-
-    m_map = result;
+    *this = *this + other;
 }
 
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
