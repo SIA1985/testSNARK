@@ -79,24 +79,61 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
     /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
     CanonicPolynom res(n + 1), rem(n + 1);
 
-    for(j = 0; j <= n; j++) {
-            rem[j] = (*this)[j];
-            res[j]=0.0;
-    }
-    for(k = n - nOther; k >= 0; k--) {
-        res[k] = rem[nOther + k] / other[nOther];
+    // Проверка на деление на ноль-полином или степень 0
+//    if (nOther < 0 || (nOther == 0 && std::abs(other.m_coefs[0]) < 1e-9)) {
+//        // Обработка ошибки (например, выброс исключения)
+//        throw std::invalid_argument("Division by zero polynomial or zero constant.");
+//    }
 
-        for(j = nOther + k - 1; j >= k; j--) {
-            rem[j] -= res[k] * other[j - k];
+    // Если степень делимого меньше степени делителя, частное равно 0, остаток равен делимому
+    if (n < nOther) {
+        res = CanonicPolynom(1); // Полином 0 степени (константа 0.0)
+        res[0] = 0.0;
+        rem = *this; // Остаток - исходный полином
+        return CustomPolynom::generate([rem, other](X_t x) mutable -> Y_t
+        {
+            return rem(x) / other(x);
+        });
+    }
+
+    // Инициализируем остаток как копию текущего полинома (делимого)
+    // Мы будем модифицировать этот остаток в процессе деления
+    coefs_t remainder_coefs = m_coefs;
+
+    // Определяем степень итогового частного и инициализируем его
+    int degree_res = n - nOther;
+    res = CanonicPolynom(degree_res + 1); // Устанавливаем правильный размер
+    for(int i = 0; i <= degree_res; ++i) {
+        res[i] = 0.0;
+    }
+
+    // Основной цикл длинного деления
+    for (int i = degree_res; i >= 0; --i) {
+        // Коэффициент текущего члена частного
+        ValueType factor = remainder_coefs[i + nOther] / other.m_coefs[nOther];
+        res[i] = factor;
+
+        // Вычитаем (factor * x^i * other) из текущего остатка
+        for (int j = 0; j <= nOther; ++j) {
+            remainder_coefs[i + j] -= factor * other.m_coefs[j];
         }
     }
-    for(j = nOther; j <= n; j++) {
-        rem[j] = 0.0;
+
+    // remainder_coefs теперь содержит коэффициенты остатка.
+    // Старшие члены (с i + nOther >= nOther) должны быть близки к нулю.
+    // Нам нужно скопировать только значимые члены остатка в rem.
+
+    // Остаток имеет степень не более nOther - 1
+    rem = CanonicPolynom(nOther); // Размер nOther для индексов 0 .. nOther-1
+
+    for(int j = 0; j < nOther; ++j) {
+         // Используем оставшиеся коэффициенты
+         rem[j] = remainder_coefs[j];
     }
 
-    return CustomPolynom::generate([res, rem](X_t x) mutable -> Y_t
+    return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) + rem(x);
+        return res(x) + rem(x) / other(x);
     });
 }
 

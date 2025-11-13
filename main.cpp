@@ -122,7 +122,9 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, w1}, gp.TG())) {
+    //todo: проверить деление и др. операции с PartedCanonic, тесты со степенью > 1
+
+    if (!correctInputs(gp.PP().t, {x1, x2, {2}}, gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
     }
@@ -134,24 +136,20 @@ int main(int argc, char *argv[])
 
     //todo: 6.
 
-//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-//        std::cout << "Некорректный выход!" << std::endl;
-//        return 1;
-//    }
+    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return 1;
+    }
 
     //todo: нет assert на размер диапазона
 //    snrk::PartedCanonicPolynom::map m;
 //    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1}));
 //    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({3}));
 
-//    auto a = snrk::PartedCanonicPolynom::generate(m);
+//    auto a = snrk::CanonicPolynom::generate({3});
+//    auto b = snrk::CanonicPolynom::generate({2, 1});
 
-//    snrk::PartedCanonicPolynom::map m2;
-//    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({2}));
-//    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({5}));
-//    auto b = snrk::PartedCanonicPolynom::generate(m2);
-
-//    std::cout << b(a)(6) << std::endl;
+//    std::cout << (a / b)(4) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
