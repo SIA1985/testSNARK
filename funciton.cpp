@@ -180,17 +180,6 @@ CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
         // Добавляем следующий коэффициент (a_{n-1}, a_{n-2}, ...)
         result += CanonicPolynom::generate({m_coefs[i]});
     }
-    // В конце получаем полный P(Q(x))
-
-    /*
-    CanonicPolynom y = CanonicPolynom::generate({m_coefs[0]});
-    auto xPow = other;
-
-    for(std::size_t i = 1; i < m_coefs.size(); i++) {
-        y += xPow * m_coefs[i];
-        xPow *= other;
-    }*/
-
 
     return result;
 }
@@ -423,12 +412,10 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
 
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
 {
+    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        auto f1 = it->second;
-        auto f2 = itOther->second;
-        std::cout << currentRange.leftBound() << " " << currentRange.rightBound() << " : " << f1(1) << " " << f2(1) << std::endl;
         result.insert(currentRange, it->second + itOther->second);
     });
 
@@ -437,6 +424,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
 
 PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom &other) const
 {
+    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
@@ -460,6 +448,7 @@ CustomPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other)
 
 PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom &other) const
 {
+    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
@@ -471,7 +460,12 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
 
 void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 {
-    map result;
+    if (m_map.size() == 0) {
+        m_map = other.m_map;
+        return;
+    }
+
+    map result = m_map;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         result[currentRange] += itOther->second;
@@ -483,6 +477,17 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
     PartedCanonicPolynom left, right;
+    auto fillZeroMap = [](map& m) -> map
+    {
+        map result;
+        for(auto it = m.cbegin(); it != m.cend(); it++) {
+            const auto &[k, _] = *it;
+            result.insert(k, CanonicPolynom::generate({0}));
+        }
+
+        return result;
+    };
+
     bool meLeft = m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound();
 
     if (meLeft) {

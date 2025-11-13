@@ -13,7 +13,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
         c = -c;
     }
 
-    std::cout << "diff " << c << std::endl;
+    std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
 
     return c <= eps;
 }
@@ -73,6 +73,8 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     /*todo: */
     ptr->m_r = 15;
+
+    //todo: одинаковые значения!
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
 
@@ -95,6 +97,8 @@ bool ZeroTestProof::check()
     auto z = ZeroPolynom::generate(m_witness);
 
     ValueType b = m_qR * z(m_r);
+
+    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 

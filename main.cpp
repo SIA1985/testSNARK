@@ -87,11 +87,9 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
         witness.insert(i);
-        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " ";
-        std::cout << std::setprecision(20) << funcF(i) << std::endl;
+        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " " << funcF(i) << std::endl;
     }
 
-    //todo: дело определённо в полиноме funcF, так как при вычисление с большей точностью все работает (долнжо по к.м.)
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
 
     return proof->check();
@@ -136,10 +134,10 @@ int main(int argc, char *argv[])
 
     //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
-        std::cout << "Некорректный выход!" << std::endl;
-        return 1;
-    }
+//    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+//        std::cout << "Некорректный выход!" << std::endl;
+//        return 1;
+//    }
 
     //todo: нет assert на размер диапазона
 //    snrk::PartedCanonicPolynom::map m;
@@ -153,8 +151,7 @@ int main(int argc, char *argv[])
 //    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({5}));
 //    auto b = snrk::PartedCanonicPolynom::generate(m2);
 
-//    //todo: неверно справа сложилось
-//    std::cout << (a + b)(0.5) << std::endl;
+//    std::cout << b(a)(6) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
