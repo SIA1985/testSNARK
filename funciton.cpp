@@ -378,7 +378,12 @@ bool operator<(const Range &a, const Range &b)
 
 bool operator==(const Range &a, const Range &b)
 {
-    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound());
+    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound() == 0);
+}
+
+bool operator<=(const Range &a, const Range &b)
+{
+    return a < b || a == b;
 }
 
 PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
@@ -408,9 +413,9 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &othe
 PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom &other) const
 {
     map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result.insert(it->first, it->second(itOther->second));
+        result.insert(currentRange, it->second(itOther->second));
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -419,9 +424,12 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
 {
     map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result.insert(it->first, it->second + itOther->second);
+        auto f1 = it->second;
+        auto f2 = itOther->second;
+        std::cout << currentRange.leftBound() << " " << currentRange.rightBound() << " : " << f1(1) << " " << f2(1) << std::endl;
+        result.insert(currentRange, it->second + itOther->second);
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -430,9 +438,9 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
 PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom &other) const
 {
     map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result.insert(it->first, it->second * itOther->second);
+        result.insert(currentRange, it->second * itOther->second);
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -453,9 +461,9 @@ CustomPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other)
 PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom &other) const
 {
     map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result.insert(it->first, it->second - itOther->second);
+        result.insert(currentRange, it->second - itOther->second);
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -464,9 +472,9 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
 void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 {
     map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther)
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result[itOther->first] += itOther->second;
+        result[currentRange] += itOther->second;
     });
 
     m_map = result;
@@ -485,30 +493,35 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         right = *this;
     }
 
+    Range currentRange = left.m_map.cbegin()->first;
     auto itLeft = left.m_map.cbegin();
     auto itRight = right.m_map.cbegin();
+
+    auto leftVal = [&left, &itLeft](){ return itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft;};
+    auto rightVal = [&right, &itRight](){ return itRight == right.m_map.cend() ? --right.m_map.cend() : itRight;};
+
+    auto leftEnd = left.m_map.cend();
+    auto rightEnd = right.m_map.cend();
+
     while(itLeft != left.m_map.cend() || itRight != right.m_map.cend()) {
-        auto leftVal = (itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft);
-        auto rightVal = (itRight == right.m_map.cend() ? --right.m_map.cend() : itRight);
-
-        //todo: currentRange
         if (meLeft) {
-            pred(leftVal,
-                 rightVal);
+            pred(leftVal(), rightVal(), currentRange);
         } else {
-            pred(rightVal,
-                 leftVal);
+            pred(rightVal(), leftVal(), currentRange);
         }
 
-        if (itLeft != left.m_map.cend()) {
+        if (itLeft != leftEnd) {
             itLeft++;
-        } else if (itRight != right.m_map.cend()) {
+            currentRange = leftVal()->first;
+        } else if (itRight != rightEnd) {
             itRight++;
+            currentRange = rightVal()->first;
         }
 
-        if ((leftVal->first < rightVal->first || leftVal->first == rightVal->first) && itRight != right.m_map.cend()) {
-            itRight++;
-        }
+        //todo: отсечь пересечения
+//        if (rightVal()->first == leftVal()->first && itRight != rightEnd) {
+//            itRight++;
+//        }
     }
 }
 
