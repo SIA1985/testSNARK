@@ -43,13 +43,13 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     + аналогичное с isOperation (проходимся по S и где операторы совпадают -> 1, иначе -> 0)
     */
 
-    auto tCanonic = t.toPartedCanonicPolynom();
-    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
-    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
-    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3}));
+    auto tCanonic = t.toPartedCanonicPolynom(); // V
+    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3})); // X
+    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3})); // X
+    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3})); // X
 
     auto funcF = snrk::PartedCanonicPolynom::generate({});
-    auto sCanonic = s.toCanonicPolynom();
+    auto sCanonic = s.toPartedCanonicPolynom();
 
     FOROPS {
         auto currentOperation = operation;
@@ -85,9 +85,11 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     }
 
     snrk::xs_t witness;
-    for(std::size_t i = 1; i <= sCanonic.degree() + 1; i++) {
+    for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
         witness.insert(i);
-        std::cout << std::setprecision(20) << tCanonic3wPlus3(i) << " " << funcF(i) << tCanonic(i) << std::endl;
+        //todo: чёта с интервалами походу надо
+        std::cout << std::setprecision(20) << tCanonic3wPlus1(i/3.) << " " << tCanonic3wPlus2(i/3.) << " " << tCanonic3wPlus3(i/3.) << std::endl;
+//        std::cout << std::setprecision(20) << tCanonic(3*i + 1) << " " << tCanonic(3*i + 2) << " " << tCanonic(3*i + 3) << std::endl;
     }
 
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
@@ -122,7 +124,7 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, {2}}, gp.TG())) {
+    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
     }

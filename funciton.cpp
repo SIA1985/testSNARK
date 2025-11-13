@@ -430,6 +430,8 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &othe
 {
     map result;
     for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
+//        auto f1 = it->second(other);
+//        std::cout << it->first.leftBound() << " " << it->first.rightBound() << " - " << f1(it->first.leftBound()) << std::endl;
         result.insert(it->first, it->second(other));
     }
 
