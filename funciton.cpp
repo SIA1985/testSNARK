@@ -428,10 +428,16 @@ Y_t PartedCanonicPolynom::operator()(X_t x)
 
 PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &other) const
 {
+    assert(other.degree() <= 2);
+
     map result;
     for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
 //        auto f1 = it->second(other);
 //        std::cout << it->first.leftBound() << " " << it->first.rightBound() << " - " << f1(it->first.leftBound()) << std::endl;
+        auto left = it->first.leftBound();
+        left -= other[0];
+        left /= other[1];
+        //todo: решение уравнений матрицами?
         result.insert(it->first, it->second(other));
     }
 
@@ -563,6 +569,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     }
 }
 
-const int PartedCanonicPolynom::Partition = 3;
+const int PartedCanonicPolynom::Partition = 2;
 
 }

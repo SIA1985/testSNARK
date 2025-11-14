@@ -88,7 +88,7 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
         witness.insert(i);
         //todo: чёта с интервалами походу надо
-        std::cout << std::setprecision(20) << tCanonic3wPlus1(i/3.) << " " << tCanonic3wPlus2(i/3.) << " " << tCanonic3wPlus3(i/3.) << std::endl;
+        std::cout << std::setprecision(20) << tCanonic3wPlus1(i/3.) << " " << tCanonic3wPlus2(i/3.) << " " << tCanonic3wPlus3(i/3.)  << " + " << tCanonic(i) << std::endl;
 //        std::cout << std::setprecision(20) << tCanonic(3*i + 1) << " " << tCanonic(3*i + 2) << " " << tCanonic(3*i + 3) << std::endl;
     }
 
