@@ -78,6 +78,7 @@ public:
     CanonicPolynom operator()(const CanonicPolynom &other) const;
 
     ValueType &operator[](std::size_t i);
+    const ValueType operator[](std::size_t i) const;
 
     std::size_t degree() const;
 

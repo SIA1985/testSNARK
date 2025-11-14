@@ -226,6 +226,11 @@ ValueType &CanonicPolynom::operator[](std::size_t i)
     return m_coefs[i];
 }
 
+const ValueType CanonicPolynom::operator[](std::size_t i) const
+{
+    return m_coefs.size() < i ? 0.0 : m_coefs.at(i);
+}
+
 std::size_t CanonicPolynom::degree() const
 {
     return m_coefs.size() - 1;
@@ -372,7 +377,8 @@ Range::Range(X_t left, X_t right)
     , m_right{right}
 {
     assert(cmp(right, left) != -1);
-    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
+    //todo: этот assert для заполнения
+//    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
 int Range::inRange(X_t x) const
@@ -428,17 +434,24 @@ Y_t PartedCanonicPolynom::operator()(X_t x)
 
 PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &other) const
 {
-    assert(other.degree() <= 2);
+    assert(other.degree() <= 1);
+
+    //todo: решение уравнений матрицами? так как тут по сути решаем линейное уравнение
+    auto normInterval = [&other](X_t bound) -> X_t
+    {
+        //todo: нулевые коэфы
+        other.degree() >= 0 ? bound -= other[0] : 0.0;
+        other.degree() > 0 ? bound /= other[1] : 0.0;
+
+        return bound;
+    };
 
     map result;
     for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
-//        auto f1 = it->second(other);
-//        std::cout << it->first.leftBound() << " " << it->first.rightBound() << " - " << f1(it->first.leftBound()) << std::endl;
-        auto left = it->first.leftBound();
-        left -= other[0];
-        left /= other[1];
-        //todo: решение уравнений матрицами?
-        result.insert(it->first, it->second(other));
+        auto left = normInterval(it->first.leftBound());
+        auto right = normInterval(it->first.rightBound());
+
+        result.insert(Range{left, right}, it->second(other));
     }
 
     return PartedCanonicPolynom::generate(result);
@@ -449,7 +462,26 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        result.insert(currentRange, it->second(itOther->second));
+        auto otherF = itOther->second;
+        assert(otherF.degree() <= 1);
+
+        //todo: решение уравнений матрицами? так как тут по сути решаем линейное уравнение
+        auto normInterval = [&other = otherF](X_t bound) -> X_t
+        {
+            if (other.degree() > 0 && other[1] == 0) {
+                return bound -= other[0];
+            }
+
+            other.degree() >= 0 ? bound -= other[0] : 0.0;
+            other.degree() > 0 ? bound /= other[1] : 0.0;
+
+            return bound;
+        };
+
+        auto left = normInterval(currentRange.leftBound());
+        auto right = normInterval(currentRange.rightBound());
+
+        result.insert(Range{left, right}, it->second(otherF));
     });
 
     return PartedCanonicPolynom::generate(result);

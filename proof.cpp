@@ -74,7 +74,6 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     /*todo: */
     ptr->m_r = 15;
 
-    //todo: одинаковые значения!
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
 
