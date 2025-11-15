@@ -24,10 +24,10 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 
 bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
-    auto tCanonic = t.toPartedCanonicPolynom(); // V
-    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3})); // V
-    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3})); // V
-    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3})); // V
+    auto tCanonic = t.toPartedCanonicPolynom();
+    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
+    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
+    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3}));
 
     auto funcF = snrk::PartedCanonicPolynom::generate({});
     auto sCanonic = s.toPartedCanonicPolynom();
@@ -38,19 +38,24 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
             dots.push_back(operation == sCanonic(i) ? snrk::dot_t{i, 1} : snrk::dot_t{i, 0});
         }
 
-        auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom(); //V
+//        auto currentOp = operation;
+//        FOROPS {
+//            dots.push_back(operation == currentOp ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
+//        }
+
+        auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
 
         switch(operation) {
         case snrk::Sum: {
-            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation; //isOperation(sCanonic);
             break;
         }
         case snrk::Product: {
-            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation; //isOperation(sCanonic);
             break;
         }
         case snrk::Minus: {
-            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation; //isOperation(sCanonic);
             break;
         }
             //todo: после деления имеем CustomPolynom
@@ -67,7 +72,6 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
         witness.insert(i);
         std::cout << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
-//        std::cout << std::setprecision(20) << tCanonic(3*i + 1) << " " << tCanonic(3*i + 2) << " " << tCanonic(3*i + 3) << std::endl;
     }
 
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
@@ -99,6 +103,8 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {x2, w1}, out2});
     auto out3 = snrk::Value(77);
     c.addGate({snrk::Product, {out1, out2}, {out3}});
+    auto out4 = snrk::Value(70);
+    c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
     snrk::GlobalParams gp(c);
 
@@ -114,7 +120,7 @@ int main(int argc, char *argv[])
 
     //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out3, gp.TG())) {
+    if (!currentOutput(gp.PP().t, out4, gp.TG())) {
         std::cout << "Некорректный выход!" << std::endl;
         return 1;
     }
@@ -147,6 +153,7 @@ int main(int argc, char *argv[])
  * 6. generate -> constructor
  * 7. Вынести типы в types.h
  * 8. В операторах PartedCanonic пересечение проходится 2-жды
+ * 9. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

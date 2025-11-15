@@ -436,10 +436,12 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &othe
 {
     assert(other.degree() <= 1);
 
-    //todo: решение уравнений матрицами? так как тут по сути решаем линейное уравнение
     auto normInterval = [&other](X_t bound) -> X_t
     {
-        //todo: нулевые коэфы
+        if (other.degree() > 0 && other[1] == 0) {
+            return bound -= other[0];
+        }
+
         other.degree() >= 0 ? bound -= other[0] : 0.0;
         other.degree() > 0 ? bound /= other[1] : 0.0;
 
@@ -465,7 +467,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
         auto otherF = itOther->second;
         assert(otherF.degree() <= 1);
 
-        //todo: решение уравнений матрицами? так как тут по сути решаем линейное уравнение
         auto normInterval = [&other = otherF](X_t bound) -> X_t
         {
             if (other.degree() > 0 && other[1] == 0) {
@@ -481,6 +482,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
         auto left = normInterval(currentRange.leftBound());
         auto right = normInterval(currentRange.rightBound());
 
+        //todo: мб разные интервалы и итерация и др. операции неверны?
         result.insert(Range{left, right}, it->second(otherF));
     });
 
@@ -494,6 +496,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         result.insert(currentRange, it->second + itOther->second);
+        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -569,6 +572,8 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         right = *this;
     }
 
+    /*todo: не будет ли выходить так, что интервалы будут всегда совпадать?*/
+
     Range currentRange = left.m_map.cbegin()->first;
     auto itLeft = left.m_map.cbegin();
     auto itRight = right.m_map.cbegin();
@@ -586,6 +591,10 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             pred(rightVal(), leftVal(), currentRange);
         }
 
+        if (rightVal()->first == leftVal()->first && itRight != rightEnd) {
+            itRight++;
+        }
+
         if (itLeft != leftEnd) {
             itLeft++;
             currentRange = leftVal()->first;
@@ -593,11 +602,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             itRight++;
             currentRange = rightVal()->first;
         }
-
-        //todo: отсечь пересечения
-//        if (rightVal()->first == leftVal()->first && itRight != rightEnd) {
-//            itRight++;
-//        }
     }
 }
 
