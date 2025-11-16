@@ -71,7 +71,7 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
         witness.insert(i);
-        std::cout << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
+        std::cout << std::setprecision(20) << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
     }
 
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);

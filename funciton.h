@@ -93,9 +93,20 @@ protected:
 class Range
 {
 public:
+    enum pos_t : int
+    {
+        left,
+        right,
+        crossed,
+    };
+
     Range(X_t left, X_t right);
 
-    int inRange(X_t x) const;
+    bool inRange(X_t x) const;
+
+    pos_t isCross(const Range &other) const;
+
+    Range crossBy(const Range &other) const;
 
     X_t leftBound() const;
     X_t rightBound() const;
