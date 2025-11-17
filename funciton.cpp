@@ -378,38 +378,41 @@ Range::Range(X_t left, X_t right)
 {
     assert(cmp(right, left) != -1);
     //todo: этот assert для заполнения
-//    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
+    //    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
-bool Range::inRange(X_t x) const
+bool Range::inRangeStrict(X_t x) const
 {
-    return cmp(m_right, x) >= 0 && cmp(m_left, x) <= 0;
+    return cmp(m_right, x) == 1 && cmp(m_left, x) == -1;
 }
 
-Range::pos_t Range::isCross(const Range &other) const
+Range::pos_t Range::isCrossStrict(const Range &other) const
 {
-    if (inRange(other.m_left) || inRange(other.m_right)) {
+    if (*this == other) {
+        return equal;
+    }
+
+    if (inRangeStrict(other.m_left) || inRangeStrict(other.m_right)) {
         return crossed;
     }
 
-    if(cmp(m_left, other.m_right) == 1) {
-        return left;
-    } else
-    {
+    if(cmp(m_left, other.m_right) >= 0) {
         return right;
+    } else {
+        return left;
     }
 }
 
 Range Range::crossBy(const Range &other) const
 {
-    if (isCross(other) != crossed) {
+    if (isCrossStrict(other) != crossed) {
         return {0, 0};
     }
 
     if(cmp(m_left, other.m_right) == 1) {
-        return {other.m_right, m_left};
-    } else {
         return {m_right, other.m_left};
+    } else {
+        return {other.m_right, m_left};
     }
 }
 
@@ -553,6 +556,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
+        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
         result.insert(currentRange, it->second - itOther->second);
     });
 
@@ -571,59 +575,85 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
-    PartedCanonicPolynom left, right;
-    auto fillZeroMap = [](map& m) -> map
-    {
-        map result;
-        for(auto it = m.cbegin(); it != m.cend(); it++) {
-            const auto &[k, _] = *it;
-            result.insert(k, CanonicPolynom::generate({0}));
+    Range currentRange = {0, 0};
+    auto it = m_map.cbegin();
+    auto itOther = other.m_map.cbegin();
+
+    auto end = m_map.cend();
+    auto otherEnd = other.m_map.cend();
+
+    auto itRange = [&it, this](){return it == m_map.cend() ? (--m_map.cend())->first : it->first;};
+    auto otherRange = [&itOther, &other](){ return itOther == other.m_map.cend() ? (--other.m_map.cend())->first : itOther->first;};
+
+    auto inc = [&it, this](){it != m_map.cend() ? it++ : it;};
+    auto incOther = [&itOther, &other](){itOther != other.m_map.cend() ? itOther++ : itOther;};
+
+    auto currIt = [&it, &end, this](){return it != end ? it : (--m_map.cend());};
+    auto currItOther = [&itOther, &otherEnd, &other](){return itOther != otherEnd ? itOther : (--other.m_map.cend());};
+
+    auto predCall = [&currIt, &currItOther, &currentRange, &pred](){pred(currIt(), currItOther(), currentRange);};
+
+    while(it != end || itOther != otherEnd) {
+        switch(itRange().isCrossStrict(otherRange())) {
+        case Range::equal: {
+            currentRange = itRange();
+            predCall();
+
+            inc();
+            incOther();
+            break;
         }
+        case Range::crossed: {
+            auto cross = itRange().crossBy(otherRange());
+            if (cross.leftBound() == cross.rightBound()) {
+                std::cout << "dot crossed" << std::endl;
+                break;
+            }
 
-        return result;
-    };
+            map::const_iterator *left, leftEnd;
+            if (itRange() < otherRange()) {
+                left = &it;
+                leftEnd = end;
+            } else {
+                left = &itOther;
+                leftEnd = otherEnd;
+            }
 
-    bool meLeft = m_map.cbegin()->first.leftBound() < other.m_map.cbegin()->first.leftBound();
+            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
+            predCall();
 
-    if (meLeft) {
-        left = *this;
-        right = other;
-    } else {
-        left = other;
-        right = *this;
-    }
+            if (*left != leftEnd) {
+                (*left)++;
+            }
+            currentRange = cross;
+            predCall();
 
-    /*todo: не будет ли выходить так, что интервалы будут всегда совпадать?*/
-
-    Range currentRange = left.m_map.cbegin()->first;
-    auto itLeft = left.m_map.cbegin();
-    auto itRight = right.m_map.cbegin();
-
-    auto leftVal = [&left, &itLeft](){ return itLeft == left.m_map.cend() ? --left.m_map.cend() : itLeft;};
-    auto rightVal = [&right, &itRight](){ return itRight == right.m_map.cend() ? --right.m_map.cend() : itRight;};
-
-    auto leftEnd = left.m_map.cend();
-    auto rightEnd = right.m_map.cend();
-
-    while(itLeft != left.m_map.cend() || itRight != right.m_map.cend()) {
-        //todo: isCross, crossBy
-
-        if (meLeft) {
-            pred(leftVal(), rightVal(), currentRange);
-        } else {
-            pred(rightVal(), leftVal(), currentRange);
+            break;
         }
+        case Range::left: {
+            if (it == end) {
+                goto right;
+            }
 
-        if (rightVal()->first == leftVal()->first && itRight != rightEnd) {
-            itRight++;
+        left:
+            currentRange = itRange();
+            predCall();
+
+            inc();
+            break;
         }
+        case Range::right: {
+            if (itOther == otherEnd) {
+                goto left;
+            }
 
-        if (itLeft != leftEnd) {
-            itLeft++;
-            currentRange = leftVal()->first;
-        } else if (itRight != rightEnd) {
-            itRight++;
-            currentRange = rightVal()->first;
+        right:
+            currentRange = otherRange();
+            predCall();
+
+            incOther();
+            break;
+        }
         }
     }
 }

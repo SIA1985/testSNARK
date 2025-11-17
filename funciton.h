@@ -98,13 +98,14 @@ public:
         left,
         right,
         crossed,
+        equal,
     };
 
     Range(X_t left, X_t right);
 
-    bool inRange(X_t x) const;
+    bool inRangeStrict(X_t x) const;
 
-    pos_t isCross(const Range &other) const;
+    pos_t isCrossStrict(const Range &other) const;
 
     Range crossBy(const Range &other) const;
 
