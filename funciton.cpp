@@ -403,17 +403,20 @@ Range::pos_t Range::isCrossStrict(const Range &other) const
     }
 }
 
-Range Range::crossBy(const Range &other) const
+Range Range::crossByStrict(const Range &other) const
 {
     if (isCrossStrict(other) != crossed) {
         return {0, 0};
     }
 
-    if(cmp(m_left, other.m_right) == 1) {
-        return {m_right, other.m_left};
-    } else {
+    if(cmp(m_left, other.m_right) == -1 && cmp(m_right, other.m_left) == 1) {
+        return {other.m_left, m_right};
+    }
+    if (cmp(m_right, other.m_left) == 1 && cmp(m_left, other.m_right) == -1) {
         return {other.m_right, m_left};
     }
+
+    return {0, 0};
 }
 
 X_t Range::leftBound() const
@@ -556,7 +559,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
+//        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
         result.insert(currentRange, it->second - itOther->second);
     });
 
@@ -604,11 +607,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             break;
         }
         case Range::crossed: {
-            auto cross = itRange().crossBy(otherRange());
-            if (cross.leftBound() == cross.rightBound()) {
-                std::cout << "dot crossed" << std::endl;
-                break;
-            }
+            auto cross = itRange().crossByStrict(otherRange());
 
             map::const_iterator *left, leftEnd;
             if (itRange() < otherRange()) {
@@ -619,14 +618,15 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
                 leftEnd = otherEnd;
             }
 
-            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
+//            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
+//            predCall();
+
+            currentRange = cross;
             predCall();
 
             if (*left != leftEnd) {
                 (*left)++;
             }
-            currentRange = cross;
-            predCall();
 
             break;
         }

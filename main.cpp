@@ -127,18 +127,18 @@ int main(int argc, char *argv[])
 
     //todo: нет assert на размер диапазона
     snrk::PartedCanonicPolynom::map m;
-    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1, 1}));
-    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({3, 3}));
+    m.insert(snrk::Range{1, 3.5}, snrk::CanonicPolynom::generate({1}));
+    m.insert(snrk::Range{3.5, 5}, snrk::CanonicPolynom::generate({2}));
 
     auto a = snrk::PartedCanonicPolynom::generate(m);
 
     snrk::PartedCanonicPolynom::map m2;
-    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1, 3})); //4*4 + 4*6 == 40
-    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4, 5}));
+    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1})); //4*4 + 4*6 == 40
+    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4}));
 
     auto b = snrk::PartedCanonicPolynom::generate(m2);
 
-    std::cout << (a - b)(4) << " " << a(4) - b(4) << std::endl;
+    std::cout << (a + b)(4) << " " << a(4) + b(4) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
@@ -152,8 +152,7 @@ int main(int argc, char *argv[])
  * (мало ли mpf_set_default_prec(256);)
  * 6. generate -> constructor
  * 7. Вынести типы в types.h
- * 8. В операторах PartedCanonic пересечение проходится 2-жды
- * 9. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
+ * 8. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

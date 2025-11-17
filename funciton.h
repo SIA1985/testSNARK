@@ -107,7 +107,7 @@ public:
 
     pos_t isCrossStrict(const Range &other) const;
 
-    Range crossBy(const Range &other) const;
+    Range crossByStrict(const Range &other) const;
 
     X_t leftBound() const;
     X_t rightBound() const;
