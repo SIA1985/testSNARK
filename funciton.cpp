@@ -508,7 +508,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
         auto left = normInterval(currentRange.leftBound());
         auto right = normInterval(currentRange.rightBound());
 
-        //todo: мб разные интервалы и итерация и др. операции неверны?
         result.insert(Range{left, right}, it->second(otherF));
     });
 
@@ -578,23 +577,58 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
 
 void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
 {
+    auto mapCopy = m_map;
+    auto mapCopyOther = other.m_map;
+
+    {
+        auto copyFirst = mapCopy.cbegin();
+        auto copyOtherFirst = mapCopyOther.cbegin();
+
+        if (copyFirst->first < copyOtherFirst->first) {
+            mapCopyOther.insert(Range{copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()}, copyOtherFirst->second);
+        } else {
+            //в примере заходит сюда? Проверить оператор <
+            mapCopy.insert(Range{copyOtherFirst->first.leftBound(), copyFirst->first.leftBound()}, copyFirst->second);
+        }
+    }
+    {
+        auto copyLast = (--mapCopy.cend());
+        auto copyOtherLast = (--mapCopyOther.cend());
+
+        if (copyLast->first < copyOtherLast->first) {
+            mapCopy.insert(Range{copyOtherLast->first.rightBound(), copyLast->first.rightBound()}, copyLast->second);
+        } else {
+            mapCopyOther.insert(Range{copyLast->first.rightBound(), copyOtherLast->first.rightBound()}, copyOtherLast->second);
+        }
+    }
+
+
     Range currentRange = {0, 0};
-    auto it = m_map.cbegin();
+    auto it = mapCopy.cbegin();
     auto itOther = other.m_map.cbegin();
 
-    auto end = m_map.cend();
-    auto otherEnd = other.m_map.cend();
+    auto end = mapCopy.cend();
+    auto otherEnd = mapCopyOther.cend();
 
-    auto itRange = [&it, this](){return it == m_map.cend() ? (--m_map.cend())->first : it->first;};
-    auto otherRange = [&itOther, &other](){ return itOther == other.m_map.cend() ? (--other.m_map.cend())->first : itOther->first;};
+    auto itRange = [&it, &mapCopy](){return it == mapCopy.cend() ? (--mapCopy.cend())->first : it->first;};
+    auto otherRange = [&itOther, &mapCopyOther](){ return itOther == mapCopyOther.cend() ? (--mapCopyOther.cend())->first : itOther->first;};
 
-    auto inc = [&it, this](){it != m_map.cend() ? it++ : it;};
-    auto incOther = [&itOther, &other](){itOther != other.m_map.cend() ? itOther++ : itOther;};
+    auto inc = [&it, &mapCopy](){it != mapCopy.cend() ? it++ : it;};
+    auto incOther = [&itOther, &mapCopyOther](){itOther != mapCopyOther.cend() ? itOther++ : itOther;};
 
-    auto currIt = [&it, &end, this](){return it != end ? it : (--m_map.cend());};
-    auto currItOther = [&itOther, &otherEnd, &other](){return itOther != otherEnd ? itOther : (--other.m_map.cend());};
+    auto currIt = [&it, &end, &mapCopy](){return it != end ? it : (--mapCopy.cend());};
+    auto currItOther = [&itOther, &otherEnd, &mapCopyOther](){return itOther != otherEnd ? itOther : (--mapCopyOther.cend());};
 
     auto predCall = [&currIt, &currItOther, &currentRange, &pred](){pred(currIt(), currItOther(), currentRange);};
+
+    auto moveDuringCross = [](map::const_iterator *it, Range cross)
+    {
+        if (cmp((*it)->first.rightBound(), cross.leftBound()) == 0 ||
+            cmp((*it)->first.leftBound(), cross.rightBound()) == 0 ||
+            cmp((*it)->first.rightBound(), cross.rightBound()) == 0) {
+            it++;
+        }
+    };
 
     while(it != end || itOther != otherEnd) {
         switch(itRange().isCrossStrict(otherRange())) {
@@ -609,24 +643,30 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         case Range::crossed: {
             auto cross = itRange().crossByStrict(otherRange());
 
-            map::const_iterator *left, leftEnd;
+            map::const_iterator *left, *right, leftEnd, rightEnd;
             if (itRange() < otherRange()) {
                 left = &it;
                 leftEnd = end;
+                right = &itOther;
+                rightEnd = otherEnd;
             } else {
                 left = &itOther;
                 leftEnd = otherEnd;
+                right = &it;
+                rightEnd = end;
             }
 
-//            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
-//            predCall();
+            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
+            predCall();
+
+            moveDuringCross(left, cross);
+            moveDuringCross(right, cross);
 
             currentRange = cross;
             predCall();
 
-            if (*left != leftEnd) {
-                (*left)++;
-            }
+            moveDuringCross(left, cross);
+            moveDuringCross(right, cross);
 
             break;
         }
