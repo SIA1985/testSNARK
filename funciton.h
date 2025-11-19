@@ -95,19 +95,25 @@ class Range
 public:
     enum pos_t : int
     {
-        left,
-        right,
-        crossed,
-        equal,
+        left        = 1 << 0,
+        right       = 1 << 1,
+        crossed     = 1 << 2,
+        equal       = 1 << 3,
+        inside      = 1 << 4,
+        outside     = 1 << 5,
     };
 
     Range(X_t left, X_t right);
 
     bool inRangeStrict(X_t x) const;
 
+    bool inRange(X_t x) const;
+
     pos_t isCrossStrict(const Range &other) const;
 
     Range crossByStrict(const Range &other) const;
+
+    Range crossBy(const Range &other) const;
 
     X_t leftBound() const;
     X_t rightBound() const;

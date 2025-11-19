@@ -386,13 +386,27 @@ bool Range::inRangeStrict(X_t x) const
     return cmp(m_right, x) == 1 && cmp(m_left, x) == -1;
 }
 
+bool Range::inRange(X_t x) const
+{
+    return cmp(m_right, x) >= 0 && cmp(m_left, x) <= 0;
+}
+
 Range::pos_t Range::isCrossStrict(const Range &other) const
 {
     if (*this == other) {
         return equal;
     }
 
-    if (inRangeStrict(other.m_left) || inRangeStrict(other.m_right)) {
+    if (inRange(other.m_left) && inRange(other.m_right)) {
+        return inside;
+    }
+
+    if (other.inRange(m_left) && other.inRange(m_right)) {
+        return outside;
+    }
+
+    if (inRangeStrict(other.m_left) || inRangeStrict(other.m_right) ||
+        other.inRangeStrict(m_left) || other.inRangeStrict(m_right)) {
         return crossed;
     }
 
@@ -405,7 +419,7 @@ Range::pos_t Range::isCrossStrict(const Range &other) const
 
 Range Range::crossByStrict(const Range &other) const
 {
-    if (isCrossStrict(other) != crossed) {
+    if (!(isCrossStrict(other) & (crossed | inside | outside))) {
         return {0, 0};
     }
 
@@ -413,6 +427,22 @@ Range Range::crossByStrict(const Range &other) const
         return {other.m_left, m_right};
     }
     if (cmp(m_right, other.m_left) == 1 && cmp(m_left, other.m_right) == -1) {
+        return {other.m_right, m_left};
+    }
+
+    return {0, 0};
+}
+
+Range Range::crossBy(const Range &other) const
+{
+    if (!(isCrossStrict(other) & (crossed | inside | outside))) {
+        return {0, 0};
+    }
+
+    if(cmp(m_left, other.m_right) <= 0 && cmp(m_right, other.m_left) >= 0) {
+        return {other.m_left, m_right};
+    }
+    if (cmp(m_right, other.m_left) >= 0 && cmp(m_left, other.m_right) <= 0) {
         return {other.m_right, m_left};
     }
 
@@ -521,7 +551,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         result.insert(currentRange, it->second + itOther->second);
-//        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
+        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -584,10 +614,9 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         auto copyFirst = mapCopy.cbegin();
         auto copyOtherFirst = mapCopyOther.cbegin();
 
-        if (copyFirst->first < copyOtherFirst->first) {
+        if (cmp(copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()) == -1) {
             mapCopyOther.insert(Range{copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()}, copyOtherFirst->second);
-        } else {
-            //в примере заходит сюда? Проверить оператор <
+        } else if (cmp(copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()) == 1){
             mapCopy.insert(Range{copyOtherFirst->first.leftBound(), copyFirst->first.leftBound()}, copyFirst->second);
         }
     }
@@ -595,10 +624,10 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         auto copyLast = (--mapCopy.cend());
         auto copyOtherLast = (--mapCopyOther.cend());
 
-        if (copyLast->first < copyOtherLast->first) {
-            mapCopy.insert(Range{copyOtherLast->first.rightBound(), copyLast->first.rightBound()}, copyLast->second);
-        } else {
-            mapCopyOther.insert(Range{copyLast->first.rightBound(), copyOtherLast->first.rightBound()}, copyOtherLast->second);
+        if (cmp(copyLast->first.rightBound(), copyOtherLast->first.rightBound()) == -1) {
+            mapCopy.insert(Range{copyLast->first.rightBound(), copyOtherLast->first.rightBound()}, copyLast->second);
+        } else if (cmp(copyLast->first.rightBound(), copyOtherLast->first.rightBound()) == 1) {
+            mapCopyOther.insert(Range{copyOtherLast->first.rightBound(), copyLast->first.rightBound()}, copyOtherLast->second);
         }
     }
 
@@ -621,16 +650,37 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
     auto predCall = [&currIt, &currItOther, &currentRange, &pred](){pred(currIt(), currItOther(), currentRange);};
 
-    auto moveDuringCross = [](map::const_iterator *it, Range cross)
+    auto moveDuringCross = [](map::const_iterator *it, map::const_iterator end, Range cross)
     {
         if (cmp((*it)->first.rightBound(), cross.leftBound()) == 0 ||
             cmp((*it)->first.leftBound(), cross.rightBound()) == 0 ||
-            cmp((*it)->first.rightBound(), cross.rightBound()) == 0) {
-            it++;
+            cmp((*it)->first.rightBound(), cross.rightBound()) == 0 &&
+            (*it) != end) {
+            (*it)++;
+        }
+    };
+
+    auto onInside = [&currentRange, &predCall](Range r, Range cross)
+    {
+        if (cmp(r.leftBound(), cross.leftBound()) == -1 &&
+            !(Range{r.leftBound(), cross.leftBound()} == currentRange)) {
+            currentRange = Range{r.leftBound(), cross.leftBound()};
+            predCall();
+        }
+
+        currentRange = cross;
+        predCall();
+
+        if (cmp(r.rightBound(), cross.rightBound()) == 1) {
+            currentRange = Range{cross.rightBound(), r.rightBound()};
+            predCall();
         }
     };
 
     while(it != end || itOther != otherEnd) {
+        std::cout << itRange().leftBound() << " " << itRange().rightBound() << std::endl;
+        std::cout << otherRange().leftBound() << " " << otherRange().rightBound() << std::endl;
+
         switch(itRange().isCrossStrict(otherRange())) {
         case Range::equal: {
             currentRange = itRange();
@@ -644,7 +694,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             auto cross = itRange().crossByStrict(otherRange());
 
             map::const_iterator *left, *right, leftEnd, rightEnd;
-            if (itRange() < otherRange()) {
+            if (cmp(itRange().leftBound(),  otherRange().leftBound()) == -1) {
                 left = &it;
                 leftEnd = end;
                 right = &itOther;
@@ -656,20 +706,40 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
                 rightEnd = end;
             }
 
-            currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
-            predCall();
+            if (!(currentRange == Range{(*left)->first.leftBound(), cross.leftBound()})) {
+                currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
+                predCall();
+            }
 
-            moveDuringCross(left, cross);
-            moveDuringCross(right, cross);
+            moveDuringCross(left, leftEnd, cross);
+            moveDuringCross(right, rightEnd, cross);
 
             currentRange = cross;
             predCall();
 
-            moveDuringCross(left, cross);
-            moveDuringCross(right, cross);
+            break;
+        }
+        case Range::inside: {
+            auto cross = otherRange();
+
+            onInside(itRange(), cross);
+
+            moveDuringCross(&it, end, cross);
+            moveDuringCross(&itOther, otherEnd, cross);
 
             break;
         }
+        case Range::outside: {
+            auto cross = itRange();
+
+            onInside(otherRange(), cross);
+
+            moveDuringCross(&it, end, cross);
+            moveDuringCross(&itOther, otherEnd, cross);
+
+            break;
+        }
+
         case Range::left: {
             if (it == end) {
                 goto right;
