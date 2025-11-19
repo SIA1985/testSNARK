@@ -108,37 +108,38 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-//    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
-//    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
-//        std::cout << "Некорректные переходы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+        std::cout << "Некорректные переходы!" << std::endl;
+        return 1;
+    }
 
-//    //todo: 6.
+    //todo: 6.
 
-//    if (!currentOutput(gp.PP().t, out4, gp.TG())) {
-//        std::cout << "Некорректный выход!" << std::endl;
-//        return 1;
-//    }
+    if (!currentOutput(gp.PP().t, out4, gp.TG())) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return 1;
+    }
 
     //todo: нет assert на размер диапазона
-    snrk::PartedCanonicPolynom::map m;
-    m.insert(snrk::Range{1, 3.5}, snrk::CanonicPolynom::generate({1}));
-    m.insert(snrk::Range{3.5, 5}, snrk::CanonicPolynom::generate({2}));
+//    snrk::PartedCanonicPolynom::map m;
+//    m.insert(snrk::Range{1, 3.5}, snrk::CanonicPolynom::generate({1}));
+//    m.insert(snrk::Range{3.5, 4.5}, snrk::CanonicPolynom::generate({2}));
+//    m.insert(snrk::Range{4.5, 5}, snrk::CanonicPolynom::generate({3}));
 
-    auto a = snrk::PartedCanonicPolynom::generate(m);
+//    auto a = snrk::PartedCanonicPolynom::generate(m);
 
-    snrk::PartedCanonicPolynom::map m2;
-    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1})); //4*4 + 4*6 == 40
-    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4}));
+//    snrk::PartedCanonicPolynom::map m2;
+//    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1})); //4*4 + 4*6 == 40
+//    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4}));
 
-    auto b = snrk::PartedCanonicPolynom::generate(m2);
+//    auto b = snrk::PartedCanonicPolynom::generate(m2);
 
-    std::cout << (a + b)(4) << " " << a(4) + b(4) << std::endl;
+//    std::cout << (a + b)(4) << " " << a(4) + b(4) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }

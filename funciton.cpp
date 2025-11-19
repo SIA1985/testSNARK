@@ -474,6 +474,11 @@ bool operator<=(const Range &a, const Range &b)
     return a < b || a == b;
 }
 
+std::ostream &operator<<(std::ostream &out, const Range &r)
+{
+    return out << "{" << r.leftBound().get_d() << ", " << r.rightBound().get_d() << "}";
+}
+
 PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
 {
     PartedCanonicPolynom p;
@@ -551,7 +556,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         result.insert(currentRange, it->second + itOther->second);
-        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -564,7 +568,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         result.insert(currentRange, it->second * itOther->second);
-//        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
     });
 
     return PartedCanonicPolynom::generate(result);
@@ -588,7 +591,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-//        std::cout << std::printf("{%f,%f}", currentRange.leftBound().get_d(), currentRange.rightBound().get_d()) << std::endl;
         result.insert(currentRange, it->second - itOther->second);
     });
 
@@ -634,27 +636,33 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
     Range currentRange = {0, 0};
     auto it = mapCopy.cbegin();
-    auto itOther = other.m_map.cbegin();
+    auto itOther = mapCopyOther.cbegin();
 
     auto end = mapCopy.cend();
     auto otherEnd = mapCopyOther.cend();
 
+    auto safeIt = [](map::const_iterator it, map::const_iterator end){return it == end ? (--end) : it;};
+    //todo: safeInc
+
+    //todo: safeIt
     auto itRange = [&it, &mapCopy](){return it == mapCopy.cend() ? (--mapCopy.cend())->first : it->first;};
     auto otherRange = [&itOther, &mapCopyOther](){ return itOther == mapCopyOther.cend() ? (--mapCopyOther.cend())->first : itOther->first;};
 
+    //todo: safeInc
     auto inc = [&it, &mapCopy](){it != mapCopy.cend() ? it++ : it;};
     auto incOther = [&itOther, &mapCopyOther](){itOther != mapCopyOther.cend() ? itOther++ : itOther;};
 
+    //todo: safeIt
     auto currIt = [&it, &end, &mapCopy](){return it != end ? it : (--mapCopy.cend());};
     auto currItOther = [&itOther, &otherEnd, &mapCopyOther](){return itOther != otherEnd ? itOther : (--mapCopyOther.cend());};
 
     auto predCall = [&currIt, &currItOther, &currentRange, &pred](){pred(currIt(), currItOther(), currentRange);};
 
-    auto moveDuringCross = [](map::const_iterator *it, map::const_iterator end, Range cross)
+    auto moveDuringCross = [&safeIt](map::const_iterator *it, map::const_iterator end, Range cross)
     {
-        if (cmp((*it)->first.rightBound(), cross.leftBound()) == 0 ||
-            cmp((*it)->first.leftBound(), cross.rightBound()) == 0 ||
-            cmp((*it)->first.rightBound(), cross.rightBound()) == 0 &&
+        if (cmp(safeIt((*it), end)->first.rightBound(), cross.leftBound()) == 0 ||
+            cmp(safeIt((*it), end)->first.leftBound(), cross.rightBound()) == 0 ||
+            cmp(safeIt((*it), end)->first.rightBound(), cross.rightBound()) == 0 &&
             (*it) != end) {
             (*it)++;
         }
@@ -663,7 +671,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     auto onInside = [&currentRange, &predCall](Range r, Range cross)
     {
         if (cmp(r.leftBound(), cross.leftBound()) == -1 &&
-            !(Range{r.leftBound(), cross.leftBound()} == currentRange)) {
+            cmp(currentRange.rightBound(), r.leftBound()) <= 0) {
             currentRange = Range{r.leftBound(), cross.leftBound()};
             predCall();
         }
@@ -678,8 +686,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-        std::cout << itRange().leftBound() << " " << itRange().rightBound() << std::endl;
-        std::cout << otherRange().leftBound() << " " << otherRange().rightBound() << std::endl;
+        std::cout << itRange() << " " << otherRange() << std::endl;
 
         switch(itRange().isCrossStrict(otherRange())) {
         case Range::equal: {
@@ -706,7 +713,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
                 rightEnd = end;
             }
 
-            if (!(currentRange == Range{(*left)->first.leftBound(), cross.leftBound()})) {
+            if (cmp(currentRange.rightBound(), (*left)->first.leftBound()) <= 0) {
                 currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
                 predCall();
             }

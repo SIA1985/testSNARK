@@ -126,6 +126,7 @@ private:
 bool operator<(const Range &a, const Range &b);
 bool operator==(const Range &a, const Range &b);
 bool operator<=(const Range &a, const Range &b);
+std::ostream &operator<<(std::ostream &out, const Range &r);
 
 /*Непрерывный диапазон с одинаковым шагом*/
 template<typename T>
