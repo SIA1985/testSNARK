@@ -216,7 +216,7 @@ public:
 
     static PartedCanonicPolynom generate(RangeMap<CanonicPolynom> map);
 
-    static PartedCanonicPolynom generate(std::set<dot_t> sortedDots);
+    static PartedCanonicPolynom generate(std::set<dot_t> sortedDots, bool fromInterpolation = true);
 
     virtual Y_t operator()(X_t x) override;
 

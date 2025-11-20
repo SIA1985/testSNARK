@@ -69,6 +69,10 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     auto q = f / z;
 
+    for(auto x : witness) {
+        std::cout << q(x) << std::endl;
+    }
+
     ptr->m_comQ = q.commit(tG);
 
     /*todo: */

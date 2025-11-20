@@ -357,7 +357,7 @@ PartedCanonicPolynom ZeroPolynom::toPartedCanonicPolynom() const
         sortedDots.insert(dot_t{root, 0});
     }
 
-    return PartedCanonicPolynom::generate(sortedDots);
+    return PartedCanonicPolynom::generate(sortedDots, false);
 }
 
 Range::Range(X_t left, X_t right)
@@ -476,7 +476,7 @@ PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
     return p;
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::generate(std::set<dot_t> sortedDots)
+PartedCanonicPolynom PartedCanonicPolynom::generate(std::set<dot_t> sortedDots, bool fromInterpolation)
 {
     PartedCanonicPolynom::map map;
     for(auto it = sortedDots.begin(); it != sortedDots.end();) {
@@ -498,7 +498,16 @@ PartedCanonicPolynom PartedCanonicPolynom::generate(std::set<dot_t> sortedDots)
             rangeEnd++;
         }
 
-        map.insert({dots.front().x, rangeEnd}, InterpolationPolynom::generate(dots).toCanonicPolynom());
+        if (fromInterpolation) {
+            map.insert({dots.front().x, rangeEnd}, InterpolationPolynom::generate(dots).toCanonicPolynom());
+        } else {
+            xs_t xs;
+            for (const auto &[x, y] : dots) {
+                xs.insert(x);
+            }
+
+            map.insert({dots.front().x, rangeEnd}, CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(xs)));
+        }
     }
 
     return generate(map);

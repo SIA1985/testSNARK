@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
+    //todo: при интерполяции 2 коэфа, при коэфах от корней - 3!
     if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
