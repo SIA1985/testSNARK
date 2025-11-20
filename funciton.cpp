@@ -454,7 +454,7 @@ bool operator<(const Range &a, const Range &b)
 
 bool operator==(const Range &a, const Range &b)
 {
-    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound() == 0);
+    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound()) == 0;
 }
 
 bool operator<=(const Range &a, const Range &b)
@@ -478,10 +478,12 @@ PartedCanonicPolynom PartedCanonicPolynom::generate(map map)
 
 PartedCanonicPolynom PartedCanonicPolynom::generate(std::set<dot_t> sortedDots, bool fromInterpolation)
 {
+    int partition = fromInterpolation ? PartedCanonicPolynom::Partition : PartedCanonicPolynom::Partition - 1;
+
     PartedCanonicPolynom::map map;
     for(auto it = sortedDots.begin(); it != sortedDots.end();) {
         dots_t dots;
-        for(int i = 0; i < PartedCanonicPolynom::Partition; i++) {
+        for(int i = 0; i < partition; i++) {
             dots.push_back(*it);
 
             it++;
@@ -494,7 +496,7 @@ PartedCanonicPolynom PartedCanonicPolynom::generate(std::set<dot_t> sortedDots, 
         }
 
         X_t rangeEnd = dots.back().x;
-        for(std::size_t i = 0; i < PartedCanonicPolynom::Partition - dots.size(); i++) {
+        for(std::size_t i = 0; i < partition - dots.size(); i++) {
             rangeEnd++;
         }
 
@@ -525,6 +527,7 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
+        std::cout << currentRange << std::endl;
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
         result.insert(currentRange, f1 / f2);
@@ -715,7 +718,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-//        std::cout << itRange() << " " << otherRange() << std::endl;
+        std::cout << itRange() << " " << otherRange() << std::endl;
 
         switch(itRange().isCrossStrict(otherRange())) {
         case Range::equal: {
@@ -804,6 +807,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     }
 }
 
-const int PartedCanonicPolynom::Partition = 2;
+const int PartedCanonicPolynom::Partition = 3;
 
 }
