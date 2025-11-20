@@ -216,6 +216,8 @@ public:
 
     static PartedCanonicPolynom generate(RangeMap<CanonicPolynom> map);
 
+    static PartedCanonicPolynom generate(std::set<dot_t> sortedDots);
+
     virtual Y_t operator()(X_t x) override;
 
     PartedCanonicPolynom operator()(const CanonicPolynom &other) const;
@@ -228,13 +230,13 @@ public:
 
     PartedCanonicPolynom operator*(const PartedCanonicPolynom &other) const;
 
-    CustomPolynom operator/(CanonicPolynom &other);
+    CustomPolynom operator/(PartedCanonicPolynom &other);
 
     void operator+=(const PartedCanonicPolynom &other);
 
     const static int Partition;
 
-private:
+protected:
     PartedCanonicPolynom() = default;
 
     using operatorPred_t = std::function<void(RangeMap<CanonicPolynom>::const_iterator it,
@@ -262,8 +264,15 @@ protected:
 
 class ZeroPolynom : public CanonicPolynom
 {
+    using roots_t = xs_t;
+
 public:
     static ZeroPolynom generate(const xs_t &xs);
+
+    PartedCanonicPolynom toPartedCanonicPolynom() const;
+
+private:
+    roots_t m_roots;
 };
 
 }

@@ -65,7 +65,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
-    auto z = ZeroPolynom::generate(ptr->m_witness);
+    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
 
     auto q = f / z;
 
@@ -97,7 +97,7 @@ bool ZeroTestProof::check()
 
     ValueType b = m_qR * z(m_r);
 
-//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 
