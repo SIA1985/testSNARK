@@ -100,7 +100,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
         std::cout << g(w) << " - " << p(w) << " = " << f(w) << " : " <<q(w) << std::endl;
     }
 
-    /*todo: (hash % size(witness)) / (max(winess) + 1)*/
+    /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
     ptr->m_r = getR(witness);
     /*с дробными числами хорошо работает, почему-то работает с 3, но с 1 и 2 - нет ->
     -> потому что мы как раз и изменили 3й вход на неверный*/

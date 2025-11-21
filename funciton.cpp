@@ -411,11 +411,14 @@ Range Range::crossByStrict(const Range &other) const
         return {0, 0};
     }
 
-    if(cmp(m_left, other.m_right) == -1 && cmp(m_right, other.m_left) == 1) {
-        return {other.m_left, m_right};
+    if(cmp(m_left, other.m_right) == -1 && cmp(m_right, other.m_left) == 1 ||
+       cmp(other.m_right, m_left) == 1 && cmp(other.m_left, m_right) == -1){
+        return {m_left, other.m_right};
     }
-    if (cmp(m_right, other.m_left) == 1 && cmp(m_left, other.m_right) == -1) {
-        return {other.m_right, m_left};
+
+    if(cmp(other.m_left, m_right) == -1 && cmp(other.m_right, m_left) == 1 ||
+       cmp(m_right, other.m_left) == 1 && cmp(m_left, other.m_right) == -1) {
+        return {other.m_left, m_right};
     }
 
     return {0, 0};

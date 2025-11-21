@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //todo: что-то зацикливается
+    //todo: что-то зацикливается - на конструировании funcF (в operator-) -> сразу точна на crossByStrict (доотладить пересечения!)
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
