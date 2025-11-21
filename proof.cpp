@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <random>
 
 namespace snrk {
 
@@ -16,6 +17,28 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
     std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
 
     return c <= eps;
+}
+
+X_t getR(const xs_t &witness) {
+    if (witness.size() == 0) {
+        return 0; //todo
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    auto size = witness.size();
+
+    // Generate a random index within the range [0, size - 1]
+    std::uniform_int_distribution<decltype(size)> distrib(0, size - 1);
+    auto random_offset = distrib(gen);
+
+    auto randIt = witness.begin();
+    std::advance(randIt, random_offset);
+
+    auto max = *(--witness.cend());
+
+    return *randIt / (max + 1);
 }
 
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
@@ -77,8 +100,11 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
         std::cout << g(w) << " - " << p(w) << " = " << f(w) << " : " <<q(w) << std::endl;
     }
 
-    /*todo: */
-    ptr->m_r = 15;
+    /*todo: (hash % size(witness)) / (max(winess) + 1)*/
+    ptr->m_r = getR(witness);
+    /*с дробными числами хорошо работает, почему-то работает с 3, но с 1 и 2 - нет ->
+    -> потому что мы как раз и изменили 3й вход на неверный*/
+//    ptr->m_r = 3;
 
 //    std::cout << q(ptr->m_r) << " " << f(ptr->m_r) / z(ptr->m_r) << std::endl;
 

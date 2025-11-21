@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    //todo: что-то зацикливается
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
