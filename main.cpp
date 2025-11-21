@@ -81,8 +81,8 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
 }
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
-    auto tCanonic = t.toCanonicPolynom();
-    auto outputDot = snrk::dot_t{tCanonic.degree() + 1, output};
+    auto tCanonic = t.toPartedCanonicPolynom();
+    auto outputDot = snrk::dot_t{t.toCanonicPolynom().degree() + 1, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 
@@ -109,7 +109,6 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    //todo: при интерполяции 2 коэфа, при коэфах от корней - 3!
     if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
@@ -141,7 +140,7 @@ int main(int argc, char *argv[])
 
 //    auto b = snrk::PartedCanonicPolynom::generate(m2);
 
-//    std::cout << (a + b)(4) << " " << a(4) + b(4) << std::endl;
+//    std::cout << (a / b)(4) << " " << a(4) / b(4) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
@@ -156,6 +155,7 @@ int main(int argc, char *argv[])
  * 6. generate -> constructor
  * 7. Вынести типы в types.h
  * 8. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
+ * 9. Опять 2й проход по некоторым диапазонам
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

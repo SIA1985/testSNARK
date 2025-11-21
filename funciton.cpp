@@ -133,7 +133,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) + rem(x) / other(x);
+        return res(x)/* + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x))*/;
     });
 }
 
@@ -569,7 +569,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         auto otherF = itOther->second;
-        assert(otherF.degree() <= 1);
+        assert(otherF.degree() <= 1); //todo: решение уравнения 2й степени
 
         auto normInterval = [&other = otherF](X_t bound) -> X_t
         {
@@ -622,6 +622,7 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
+        std::cout << currentRange << std::endl;
         result.insert(currentRange, it->second - itOther->second);
     });
 
@@ -664,7 +665,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         }
     }
 
-
     Range currentRange = {0, 0};
     auto it = mapCopy.cbegin();
     auto itOther = mapCopyOther.cbegin();
@@ -673,30 +673,25 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     auto otherEnd = mapCopyOther.cend();
 
     auto safeIt = [](map::const_iterator it, map::const_iterator end){return it == end ? (--end) : it;};
-    //todo: safeInc
+    auto safeInc = [](map::const_iterator &it, map::const_iterator end){it != end ? it++ : it;};
 
-    //todo: safeIt
-    auto itRange = [&it, &mapCopy](){return it == mapCopy.cend() ? (--mapCopy.cend())->first : it->first;};
-    auto otherRange = [&itOther, &mapCopyOther](){ return itOther == mapCopyOther.cend() ? (--mapCopyOther.cend())->first : itOther->first;};
+    auto itRange = [&it, &mapCopy, &safeIt](){return safeIt(it, mapCopy.cend())->first;};
+    auto otherRange = [&itOther, &mapCopyOther, &safeIt](){ return safeIt(itOther, mapCopyOther.cend())->first;};
 
-    //todo: safeInc
-    auto inc = [&it, &mapCopy](){it != mapCopy.cend() ? it++ : it;};
-    auto incOther = [&itOther, &mapCopyOther](){itOther != mapCopyOther.cend() ? itOther++ : itOther;};
+    auto inc = [&it, &mapCopy, &safeInc](){safeInc(it, mapCopy.cend());};
+    auto incOther = [&itOther, &mapCopyOther, &safeInc](){safeInc(itOther, mapCopyOther.cend());};
 
-    //todo: safeIt
-    auto currIt = [&it, &end, &mapCopy](){return it != end ? it : (--mapCopy.cend());};
-    auto currItOther = [&itOther, &otherEnd, &mapCopyOther](){return itOther != otherEnd ? itOther : (--mapCopyOther.cend());};
+    auto currIt = [&it, &end, &safeIt](){return safeIt(it, end);};
+    auto currItOther = [&itOther, &otherEnd, &safeIt](){return safeIt(itOther, otherEnd);};
 
     auto predCall = [&currIt, &currItOther, &currentRange, &pred](){pred(currIt(), currItOther(), currentRange);};
 
-    auto moveDuringCross = [&safeIt](map::const_iterator *it, map::const_iterator end, Range cross)
+    auto moveDuringCross = [&safeIt, &safeInc](map::const_iterator *it, map::const_iterator end, Range cross)
     {
         if (cmp(safeIt((*it), end)->first.rightBound(), cross.leftBound()) == 0 ||
             cmp(safeIt((*it), end)->first.leftBound(), cross.rightBound()) == 0 ||
-            cmp(safeIt((*it), end)->first.rightBound(), cross.rightBound()) == 0 &&
-            (*it) != end) {
-            //todo: safeInc
-            (*it)++;
+            cmp(safeIt((*it), end)->first.rightBound(), cross.rightBound()) == 0) {
+            safeInc(*it, end);
         }
     };
 
@@ -710,11 +705,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
         currentRange = cross;
         predCall();
-
-        if (cmp(r.rightBound(), cross.rightBound()) == 1) {
-            currentRange = Range{cross.rightBound(), r.rightBound()};
-            predCall();
-        }
     };
 
     while(it != end || itOther != otherEnd) {

@@ -71,10 +71,16 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_comQ = q.commit(tG);
 
+    //todo: если совпадают, то q - выдаёт 0, иначе != 0
+    //todo: мб проверить то же самое со старой версией полинома?
+    for(auto w : witness) {
+        std::cout << g(w) << " - " << p(w) << " = " << f(w) << " : " <<q(w) << std::endl;
+    }
+
     /*todo: */
     ptr->m_r = 15;
 
-    std::cout << q(15) << " " << f(15) / z(15) << std::endl;
+//    std::cout << q(ptr->m_r) << " " << f(ptr->m_r) / z(ptr->m_r) << std::endl;
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
