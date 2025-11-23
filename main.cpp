@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, out1});
     auto out2 = snrk::Value(7);
-    c.addGate({snrk::Sum, {x2, w1}, out2});
+    c.addGate({snrk::Sum, {x2, {w1}}, out2});
     auto out3 = snrk::Value(77);
     c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
@@ -108,7 +108,6 @@ int main(int argc, char *argv[])
 //        return 1;
 //    }
 
-    //вернуть предыдущую isOperation и добавить решение уравнение 2й степени
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;

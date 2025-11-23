@@ -88,7 +88,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
-    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom()(snrk::CanonicPolynom::generate({3, 3}));
 
     auto q = f / z;
 
@@ -96,14 +96,22 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     //такое ощущение, что пруф нужен для всех диапазонов, так как для r из одного диапазона
     //не отлавливается ошибка в другом диапазоне -> ОБЪЕДИНЕНИЕ ПРУФОВ ДЛЯ РАЗНЫХ ДИАПАЗОНОВ (дерево Меркла?)
+    //в случае докательства переходов скорее всего дело в диапазоназ в длину по 1/3, куда не попадает r
 
     //todo: сделать не только в диапазон [0, 1]
     /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
-    ptr->m_r = 2 + getR(witness);
-    std::cout << "R: " << ptr->m_r << std::endl;
+    ptr->m_r = 2;
+//    std::cout << "R: " << ptr->m_r << " " << f( ptr->m_r) << " / " << z( ptr->m_r) << " =?= " << q( ptr->m_r)<< std::endl;
+
+    /*
+     * f - корректно считается (в каждом w = 0)
+     * z - корректно строится (в каждом w = 0)
+     * деление каждого полинома f на соответ. z считается верно ( (f/z)(w) == f(w)/z(w))
+     * q - в каждой w != 0
+    */
 
     for(auto w : witness) {
-        std::cout << w << " : " << f(w) << " " << z(w) << std::endl;
+        std::cout << w << " : " << f(w) << " / " << z((w - 3) /3.) << " =?= " << q(w) << std::endl;
     }
 
     ptr->m_fR = f(ptr->m_r);
