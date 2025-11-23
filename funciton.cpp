@@ -92,7 +92,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
         rem = *this; // Остаток - исходный полином
         return CustomPolynom::generate([rem, other](X_t x) mutable -> Y_t
         {
-            return rem(x) / other(x);
+            return (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
         });
     }
 
@@ -133,7 +133,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x)/* + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x))*/;
+        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
     });
 }
 
@@ -411,30 +411,12 @@ Range Range::crossByStrict(const Range &other) const
         return {0, 0};
     }
 
-    if(cmp(m_left, other.m_right) == -1 && cmp(m_right, other.m_left) == 1 ||
-       cmp(other.m_right, m_left) == 1 && cmp(other.m_left, m_right) == -1){
+    if(inRangeStrict(other.m_left)  && other.inRangeStrict(m_right)) {
+        return {other.m_left, m_right};
+    }
+
+    if(other.inRangeStrict(m_left)  && inRangeStrict(other.m_right)) {
         return {m_left, other.m_right};
-    }
-
-    if(cmp(other.m_left, m_right) == -1 && cmp(other.m_right, m_left) == 1 ||
-       cmp(m_right, other.m_left) == 1 && cmp(m_left, other.m_right) == -1) {
-        return {other.m_left, m_right};
-    }
-
-    return {0, 0};
-}
-
-Range Range::crossBy(const Range &other) const
-{
-    if (!(isCrossStrict(other) & (crossed | inside | outside))) {
-        return {0, 0};
-    }
-
-    if(cmp(m_left, other.m_right) <= 0 && cmp(m_right, other.m_left) >= 0) {
-        return {other.m_left, m_right};
-    }
-    if (cmp(m_right, other.m_left) >= 0 && cmp(m_left, other.m_right) <= 0) {
-        return {other.m_right, m_left};
     }
 
     return {0, 0};
@@ -530,9 +512,11 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
 
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        std::cout << currentRange << std::endl;
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
+        std::cout << "left: " << it->first << " | " << "right: " << itOther->first << std::endl;
+//        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
+        std::cout << currentRange << std::endl;
         result.insert(currentRange, f1 / f2);
     });
 
@@ -625,7 +609,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        std::cout << currentRange << std::endl;
         result.insert(currentRange, it->second - itOther->second);
     });
 
@@ -711,7 +694,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-        std::cout << itRange() << " " << otherRange() << std::endl;
+//        std::cout << itRange() << " " << otherRange() << std::endl;
 
         switch(itRange().isCrossStrict(otherRange())) {
         case Range::equal: {

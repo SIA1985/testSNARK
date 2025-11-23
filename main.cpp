@@ -33,29 +33,25 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     auto sCanonic = s.toPartedCanonicPolynom();
 
     FOROPS {
+        //todo: вынести в генерацию S
         snrk::dots_t dots;
-//        for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
-//            dots.push_back(operation == sCanonic(i) ? snrk::dot_t{i, 1} : snrk::dot_t{i, 0});
-//        }
-
-        auto currentOp = operation;
-        FOROPS {
-            dots.push_back(operation == currentOp ? snrk::dot_t{operation, 1} : snrk::dot_t{operation, 0});
+        for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
+            dots.push_back(operation == sCanonic(i) ? snrk::dot_t{i, 1} : snrk::dot_t{i, 0});
         }
 
         auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
 
         switch(operation) {
         case snrk::Sum: {
-            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation;
             break;
         }
         case snrk::Product: {
-            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation;
             break;
         }
         case snrk::Minus: {
-            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation(sCanonic);
+            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation;
             break;
         }
             //todo: после деления имеем CustomPolynom
@@ -71,8 +67,6 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     snrk::xs_t witness;
     for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
         witness.insert(i);
-        //todo: скорее всего дело в 1, что переходит в 0 или что-то подобное
-        std::cout << std::setprecision(20) << funcF(i) << " " << tCanonic3wPlus3(i) << std::endl;
     }
 
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
@@ -109,12 +103,12 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
-        std::cout << "Некорректные входы!" << std::endl;
-        return 1;
-    }
+//    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+//        std::cout << "Некорректные входы!" << std::endl;
+//        return 1;
+//    }
 
-    //todo: что-то зацикливается - на конструировании funcF (в operator-) -> сразу точна на crossByStrict (доотладить пересечения!)
+    //вернуть предыдущую isOperation и добавить решение уравнение 2й степени
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;

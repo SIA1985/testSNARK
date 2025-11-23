@@ -94,19 +94,17 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_comQ = q.commit(tG);
 
-    //todo: если совпадают, то q - выдаёт 0, иначе != 0
-    //todo: мб проверить то же самое со старой версией полинома?
-    for(auto w : witness) {
-        std::cout << g(w) << " - " << p(w) << " = " << f(w) << " : " <<q(w) << std::endl;
-    }
+    //такое ощущение, что пруф нужен для всех диапазонов, так как для r из одного диапазона
+    //не отлавливается ошибка в другом диапазоне -> ОБЪЕДИНЕНИЕ ПРУФОВ ДЛЯ РАЗНЫХ ДИАПАЗОНОВ (дерево Меркла?)
 
+    //todo: сделать не только в диапазон [0, 1]
     /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
-    ptr->m_r = getR(witness);
-    /*с дробными числами хорошо работает, почему-то работает с 3, но с 1 и 2 - нет ->
-    -> потому что мы как раз и изменили 3й вход на неверный*/
-//    ptr->m_r = 3;
+    ptr->m_r = 2 + getR(witness);
+    std::cout << "R: " << ptr->m_r << std::endl;
 
-//    std::cout << q(ptr->m_r) << " " << f(ptr->m_r) / z(ptr->m_r) << std::endl;
+    for(auto w : witness) {
+        std::cout << w << " : " << f(w) << " " << z(w) << std::endl;
+    }
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
@@ -131,7 +129,7 @@ bool ZeroTestProof::check()
 
     ValueType b = m_qR * z(m_r);
 
-    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 
