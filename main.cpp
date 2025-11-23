@@ -32,11 +32,16 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
     auto funcF = snrk::PartedCanonicPolynom::generate(snrk::PartedCanonicPolynom::map{});
     auto sCanonic = s.toPartedCanonicPolynom();
 
+    snrk::xs_t witness;
+    for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
+        witness.insert(i);
+    }
+
     FOROPS {
         //todo: вынести в генерацию S
         snrk::dots_t dots;
-        for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
-            dots.push_back(operation == sCanonic(i) ? snrk::dot_t{i, 1} : snrk::dot_t{i, 0});
+        for(const auto &w : witness) {
+            dots.push_back(operation == sCanonic(w) ? snrk::dot_t{w, 1} : snrk::dot_t{w, 0});
         }
 
         auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
@@ -64,11 +69,6 @@ bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
         }
     }
 
-    snrk::xs_t witness;
-    for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
-        witness.insert(i);
-    }
-
     auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
 
     return proof->check();
@@ -83,6 +83,17 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
     return proof->check();
 }
 
+/*
+ * Дело определённо в PCP получаемым после деления f / z, так как этот q != 0 в свидетелях
+ * Конкретнее дело в: полиномах-отрезках, которые мы получаем в f, так как на левой части отрезка они != 0,
+ * когда на правой == 0, при такой же ситуации в случае проверки входов полиномы == 0 на концах своего отрезка.
+ * Возможные причины:
+ * а) Рунге влез в конструирование funcF (у него там 6я степень, мб увеличить степень и проверить)
+ * б) Дело в RangeMap, которая при поиске выдаёт не тот полином (хотя в любом случае, каждый полином должен
+ * быть равен сосед на границе с ним, пробовал минять поиск, но т.к все != 0 на левых частях - бесполезно)
+ * в) Неверное деление (хотя проверял деление - всё ок)
+ */
+
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
@@ -95,7 +106,7 @@ int main(int argc, char *argv[])
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, out1});
     auto out2 = snrk::Value(7);
-    c.addGate({snrk::Sum, {x2, {w1}}, out2});
+    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     auto out3 = snrk::Value(77);
     c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
@@ -103,10 +114,10 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-//    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
     if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
@@ -122,9 +133,8 @@ int main(int argc, char *argv[])
 
     //todo: нет assert на размер диапазона
 //    snrk::PartedCanonicPolynom::map m;
-//    m.insert(snrk::Range{1, 3.5}, snrk::CanonicPolynom::generate({1}));
-//    m.insert(snrk::Range{3.5, 4.5}, snrk::CanonicPolynom::generate({2}));
-//    m.insert(snrk::Range{4.5, 5}, snrk::CanonicPolynom::generate({3}));
+//    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1}));
+//    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({2}));
 
 //    auto a = snrk::PartedCanonicPolynom::generate(m);
 
@@ -134,7 +144,7 @@ int main(int argc, char *argv[])
 
 //    auto b = snrk::PartedCanonicPolynom::generate(m2);
 
-//    std::cout << (a / b)(4) << " " << a(4) / b(4) << std::endl;
+//    std::cout << (a / b)(3) << " " << a(3) / b(3) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }

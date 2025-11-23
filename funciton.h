@@ -138,7 +138,7 @@ public:
         auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
         [](const std::pair<Range, T> &keyValue, X_t x) -> bool
         {
-            return keyValue.first.rightBound() < x;
+            return cmp(keyValue.first.rightBound(), x) == -1;
         });
 
         if (found != m_map.end()) {

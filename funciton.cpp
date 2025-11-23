@@ -131,9 +131,13 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
          rem[j] = remainder_coefs[j];
     }
 
+//    for(int i = 0; i <= degree_res; ++i) {
+//        std::cout << "c: " << res[i] << std::endl;
+//    }
+
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
+        return res(x) + rem(x) / other(x);
     });
 }
 
@@ -516,7 +520,7 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
         CanonicPolynom f2 = itOther->second;
         std::cout << "left: " << it->first << " | " << "right: " << itOther->first << std::endl;
 //        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
-        std::cout << currentRange << std::endl;
+        std::cout << currentRange << " " << f1(currentRange.leftBound()) << " ? " << f1(currentRange.rightBound()) << std::endl;
         result.insert(currentRange, f1 / f2);
     });
 
