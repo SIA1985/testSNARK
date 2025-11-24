@@ -85,12 +85,12 @@ TG_t GlobalParams::TG()
 GlobalParams::ProverParams_t GlobalParams::PP()
 {
     /*todo: не копия*/
-    return {.t = m_T, .s = m_S, .w = m_W};
+    return {.t = m_T, .splittedT = m_splittedT, .s = m_S, .w = m_W};
 }
 
 void GlobalParams::generateT(const Circut &circut)
 {
-    dots_t dots;
+    dots_t dots, leftDots, rightDots, resultDots;
 
     auto cw = m_witnesses.cbegin();
     auto fillMap = [&cw, &dots](const values_t &row)
@@ -103,13 +103,27 @@ void GlobalParams::generateT(const Circut &circut)
     fillMap(circut.m_inputX);
     fillMap(circut.m_inputW);
 
+    /*todo: 1 -> macro*/
+    std::size_t i = 1;
     for(const auto& gate : circut.m_gates) {
         dots.push_back({X_t(*cw++), Y_t(gate.m_input.a)});
+        leftDots.push_back({X_t(i), Y_t(gate.m_input.a)});
+
         dots.push_back({X_t(*cw++), Y_t(gate.m_input.b)});
+        rightDots.push_back({X_t(i), Y_t(gate.m_input.b)});
+
         dots.push_back({X_t(*cw++), Y_t(gate.m_output)});
+        resultDots.push_back({X_t(i), Y_t(gate.m_output)});
+
+        i++;
     }
 
     m_T = T_t::generate(dots);
+    m_splittedT = {
+                    .left = InterpolationPolynom::generate(leftDots),
+                    .right = InterpolationPolynom::generate(rightDots),
+                    .result = InterpolationPolynom::generate(resultDots)
+                  };
 }
 
 void GlobalParams::generateS(const Circut &circut)

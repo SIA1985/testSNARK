@@ -22,12 +22,11 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     return proof->check();
 }
 
-bool correctGates(const snrk::T_t &t, const snrk::S_t &s, snrk::TG_t tG)
+bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
-    auto tCanonic = t.toPartedCanonicPolynom();
-    auto tCanonic3wPlus1 = tCanonic(snrk::CanonicPolynom::generate({1, 3}));
-    auto tCanonic3wPlus2 = tCanonic(snrk::CanonicPolynom::generate({2, 3}));
-    auto tCanonic3wPlus3 = tCanonic(snrk::CanonicPolynom::generate({3, 3}));
+    auto tCanonic3wPlus1 = t.left.toPartedCanonicPolynom();
+    auto tCanonic3wPlus2 = t.right.toPartedCanonicPolynom();
+    auto tCanonic3wPlus3 = t.result.toPartedCanonicPolynom();
 
     auto funcF = snrk::PartedCanonicPolynom::generate(snrk::PartedCanonicPolynom::map{});
     auto sCanonic = s.toPartedCanonicPolynom();
@@ -88,9 +87,9 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
  * Конкретнее дело в: полиномах-отрезках, которые мы получаем в f, так как на левой части отрезка они != 0,
  * когда на правой == 0, при такой же ситуации в случае проверки входов полиномы == 0 на концах своего отрезка.
  * Возможные причины:
- * а) Рунге влез в конструирование funcF (у него там 6я степень, мб увеличить степень и проверить)
+ * а) Рунге влез в конструирование funcF (у него там 6я степень, мб увеличить точность и проверить)
  * б) Дело в RangeMap, которая при поиске выдаёт не тот полином (хотя в любом случае, каждый полином должен
- * быть равен сосед на границе с ним, пробовал минять поиск, но т.к все != 0 на левых частях - бесполезно)
+ * быть равен соседу на границе с ним, пробовал менять поиск, но т.к все != 0 на левых частях - бесполезно)
  * в) Неверное деление (хотя проверял деление - всё ок)
  */
 
@@ -119,7 +118,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (!correctGates(gp.PP().t, gp.PP().s, gp.TG())) {
+    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
     }

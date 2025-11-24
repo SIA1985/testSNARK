@@ -131,13 +131,9 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
          rem[j] = remainder_coefs[j];
     }
 
-//    for(int i = 0; i <= degree_res; ++i) {
-//        std::cout << "c: " << res[i] << std::endl;
-//    }
-
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) + rem(x) / other(x);
+        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
     });
 }
 
@@ -519,8 +515,8 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
         std::cout << "left: " << it->first << " | " << "right: " << itOther->first << std::endl;
-//        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
-        std::cout << currentRange << " " << f1(currentRange.leftBound()) << " ? " << f1(currentRange.rightBound()) << std::endl;
+        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
+        std::cout << currentRange << " " << f1(currentRange.leftBound()) << " ? " << f1(currentRange.leftBound()) << std::endl;
         result.insert(currentRange, f1 / f2);
     });
 
@@ -585,7 +581,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
 
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
 {
-    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
@@ -597,7 +592,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
 
 PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom &other) const
 {
-    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
@@ -609,7 +603,6 @@ PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom 
 
 PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom &other) const
 {
-    //todo: m_map.size() == 0
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {

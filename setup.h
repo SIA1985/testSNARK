@@ -28,8 +28,15 @@ private:
     std::unordered_map<witness_t, std::shared_ptr<cond_t>> m_map;
 };
 
+struct SplittedT_t
+{
+    InterpolationPolynom left;
+    InterpolationPolynom right;
+    InterpolationPolynom result;
+};
+
 class GlobalParams {
-    using ProverParams_t = struct{T_t t; S_t s; W_t w;};
+    using ProverParams_t = struct{T_t t; SplittedT_t splittedT; S_t s; W_t w;};
 
 public:
     GlobalParams(const Circut &circut);
@@ -52,6 +59,7 @@ private:
     TG_t m_TG;
 
     T_t m_T;
+    SplittedT_t m_splittedT;
     S_t m_S;
     W_t m_W;
 };
