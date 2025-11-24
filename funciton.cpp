@@ -514,9 +514,9 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
     {
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
-        std::cout << "left: " << it->first << " | " << "right: " << itOther->first << std::endl;
-        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
-        std::cout << currentRange << " " << f1(currentRange.leftBound()) << " ? " << f1(currentRange.leftBound()) << std::endl;
+//        std::cout << "left: " << it->first << " | " << "right: " << itOther->first << std::endl;
+//        ValueType mid = (currentRange.leftBound() + currentRange.rightBound()) / 2;
+//        std::cout << currentRange << " " << (f1 / f2)(currentRange.rightBound()) << " ? " << f2(currentRange.rightBound()) << std::endl;
         result.insert(currentRange, f1 / f2);
     });
 

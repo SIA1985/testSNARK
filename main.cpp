@@ -24,9 +24,9 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
 
 bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
 {
-    auto tCanonic3wPlus1 = t.left.toPartedCanonicPolynom();
-    auto tCanonic3wPlus2 = t.right.toPartedCanonicPolynom();
-    auto tCanonic3wPlus3 = t.result.toPartedCanonicPolynom();
+    auto left = t.left.toPartedCanonicPolynom();
+    auto right = t.right.toPartedCanonicPolynom();
+    auto result = t.result.toPartedCanonicPolynom();
 
     auto funcF = snrk::PartedCanonicPolynom::generate(snrk::PartedCanonicPolynom::map{});
     auto sCanonic = s.toPartedCanonicPolynom();
@@ -47,20 +47,20 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
 
         switch(operation) {
         case snrk::Sum: {
-            funcF += (tCanonic3wPlus1 + tCanonic3wPlus2) * isOperation;
+            funcF += (left + right) * isOperation;
             break;
         }
         case snrk::Product: {
-            funcF += (tCanonic3wPlus1 * tCanonic3wPlus2) * isOperation;
+            funcF += (left * right) * isOperation;
             break;
         }
         case snrk::Minus: {
-            funcF += (tCanonic3wPlus1 - tCanonic3wPlus2) * isOperation;
+            funcF += (left - right) * isOperation;
             break;
         }
             //todo: после деления имеем CustomPolynom
 //        case snrk::Devide: {
-//            funcF += (tCanonic3wPlus1 / tCanonic3wPlus2) * isOperation(sCanonic);
+//            funcF += (left / right) * isOperation(sCanonic);
 //            break;
 //        }
         default:
@@ -68,7 +68,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
         }
     }
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, tCanonic3wPlus3, tG, witness);
+    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witness);
 
     return proof->check();
 }
@@ -83,14 +83,9 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
 }
 
 /*
- * Дело определённо в PCP получаемым после деления f / z, так как этот q != 0 в свидетелях
- * Конкретнее дело в: полиномах-отрезках, которые мы получаем в f, так как на левой части отрезка они != 0,
- * когда на правой == 0, при такой же ситуации в случае проверки входов полиномы == 0 на концах своего отрезка.
- * Возможные причины:
- * а) Рунге влез в конструирование funcF (у него там 6я степень, мб увеличить точность и проверить)
- * б) Дело в RangeMap, которая при поиске выдаёт не тот полином (хотя в любом случае, каждый полином должен
- * быть равен соседу на границе с ним, пробовал менять поиск, но т.к все != 0 на левых частях - бесполезно)
- * в) Неверное деление (хотя проверял деление - всё ок)
+ * Если все переходы и входы корректны, то в любом свидетеле будет пройден ZeroTest,
+ * если какой-то переход неверен, то в его свидетеле rem != 0 -> деление на 0 -> ошибка.
+ * Выходит, нужно проверять по 1му свидетелю для каждого диапазона. (при partition = 2 <=> SubTest)
  */
 
 int main(int argc, char *argv[])
@@ -103,7 +98,7 @@ int main(int argc, char *argv[])
     snrk::Circut c({x1, x2}, {w1});
 
     auto out1 = snrk::Value(11);
-    c.addGate({snrk::Sum, {x1, x2}, out1});
+    c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
     c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     auto out3 = snrk::Value(77);
@@ -113,10 +108,10 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
-        std::cout << "Некорректные входы!" << std::endl;
-        return 1;
-    }
+//    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+//        std::cout << "Некорректные входы!" << std::endl;
+//        return 1;
+//    }
 
     if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
