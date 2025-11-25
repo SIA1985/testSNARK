@@ -10,6 +10,16 @@ bool operator<(const dot_t &a, const dot_t &b)
     return cmp(a.x, b.x) != 1;
 }
 
+dots_t Polynom::dots(xs_t xs)
+{
+    dots_t result;
+    for(const auto &x : xs) {
+        result.push_back({x, (*this)(x)});
+    }
+
+    return result;
+}
+
 Y_t Polynom::commit(TG_t tG)
 {
     /*пока = f(t)*G напрямую*/
@@ -133,7 +143,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
+        return res(x) /*+ (rem(x) == 0 ? Y_t(0) : rem(x) / other(x))*/;
     });
 }
 

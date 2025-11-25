@@ -31,6 +31,7 @@ public:
     virtual ~Polynom() = default;
 
     virtual Y_t operator()(X_t x) = 0;
+    dots_t dots(xs_t xs);
 
     /*todo: передача gp*/
     virtual Y_t commit(TG_t tG);

@@ -59,10 +59,10 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
             break;
         }
             //todo: после деления имеем CustomPolynom
-//        case snrk::Devide: {
-//            funcF += (left / right) * isOperation(sCanonic);
-//            break;
-//        }
+        case snrk::Devide: {
+//            funcF += (snrk::InterpolationPolynom::generate((left / right).dots(witness))).toPartedCanonicPolynom() * isOperation(sCanonic);
+            break;
+        }
         default:
             break;
         }
@@ -100,18 +100,18 @@ int main(int argc, char *argv[])
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
-    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     auto out3 = snrk::Value(77);
+    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
     snrk::GlobalParams gp(c);
 
-//    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        return 1;
-//    }
+    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return 1;
+    }
 
     if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;

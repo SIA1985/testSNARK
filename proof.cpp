@@ -90,6 +90,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
 
+//    auto q = InterpolationPolynom::generate((f / z).dots(witness));
     auto q = f / z;
 
     ptr->m_comQ = q.commit(tG);
@@ -100,13 +101,13 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     //todo: сделать не только в диапазон [0, 1]
     /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
-    ptr->m_r = 3;
+    ptr->m_r = 2;
     std::cout << "R: " << ptr->m_r << " " << f( ptr->m_r) << " / " << z( ptr->m_r) << " =?= " << q( ptr->m_r)<< std::endl;
 
-//    for(auto w : ptr->m_witness) {
-////        w +=/* (w - 3) / 3. */ 0.0000001;
-//        std::cout << w << " : " << f(w) << " / " << z(w ) << " =?= " << q(w) << std::endl;
-//    }
+    for(auto w : ptr->m_witness) {
+//        w +=/* (w - 3) / 3. */ 0.0000001;
+        std::cout << w << " : " << f(w) << " / " << z(w ) << " =?= " << q(w) << std::endl;
+    }
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
@@ -127,7 +128,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom::generate(m_witness);
+    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
 
     ValueType b = m_qR * z(m_r);
 
