@@ -143,7 +143,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom::generate([res, rem, other](X_t x) mutable -> Y_t
     {
-        return res(x) /*+ (rem(x) == 0 ? Y_t(0) : rem(x) / other(x))*/;
+        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
     });
 }
 
