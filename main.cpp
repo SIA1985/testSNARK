@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
-    auto out3 = snrk::Value(77);
     c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
+    auto out3 = snrk::Value(77);
     c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});

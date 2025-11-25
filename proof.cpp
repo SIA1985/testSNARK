@@ -83,31 +83,28 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_tG = tG;
 
-    auto f = g - p;
+    auto f = InterpolationPolynom::generate((g - p).dots(witness)).toCanonicPolynom();
+    for(auto dot : (g - p).dots(witness)) {
+        std::cout << dot.x << " " <<  dot.y << std::endl;
+    }
 
     ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
-    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
+    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(ptr->m_witness));
 
-//    auto q = InterpolationPolynom::generate((f / z).dots(witness));
     auto q = f / z;
 
     ptr->m_comQ = q.commit(tG);
 
-    //такое ощущение, что пруф нужен для всех диапазонов, так как для r из одного диапазона
-    //не отлавливается ошибка в другом диапазоне -> ОБЪЕДИНЕНИЕ ПРУФОВ ДЛЯ РАЗНЫХ ДИАПАЗОНОВ (дерево Меркла?)
-    //в случае докательства переходов скорее всего дело в диапазоназ в длину по 1/3, куда не попадает r
-
     //todo: сделать не только в диапазон [0, 1]
     /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
-    ptr->m_r = 2;
+    ptr->m_r = 21;
     std::cout << "R: " << ptr->m_r << " " << f( ptr->m_r) << " / " << z( ptr->m_r) << " =?= " << q( ptr->m_r)<< std::endl;
 
-    for(auto w : ptr->m_witness) {
-//        w +=/* (w - 3) / 3. */ 0.0000001;
-        std::cout << w << " : " << f(w) << " / " << z(w ) << " =?= " << q(w) << std::endl;
-    }
+//    for(auto w : ptr->m_witness) {
+//        std::cout << w << " : " << f(w) << " / " << z(w) << " =?= " << q(w) << std::endl;
+//    }
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
