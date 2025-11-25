@@ -22,7 +22,7 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
     return proof->check();
 }
 
-bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
+bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, std::size_t witnessCount, snrk::TG_t tG)
 {
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
@@ -32,7 +32,8 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, snrk::TG_t tG)
     auto sCanonic = s.toPartedCanonicPolynom();
 
     snrk::xs_t witness;
-    for(std::size_t i = 1; i <= s.toCanonicPolynom().degree() + 1; i++) {
+    //todo: получить кол-во свидетелей по-другому
+    for(std::size_t i = 1; i <= (witnessCount - 3) / 3; i++) {
         witness.insert(i);
     }
 
@@ -97,12 +98,18 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
+    //фиктивно
+//    c.addGate({snrk::Sum, {{0}, {1}}, {1}});
+
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
-    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     auto out3 = snrk::Value(77);
-    c.addGate({snrk::Product, {out1, out2}, {out3}});
+    for(int i = 0; i < 1000; i++) {
+        c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
+
+        c.addGate({snrk::Product, {out1, out2}, {out3}});
+    }
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
@@ -113,7 +120,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.TG())) {
+    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.witnesses().size(), gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
     }

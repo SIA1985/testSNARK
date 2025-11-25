@@ -11,8 +11,10 @@
 
 namespace snrk { 
 
-typedef unsigned int witness_t;
+typedef double witness_t;
 typedef std::vector<witness_t> witnesses_t;
+
+witnesses_t genWitnesses(witness_t start, std::size_t count);
 
 typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;

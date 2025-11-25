@@ -1,10 +1,23 @@
 #include "setup.h"
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <thread>
 
 namespace snrk {
+
+witnesses_t genWitnesses(witness_t start, std::size_t count)
+{
+    witnesses_t witnesses;
+    for(std::size_t i = 0; i < count; i++) {
+        witnesses.push_back(
+            ((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.
+        );
+    }
+
+    return witnesses;
+}
 
 W_t W_t::generate(const witnesses_t &witnesses, const Circut &circut)
 {

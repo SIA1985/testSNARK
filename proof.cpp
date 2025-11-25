@@ -14,7 +14,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
         c = -c;
     }
 
-    std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
+//    std::cout << std::setprecision(20) << "diff " << a << " - " << b << " = " << c << std::endl;
 
     return c <= eps;
 }
@@ -36,9 +36,7 @@ X_t getR(const xs_t &witness) {
     auto randIt = witness.begin();
     std::advance(randIt, random_offset);
 
-    auto max = *(--witness.cend());
-
-    return *randIt / (max + 1);
+    return *randIt;
 }
 
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
@@ -81,25 +79,28 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
+//    witness.erase(witness.begin());
+
     ptr->m_tG = tG;
 
     auto f = InterpolationPolynom::generate((g - p).dots(witness)).toCanonicPolynom();
-    for(auto dot : (g - p).dots(witness)) {
-        std::cout << dot.x << " " <<  dot.y << std::endl;
-    }
+//    for(auto dot : (g - p).dots(witness)) {
+//        std::cout << dot.x << " " <<  dot.y << std::endl;
+//    }
+//    auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
+//    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
     auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(ptr->m_witness));
 
     auto q = f / z;
 
     ptr->m_comQ = q.commit(tG);
 
-    //todo: сделать не только в диапазон [0, 1]
-    /*todo: (hash % size(witness)) / (max(winess) + 1) -> тогда в рамках поля F*/
-    ptr->m_r = 21;
+    /*todo: (hash % size(witness)*/
+    ptr->m_r = getR(ptr->m_witness);
     std::cout << "R: " << ptr->m_r << " " << f( ptr->m_r) << " / " << z( ptr->m_r) << " =?= " << q( ptr->m_r)<< std::endl;
 
 //    for(auto w : ptr->m_witness) {
@@ -125,11 +126,12 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
+//    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
+    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(m_witness));
 
     ValueType b = m_qR * z(m_r);
 
-//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 
