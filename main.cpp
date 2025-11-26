@@ -11,6 +11,7 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     for(std::size_t i = 0; i < inputs.size(); i++) {
         witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
+        std::cout << ws[i] << std::endl;
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
 
@@ -31,6 +32,8 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
     snrk::xs_t witness;
     for(const auto &w : ws) {
         witness.insert(w);
+        //вывод не целых чисел
+        std::cout << sCanonic(w) << std::endl;
     }
 
     FOROPS {
@@ -65,6 +68,9 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
         }
     }
 
+    for(auto w : ws) {
+        std::cout << funcF(w) << std::endl;
+    }
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witness);
 
     return proof->check();
@@ -72,6 +78,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
+    //todo: изменить получение степени
     auto outputDot = snrk::dot_t{t.toCanonicPolynom().degree() + 1, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);

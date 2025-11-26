@@ -10,7 +10,7 @@ namespace snrk {
 witnesses_t genWitnesses(witness_t start, std::size_t count)
 {
     witnesses_t witnesses;
-    for(std::size_t i = 0; i < count; i++) {
+    for(std::size_t i = 1; i <= count; i++) {
         witnesses.push_back(
             ((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.
         );
@@ -67,6 +67,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 GlobalParams::GlobalParams(const Circut &circut)
     : m_TG{10, 20}
 {
+    //todo: 1 -> macro
     m_witnesses = genWitnesses(1., circut.degree());
 
     std::thread tT(&GlobalParams::generateT, this, std::ref(circut));
@@ -114,8 +115,8 @@ void GlobalParams::generateT(const Circut &circut)
     fillMap(circut.m_inputX);
     fillMap(circut.m_inputW);
 
-    /*todo: 1 -> macro*/
-    m_splittedTwitnesses = witnesses_t(m_witnesses.begin() + circut.inputSize(), m_witnesses.begin() + (m_witnesses.size() - 3 ) / 3);
+    //1 - > macro
+    m_splittedTwitnesses = genWitnesses(1., circut.m_gates.size());
     auto i = m_splittedTwitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {
