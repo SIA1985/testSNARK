@@ -2,27 +2,24 @@
 #include <iostream>
 #include <iomanip>
 
-bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, snrk::TG_t tG)
+bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
     auto funcT = t.toPartedCanonicPolynom();
 
     snrk::dots_t inputsW;
+    snrk::xs_t witness;
     for(std::size_t i = 0; i < inputs.size(); i++) {
-        inputsW.push_back({i + 1, inputs[i]});
+        witness.insert(ws[i]);
+        inputsW.push_back({ws[i], inputs[i]});
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
-
-    snrk::xs_t witness;
-    for(std::size_t i = 1; i <= inputs.size(); i++) {
-        witness.insert(i);
-    }
 
     auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, witness);
 
     return proof->check();
 }
 
-bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, std::size_t witnessCount, snrk::TG_t tG)
+bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
@@ -32,9 +29,8 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, std::size_t wi
     auto sCanonic = s.toPartedCanonicPolynom();
 
     snrk::xs_t witness;
-    //todo: получить кол-во свидетелей по-другому
-    for(std::size_t i = 1; i <= (witnessCount - 3) / 3; i++) {
-        witness.insert(i);
+    for(const auto &w : ws) {
+        witness.insert(w);
     }
 
     FOROPS {
@@ -105,22 +101,22 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
     auto out3 = snrk::Value(77);
-    for(int i = 0; i < 1000; i++) {
+//    for(int i = 0; i < 1000; i++) {
         c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
 
         c.addGate({snrk::Product, {out1, out2}, {out3}});
-    }
+//    }
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
     snrk::GlobalParams gp(c);
 
-    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.TG())) {
+    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.witnesses(), gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
         return 1;
     }
 
-    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.witnesses().size(), gp.TG())) {
+    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.splittedTwitnesses(), gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
     }

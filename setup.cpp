@@ -67,14 +67,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 GlobalParams::GlobalParams(const Circut &circut)
     : m_TG{10, 20}
 {
-    m_witnesses.resize(circut.degree());
-
-    witness_t wGenerator = 1;
-    std::generate(m_witnesses.begin(), m_witnesses.end(),
-    [&wGenerator]() -> witness_t
-    {
-        return wGenerator++;
-    });
+    m_witnesses = genWitnesses(1., circut.degree());
 
     std::thread tT(&GlobalParams::generateT, this, std::ref(circut));
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
@@ -88,6 +81,11 @@ GlobalParams::GlobalParams(const Circut &circut)
 witnesses_t GlobalParams::witnesses() const
 {
     return m_witnesses;
+}
+
+witnesses_t GlobalParams::splittedTwitnesses() const
+{
+    return m_splittedTwitnesses;
 }
 
 TG_t GlobalParams::TG()
@@ -117,16 +115,18 @@ void GlobalParams::generateT(const Circut &circut)
     fillMap(circut.m_inputW);
 
     /*todo: 1 -> macro*/
-    std::size_t i = 1;
+    m_splittedTwitnesses = witnesses_t(m_witnesses.begin() + circut.inputSize(), m_witnesses.begin() + (m_witnesses.size() - 3 ) / 3);
+    auto i = m_splittedTwitnesses.begin();
+
     for(const auto& gate : circut.m_gates) {
         dots.push_back({X_t(*cw++), Y_t(gate.m_input.a)});
-        leftDots.push_back({X_t(i), Y_t(gate.m_input.a)});
+        leftDots.push_back({X_t(*i), Y_t(gate.m_input.a)});
 
         dots.push_back({X_t(*cw++), Y_t(gate.m_input.b)});
-        rightDots.push_back({X_t(i), Y_t(gate.m_input.b)});
+        rightDots.push_back({X_t(*i), Y_t(gate.m_input.b)});
 
         dots.push_back({X_t(*cw++), Y_t(gate.m_output)});
-        resultDots.push_back({X_t(i), Y_t(gate.m_output)});
+        resultDots.push_back({X_t(*i), Y_t(gate.m_output)});
 
         i++;
     }
@@ -144,7 +144,7 @@ void GlobalParams::generateS(const Circut &circut)
     dots_t dots;
 
     for(std::size_t i = 0; i < circut.size(); i++) {
-        dots.push_back({X_t(i + 1), Y_t(circut.m_gates[i].m_type)});
+        dots.push_back({X_t(m_splittedTwitnesses[i]), Y_t(circut.m_gates[i].m_type)});
     }
 
     m_S = S_t::generate(dots);

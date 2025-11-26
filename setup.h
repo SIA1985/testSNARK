@@ -44,6 +44,7 @@ public:
     GlobalParams(const Circut &circut);
 
     witnesses_t witnesses() const;
+    witnesses_t splittedTwitnesses() const;
 
     TG_t TG();
 
@@ -57,6 +58,7 @@ private:
     void generateW(const Circut &circut);
 
     witnesses_t m_witnesses;
+    witnesses_t m_splittedTwitnesses;
 
     TG_t m_TG;
 
