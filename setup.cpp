@@ -70,11 +70,10 @@ GlobalParams::GlobalParams(const Circut &circut)
     //todo: 1 -> macro
     m_witnesses = genWitnesses(1., circut.degree());
 
-    std::thread tT(&GlobalParams::generateT, this, std::ref(circut));
+    generateT(circut);
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
     std::thread tW(&GlobalParams::generateW, this, std::ref(circut));
 
-    tT.join();
     tS.join();
     tW.join();
 }

@@ -1,6 +1,7 @@
 #include "snark.h"
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
@@ -32,15 +33,13 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
     snrk::xs_t witness;
     for(const auto &w : ws) {
         witness.insert(w);
-        //вывод не целых чисел
-        std::cout << sCanonic(w) << std::endl;
     }
 
     FOROPS {
         //todo: вынести в генерацию S
         snrk::dots_t dots;
         for(const auto &w : witness) {
-            dots.push_back(operation == sCanonic(w) ? snrk::dot_t{w, 1} : snrk::dot_t{w, 0});
+            dots.push_back(operation == (snrk::GateType_t)std::round(sCanonic(w).get_d()) ? snrk::dot_t{w, 1} : snrk::dot_t{w, 0});
         }
 
         auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
@@ -68,9 +67,10 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
         }
     }
 
-    for(auto w : ws) {
-        std::cout << funcF(w) << std::endl;
-    }
+    //при 1к свидетелей тут кошмар почему-то
+//    for(auto w : ws) {
+//        std::cout << w << " : " << funcF(w) << " " << result(w) << std::endl;
+//    }
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witness);
 
     return proof->check();
@@ -79,6 +79,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     //todo: изменить получение степени
+    //todo: последний свидетель
     auto outputDot = snrk::dot_t{t.toCanonicPolynom().degree() + 1, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
@@ -102,17 +103,17 @@ int main(int argc, char *argv[])
     snrk::Circut c({x1, x2}, {w1});
 
     //фиктивно
-//    c.addGate({snrk::Sum, {{0}, {1}}, {1}});
+    c.addGate({snrk::Sum, {{0}, {1}}, {1}});
 
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
     auto out3 = snrk::Value(77);
-//    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 1000; i++) {
         c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
 
         c.addGate({snrk::Product, {out1, out2}, {out3}});
-//    }
+    }
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 

@@ -78,14 +78,14 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
-//    witness.erase(witness.begin());
+    witness.erase(witness.begin());
 
     ptr->m_tG = tG;
 
     auto f = InterpolationPolynom::generate((g - p).dots(witness)).toCanonicPolynom();
-    for(auto dot : (g - p).dots(witness)) {
-        std::cout << dot.x << " " <<  dot.y << std::endl;
-    }
+//    for(auto dot : (g - p).dots(witness)) {
+//        std::cout << dot.x << " " <<  dot.y << std::endl;
+//    }
 //    auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
