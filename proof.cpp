@@ -74,25 +74,37 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
+//todo: если заработает witness: xs_t -> witnesses_t
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
 {
     auto ptr = ptr_t(new ZeroTestProof);
 
-    witness.erase(witness.begin());
-
     ptr->m_tG = tG;
 
-    auto f = InterpolationPolynom::generate((g - p).dots(witness)).toCanonicPolynom();
-//    for(auto dot : (g - p).dots(witness)) {
-//        std::cout << dot.x << " " <<  dot.y << std::endl;
+//    witness.erase(std::prev(witness.end()));
+
+//    auto fDots = (g - p).dots(witness);
+//    auto newWitnesses = genWitnesses(wStart, witness.size(), true);
+
+//    witness.clear();
+//    for(std::size_t i = 0; i < newWitnesses.size(); i++) {
+//        witness.insert(newWitnesses[i]);
+//        fDots[i].x = newWitnesses[i];
 //    }
-//    auto f = g - p;
+
+
+//    auto f = InterpolationPolynom::generate(fDots).toCanonicPolynom();
+
+    auto f = g - p;
 
     ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
-//    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
-    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(ptr->m_witness));
+    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
+//    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(ptr->m_witness));
+//    for(auto w : ptr->m_witness) {
+//        std::cout << w << " " <<  f(w + 0.1) << " / " << z(w) << std::endl;
+//    }
 
     auto q = f / z;
 
@@ -125,8 +137,8 @@ bool ZeroTestProof::check()
         return false;
     }
 
-//    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
-    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(m_witness));
+    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
+//    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(m_witness));
 
     ValueType b = m_qR * z(m_r);
 

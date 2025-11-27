@@ -14,7 +14,8 @@ namespace snrk {
 typedef double witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
-witnesses_t genWitnesses(witness_t start, std::size_t count);
+static witness_t wStart = 1.;
+witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev = false);
 
 typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;
@@ -44,7 +45,7 @@ public:
     GlobalParams(const Circut &circut);
 
     witnesses_t witnesses() const;
-    witnesses_t splittedTwitnesses() const;
+    witnesses_t SWitnesses() const;
 
     TG_t TG();
 
@@ -58,7 +59,7 @@ private:
     void generateW(const Circut &circut);
 
     witnesses_t m_witnesses;
-    witnesses_t m_splittedTwitnesses;
+    witnesses_t m_SWitnesses;
 
     TG_t m_TG;
 

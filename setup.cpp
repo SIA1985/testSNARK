@@ -7,12 +7,13 @@
 
 namespace snrk {
 
-witnesses_t genWitnesses(witness_t start, std::size_t count)
+witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev)
 {
     witnesses_t witnesses;
     for(std::size_t i = 1; i <= count; i++) {
         witnesses.push_back(
-            ((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.
+            Chebishev ? (((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.)
+                      : i
         );
     }
 
@@ -67,8 +68,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 GlobalParams::GlobalParams(const Circut &circut)
     : m_TG{10, 20}
 {
-    //todo: 1 -> macro
-    m_witnesses = genWitnesses(1., circut.degree());
+    m_witnesses = genWitnesses(wStart, circut.degree());
 
     generateT(circut);
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
@@ -83,9 +83,9 @@ witnesses_t GlobalParams::witnesses() const
     return m_witnesses;
 }
 
-witnesses_t GlobalParams::splittedTwitnesses() const
+witnesses_t GlobalParams::SWitnesses() const
 {
-    return m_splittedTwitnesses;
+    return m_SWitnesses;
 }
 
 TG_t GlobalParams::TG()
@@ -114,9 +114,8 @@ void GlobalParams::generateT(const Circut &circut)
     fillMap(circut.m_inputX);
     fillMap(circut.m_inputW);
 
-    //1 - > macro
-    m_splittedTwitnesses = genWitnesses(1., circut.m_gates.size());
-    auto i = m_splittedTwitnesses.begin();
+    m_SWitnesses = genWitnesses(wStart, circut.m_gates.size());
+    auto i = m_SWitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {
         dots.push_back({X_t(*cw++), Y_t(gate.m_input.a)});
@@ -144,7 +143,7 @@ void GlobalParams::generateS(const Circut &circut)
     dots_t dots;
 
     for(std::size_t i = 0; i < circut.size(); i++) {
-        dots.push_back({X_t(m_splittedTwitnesses[i]), Y_t(circut.m_gates[i].m_type)});
+        dots.push_back({X_t(m_SWitnesses[i]), Y_t(circut.m_gates[i].m_type)});
     }
 
     m_S = S_t::generate(dots);

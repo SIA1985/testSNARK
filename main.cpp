@@ -12,7 +12,6 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     for(std::size_t i = 0; i < inputs.size(); i++) {
         witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
-        std::cout << ws[i] << std::endl;
     }
     auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
 
@@ -57,7 +56,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
             funcF += (left - right) * isOperation;
             break;
         }
-            //todo: после деления имеем CustomPolynom
+            //todo: после деления имеем CustomPolynom (если кол-во опреаций деления != 0 -> выполнять)
         case snrk::Devide: {
 //            funcF += (snrk::InterpolationPolynom::generate((left / right).dots(witness))).toPartedCanonicPolynom() * isOperation(sCanonic);
             break;
@@ -67,20 +66,16 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
         }
     }
 
-    //при 1к свидетелей тут кошмар почему-то
-//    for(auto w : ws) {
-//        std::cout << w << " : " << funcF(w) << " " << result(w) << std::endl;
-//    }
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witness);
 
     return proof->check();
 }
 
-bool currentOutput(const snrk::T_t &t, snrk::value_t output, snrk::TG_t tG) {
+bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     //todo: изменить получение степени
     //todo: последний свидетель
-    auto outputDot = snrk::dot_t{t.toCanonicPolynom().degree() + 1, output};
+    auto outputDot = snrk::dot_t{lastWNum, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 
@@ -102,20 +97,19 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-    //фиктивно
-    c.addGate({snrk::Sum, {{0}, {1}}, {1}});
-
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
     auto out3 = snrk::Value(77);
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 100; i++) {
         c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
 
         c.addGate({snrk::Product, {out1, out2}, {out3}});
     }
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
+
+//    c.addGate({snrk::Sum, {{1}, {0}}, {1}});
 
     snrk::GlobalParams gp(c);
 
@@ -124,14 +118,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.splittedTwitnesses(), gp.TG())) {
+    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.SWitnesses(), gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
     }
 
     //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out4, gp.TG())) {
+    if (!currentOutput(gp.PP().t, out4, gp.witnesses().size(), gp.TG())) {
         std::cout << "Некорректный выход!" << std::endl;
         return 1;
     }
