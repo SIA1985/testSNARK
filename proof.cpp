@@ -81,42 +81,21 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_tG = tG;
 
-//    witness.erase(std::prev(witness.end()));
-
-//    auto fDots = (g - p).dots(witness);
-//    auto newWitnesses = genWitnesses(wStart, witness.size(), true);
-
-//    witness.clear();
-//    for(std::size_t i = 0; i < newWitnesses.size(); i++) {
-//        witness.insert(newWitnesses[i]);
-//        fDots[i].x = newWitnesses[i];
-//    }
-
-
-//    auto f = InterpolationPolynom::generate(fDots).toCanonicPolynom();
-
-    auto f = g - p;
-
-    ptr->m_comF = f.commit(tG);
     ptr->m_witness = witness;
 
-    auto z = ZeroPolynom::generate(ptr->m_witness).toPartedCanonicPolynom();
-//    auto z = CanonicPolynom::generate(CanonicPolynom::coefsFromRoots(ptr->m_witness));
-//    for(auto w : ptr->m_witness) {
-//        std::cout << w << " " <<  f(w + 0.1) << " / " << z(w) << std::endl;
-//    }
 
-    auto q = f / z;
+    auto f = g - p;
+    ptr->m_comF = f.commit(tG);
 
+    auto z = ZeroPolynom::generate(witness).toPartedCanonicPolynom();
+
+    auto qDots = (f / z).dots(witness);
+    auto q = InterpolationPolynom::generate(qDots);
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness)*/
     ptr->m_r = getR(ptr->m_witness);
     std::cout << "R: " << ptr->m_r << " " << f( ptr->m_r) << " / " << z( ptr->m_r) << " =?= " << q( ptr->m_r)<< std::endl;
-
-//    for(auto w : ptr->m_witness) {
-//        std::cout << w << " : " << f(w) << " / " << z(w) << " =?= " << q(w) << std::endl;
-//    }
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);

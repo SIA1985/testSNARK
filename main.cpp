@@ -73,8 +73,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
-    //todo: изменить получение степени
-    //todo: последний свидетель
+
     auto outputDot = snrk::dot_t{lastWNum, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
@@ -101,15 +100,13 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
     auto out3 = snrk::Value(77);
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 1000; i++) {
         c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
 
         c.addGate({snrk::Product, {out1, out2}, {out3}});
     }
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
-
-//    c.addGate({snrk::Sum, {{1}, {0}}, {1}});
 
     snrk::GlobalParams gp(c);
 
@@ -118,6 +115,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    //todo: если падает -> не построить полином -> не получить доказательство
     if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.SWitnesses(), gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
         return 1;
