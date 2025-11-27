@@ -40,7 +40,7 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, 
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
 
-    auto q = snrk::CustomPolynom::generate([&f, u = toProve.x](snrk::X_t x) -> snrk::Y_t
+    auto q = snrk::CustomPolynom([&f, u = toProve.x](snrk::X_t x) -> snrk::Y_t
     {
         return (f(x) - f(u)) / (x - u);
     });
@@ -72,7 +72,6 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-//todo: если заработает witness: xs_t -> witnesses_t
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
 {
     auto ptr = ptr_t(new ZeroTestProof);
@@ -85,10 +84,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
-    auto z = ZeroPolynom::generate(witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom(witness).toPartedCanonicPolynom();
 
-    auto qDots = (f / z).dots(witness);
-    auto q = InterpolationPolynom::generate(qDots);
+    auto q = InterpolationPolynom((f / z).dots(witness));
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness)*/
@@ -113,11 +111,11 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom::generate(m_witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom(m_witness).toPartedCanonicPolynom();
 
     ValueType b = m_qR * z(m_r);
 
-    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 

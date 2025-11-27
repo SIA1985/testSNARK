@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <csignal>
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
@@ -13,35 +14,28 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
         witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
     }
-    auto funcV = snrk::InterpolationPolynom::generate(inputsW).toPartedCanonicPolynom();
+    auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
 
     auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, witness);
 
     return proof->check();
 }
 
-bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::witnesses_t &ws, snrk::TG_t tG)
+bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
 
-    auto funcF = snrk::PartedCanonicPolynom::generate(snrk::PartedCanonicPolynom::map{});
-    auto sCanonic = s.toPartedCanonicPolynom();
+    auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
 
     snrk::xs_t witness;
     for(const auto &w : ws) {
         witness.insert(w);
     }
 
-    FOROPS {
-        //todo: вынести в генерацию S
-        snrk::dots_t dots;
-        for(const auto &w : witness) {
-            dots.push_back(operation == (snrk::GateType_t)std::round(sCanonic(w).get_d()) ? snrk::dot_t{w, 1} : snrk::dot_t{w, 0});
-        }
-
-        auto isOperation = snrk::InterpolationPolynom::generate(dots).toPartedCanonicPolynom();
+    for(const auto &[operation, dots] : SParams.opsFromS) {
+        auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
 
         switch(operation) {
         case snrk::Sum: {
@@ -56,9 +50,9 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::S_t &s, const snrk::wi
             funcF += (left - right) * isOperation;
             break;
         }
-            //todo: после деления имеем CustomPolynom (если кол-во опреаций деления != 0 -> выполнять)
+            //todo:
         case snrk::Devide: {
-//            funcF += (snrk::InterpolationPolynom::generate((left / right).dots(witness))).toPartedCanonicPolynom() * isOperation(sCanonic);
+//            funcF += (snrk::InterpolationPolynom((left / right).dots(witness))).toPartedCanonicPolynom() * isOperation;
             break;
         }
         default:
@@ -81,8 +75,18 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNu
     return proof->check();
 }
 
+void sigfpeHandler(int signum) {
+    std::cout << "Ошибка в создании доказательства!" << std::endl;
+    exit(signum);
+}
+
+
 int main(int argc, char *argv[])
 {
+    if (std::signal(SIGFPE, sigfpeHandler) == SIG_ERR) {
+        exit(2);
+    }
+
     /*todo: пример из тетради проверить*/
     auto x1 = snrk::Value(5);
     auto x2 = snrk::Value(6);
@@ -100,23 +104,24 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
     snrk::GlobalParams gp(c);
+    auto TParams = gp.PP().TParams;
 
-    if (!correctInputs(gp.PP().t, {x1, x2, {w1}}, gp.witnesses(), gp.TG())) {
+    if (!correctInputs(TParams.t, {x1, x2, {w1}}, gp.witnesses(), gp.TG())) {
         std::cout << "Некорректные входы!" << std::endl;
-        return 1;
+        exit(1);
     }
 
     //todo: если падает -> не построить полином -> не получить доказательство
-    if (!correctGates(gp.PP().splittedT, gp.PP().s, gp.SWitnesses(), gp.TG())) {
+    if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), gp.TG())) {
         std::cout << "Некорректные переходы!" << std::endl;
-        return 1;
+        exit(1);
     }
 
     //todo: 6.
 
-    if (!currentOutput(gp.PP().t, out4, gp.witnesses().size(), gp.TG())) {
+    if (!currentOutput(TParams.t, out4, gp.witnesses().size(), gp.TG())) {
         std::cout << "Некорректный выход!" << std::endl;
-        return 1;
+        exit(1);
     }
 
     std::cout << "Ok!" << std::endl;
@@ -124,11 +129,10 @@ int main(int argc, char *argv[])
 
 /*todo:
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
- * 3. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
- * 4. Доразобраться с gp и сделать норм. commit
- * 6. generate -> constructor
- * 7. Вынести типы в types.h
- * 8. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
+ * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
+ * 3. Доразобраться с gp и сделать норм. commit
+ * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
+ * 5. Разобраться с делением
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

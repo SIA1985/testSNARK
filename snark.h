@@ -3,7 +3,7 @@
 
 #include "circut.h"
 #include "setup.h"
-#include "funciton.h"
+#include "polynom.h"
 #include "proof.h"
 #include "operation.h"
 

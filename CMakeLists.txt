@@ -15,9 +15,10 @@ set(PROJECT_SOURCES
     snark.h
     circut.h circut.cpp
     setup.h setup.cpp
-    funciton.h funciton.cpp
+    polynom.h polynom.cpp
     proof.h proof.cpp
     operation.h operation.cpp
+    types.h
     main.cpp
 )
 

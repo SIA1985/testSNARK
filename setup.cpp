@@ -1,4 +1,5 @@
 #include "setup.h"
+#include "operation.h"
 
 #include <algorithm>
 #include <cmath>
@@ -20,9 +21,8 @@ witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev)
     return witnesses;
 }
 
-W_t W_t::generate(const witnesses_t &witnesses, const Circut &circut)
+W_t::W_t(const witnesses_t &witnesses, const Circut &circut)
 {
-    W_t w;
     std::map<value_t, std::shared_ptr<cond_t>> duplicates;
     auto insert = [&duplicates](value_t key, witness_t value)
     {
@@ -53,11 +53,9 @@ W_t W_t::generate(const witnesses_t &witnesses, const Circut &circut)
 
     for(const auto &[_, condition] : duplicates) {
         for(const auto &witness : *condition) {
-            w.m_map[witness] = condition;
+            m_map[witness] = condition;
         }
     }
-
-    return w;
 }
 
 W_t::cond_t W_t::operator()(witness_t w) const
@@ -96,7 +94,7 @@ TG_t GlobalParams::TG()
 
 GlobalParams::ProverParams_t GlobalParams::PP()
 {
-    return {.t = m_T, .splittedT = m_splittedT, .s = m_S, .w = m_W};
+    return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .w = m_W};
 }
 
 void GlobalParams::generateT(const Circut &circut)
@@ -130,11 +128,11 @@ void GlobalParams::generateT(const Circut &circut)
         i++;
     }
 
-    m_T = T_t::generate(dots);
+    m_T = T_t(dots);
     m_splittedT = {
-                    .left = InterpolationPolynom::generate(leftDots),
-                    .right = InterpolationPolynom::generate(rightDots),
-                    .result = InterpolationPolynom::generate(resultDots)
+                    .left = InterpolationPolynom(leftDots),
+                    .right = InterpolationPolynom(rightDots),
+                    .result = InterpolationPolynom(resultDots)
                   };
 }
 
@@ -143,15 +141,24 @@ void GlobalParams::generateS(const Circut &circut)
     dots_t dots;
 
     for(std::size_t i = 0; i < circut.size(); i++) {
-        dots.push_back({X_t(m_SWitnesses[i]), Y_t(circut.m_gates[i].m_type)});
+        auto currentOperation = circut.m_gates[i].m_type;
+        auto sw = m_SWitnesses[i];
+
+        dots.push_back({sw, currentOperation});
+
+        FOROPS {
+            m_opsFromS[operation].push_back(
+                        operation == currentOperation ? dot_t{sw, 1} : dot_t{sw, 0}
+            );
+        }
     }
 
-    m_S = S_t::generate(dots);
+    m_S = S_t(dots);
 }
 
 void GlobalParams::generateW(const Circut &circut)
 {
-    m_W = W_t::generate(m_witnesses, circut);
+    m_W = W_t(m_witnesses, circut);
 }
 
 }

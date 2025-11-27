@@ -1,7 +1,7 @@
 #ifndef PROOF_H
 #define PROOF_H
 
-#include "funciton.h"
+#include "polynom.h"
 #include "setup.h"
 
 namespace snrk {

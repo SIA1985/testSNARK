@@ -3,21 +3,10 @@
 
 #include <vector>
 #include <memory>
-#include <any>
-#include <gmpxx.h>
+
+#include "types.h"
 
 namespace snrk {
-
-enum GateType_t : char {
-    Unknown = 0,
-
-    Sum,
-    Product,
-    Minus,
-    Devide,
-};
-
-#define ValueType mpf_class
 
 class Value
 {
@@ -39,9 +28,6 @@ private:
 
 bool operator<(const Value &a, const Value &b);
 //bool operator==(const Value &a, const Value &b);
-
-typedef Value value_t;
-typedef std::vector<value_t> values_t;
 
 class Gate {
 

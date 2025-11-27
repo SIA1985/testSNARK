@@ -2,7 +2,7 @@
 #define SETUP_H
 
 #include "circut.h"
-#include "funciton.h"
+#include "polynom.h"
 
 #include <unordered_map>
 #include <utility>
@@ -11,19 +11,15 @@
 
 namespace snrk { 
 
-typedef double witness_t;
-typedef std::vector<witness_t> witnesses_t;
-
 static witness_t wStart = 1.;
 witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev = false);
-
-typedef InterpolationPolynom T_t;
-typedef InterpolationPolynom S_t;
 
 class W_t {
     using cond_t = std::unordered_set<witness_t>;
 public:
-    static W_t generate(const witnesses_t &witnesses, const Circut &circut);
+    W_t() = default;
+
+    W_t(const witnesses_t &witnesses, const Circut &circut);
 
     cond_t operator()(witness_t w) const;
 
@@ -39,9 +35,14 @@ struct SplittedT_t
 };
 
 class GlobalParams {
-    using ProverParams_t = struct{T_t t; SplittedT_t splittedT; S_t s; W_t w;};
-
 public:
+    using opsFromS_t = std::unordered_map<GateType_t, dots_t>;
+    using TParams_t = struct{T_t t; SplittedT_t splittedT;};
+    using SParams_t = struct{S_t s; opsFromS_t opsFromS;};
+
+    using ProverParams_t = struct{TParams_t TParams; SParams_t SParams; W_t w;};
+
+
     GlobalParams(const Circut &circut);
 
     witnesses_t witnesses() const;
@@ -65,7 +66,10 @@ private:
 
     T_t m_T;
     SplittedT_t m_splittedT;
+
     S_t m_S;
+    opsFromS_t m_opsFromS;
+
     W_t m_W;
 };
 
