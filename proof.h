@@ -17,10 +17,10 @@ public:
 
 class PolynomSubstitutionProof : public Proof
 {
+public:
     using commit_t = X_t;
     using ptr_t = std::shared_ptr<PolynomSubstitutionProof>;
 
-public:
     static ptr_t forProver(Polynom &f, dot_t toProve, TG_t tG);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG);
 
@@ -41,10 +41,10 @@ private:
 
 class ZeroTestProof : public Proof
 {
+public:
     using commit_t = X_t;
     using ptr_t = std::shared_ptr<ZeroTestProof>;
 
-public:
     /*todo: откуда брать r?*/
     /*check: f = p -> f - p = 0*/
     static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness);

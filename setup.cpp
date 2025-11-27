@@ -66,6 +66,7 @@ W_t::cond_t W_t::operator()(witness_t w) const
 }
 
 GlobalParams::GlobalParams(const Circut &circut)
+    //todo: генерация
     : m_TG{10, 20}
 {
     m_witnesses = genWitnesses(wStart, circut.degree());
@@ -95,7 +96,6 @@ TG_t GlobalParams::TG()
 
 GlobalParams::ProverParams_t GlobalParams::PP()
 {
-    /*todo: не копия*/
     return {.t = m_T, .splittedT = m_splittedT, .s = m_S, .w = m_W};
 }
 

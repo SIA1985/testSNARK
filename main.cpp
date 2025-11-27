@@ -81,12 +81,6 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNu
     return proof->check();
 }
 
-/*
- * Если все переходы и входы корректны, то в любом свидетеле будет пройден ZeroTest,
- * если какой-то переход неверен, то в его свидетеле rem != 0 -> деление на 0 -> ошибка.
- * Выходит, нужно проверять по 1му свидетелю для каждого диапазона. (при partition = 2 <=> SubTest)
- */
-
 int main(int argc, char *argv[])
 {
     /*todo: пример из тетради проверить*/
@@ -99,12 +93,9 @@ int main(int argc, char *argv[])
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
+    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
     auto out3 = snrk::Value(77);
-    for(int i = 0; i < 1000; i++) {
-        c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
-
-        c.addGate({snrk::Product, {out1, out2}, {out3}});
-    }
+    c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
 
@@ -128,42 +119,23 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //todo: нет assert на размер диапазона
-//    snrk::PartedCanonicPolynom::map m;
-//    m.insert(snrk::Range{1, 3}, snrk::CanonicPolynom::generate({1}));
-//    m.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({2}));
-
-//    auto a = snrk::PartedCanonicPolynom::generate(m);
-
-//    snrk::PartedCanonicPolynom::map m2;
-//    m2.insert(snrk::Range{3, 5}, snrk::CanonicPolynom::generate({1})); //4*4 + 4*6 == 40
-//    m2.insert(snrk::Range{5, 7}, snrk::CanonicPolynom::generate({4}));
-
-//    auto b = snrk::PartedCanonicPolynom::generate(m2);
-
-//    std::cout << (a / b)(3) << " " << a(3) / b(3) << std::endl;
-
     std::cout << "Ok!" << std::endl;
 }
 
 /*todo:
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
- * 2. Генерация свидетелей в ZeroTestProof с 1, если для 7 этапа, то нужно передать номер свидетеля, либо сделать отдельный класс Proof
  * 3. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 4. Доразобраться с gp и сделать норм. commit
- * !5. Заменить (но не удалить, а на его основе) CanonicPolynom на кубические сплайны (сначала попробовать имеющимися средствами, потом из примера в ИИ)!
- * (мало ли mpf_set_default_prec(256);)
  * 6. generate -> constructor
  * 7. Вынести типы в types.h
  * 8. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
- * 9. Опять 2й проход по некоторым диапазонам
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
  * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
  * [V]3. P строит T(x) и получает comt
  * [V]4. T корректно кодирует входы
- * []5. Каждый вентиль корректно посчитан
+ * [V]5. Каждый вентиль корректно посчитан (иначе не создает proof)
  * []6. Стрелки соответствуют С
  * [V]7. Выход последнего вентиля =0 (как-то через ZeroTest?, скорее через Substitution)
  * []8. Оптимизации (сложностей О)
