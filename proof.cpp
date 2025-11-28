@@ -81,12 +81,17 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_witness = witness;
 
 
+    //todo: при доказательстве входов тут p для currentRange выводит растущие значения
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
-    auto z = ZeroPolynom(witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom(ptr->m_witness).toPartedCanonicPolynom();
 
-    auto q = InterpolationPolynom((f / z).dots(witness));
+//    for(auto w : ptr->m_witness) {
+//        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;
+//    }
+
+    auto q = InterpolationPolynom((f / z).dots(ptr->m_witness));
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness)*/
@@ -115,7 +120,7 @@ bool ZeroTestProof::check()
 
     ValueType b = m_qR * z(m_r);
 
-//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 

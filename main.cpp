@@ -39,15 +39,25 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
         switch(operation) {
         case snrk::Sum: {
-            funcF += (left + right) * isOperation;
+            auto a = (left + right);
+            auto b = a * isOperation;
+            funcF = b;
             break;
         }
         case snrk::Product: {
-            funcF += (left * right) * isOperation;
+            auto a = ((left * right));
+
+            //тут бага (a и isOperation по отдельности считаю корректно) проблема в b
+            //причём начиная с 1318 появляется первая ошибка и каждые 10 раз(так как схема повторяется каждые 10 итераций)
+            //ошибка увеличивается на 15
+            auto b = a * isOperation;
+            funcF = funcF + b;
             break;
         }
         case snrk::Minus: {
-            funcF += (left - right) * isOperation;
+            auto a = (left - right);
+            auto b = a * isOperation;
+            funcF = funcF + b;
             break;
         }
             //todo:
@@ -94,6 +104,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
+//    for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -102,6 +113,19 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Product, {out1, out2}, {out3}});
     auto out4 = snrk::Value(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
+    auto out5 = snrk::Value(7);
+    c.addGate({snrk::Minus, {out3, out4}, {out5}});
+    auto out6 = snrk::Value(490);
+    c.addGate({snrk::Product, {out4, out5}, {out6}});
+    auto out7 = snrk::Value(-4);
+    c.addGate({snrk::Minus, {out2, out1}, {out7}});
+    auto out8 = snrk::Value(-28);
+    c.addGate({snrk::Product, {out5, out7}, {out8}});
+    auto out9 = snrk::Value(42);
+    c.addGate({snrk::Sum, {out8, out4}, {out9}});
+    auto out10 = snrk::Value(14);
+    c.addGate({snrk::Sum, {out9, out8}, {out10}});
+//    }
 
     snrk::GlobalParams gp(c);
     auto TParams = gp.PP().TParams;
@@ -119,7 +143,7 @@ int main(int argc, char *argv[])
 
     //todo: 6.
 
-    if (!currentOutput(TParams.t, out4, gp.witnesses().size(), gp.TG())) {
+    if (!currentOutput(TParams.t, {14}, gp.witnesses().size(), gp.TG())) {
         std::cout << "Некорректный выход!" << std::endl;
         exit(1);
     }
@@ -128,11 +152,16 @@ int main(int argc, char *argv[])
 }
 
 /*todo:
+ * ! Баг: на 1318 свидетеле откуда не ждали начал появляться эффект Рунге, хотя используем сплайны!
+ * Подозрение в isOperation, что по сути явялются булевыми, а интерполируются по 2-3 точки, т.е. полиномом 1-2 степени
+ *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 3. Доразобраться с gp и сделать норм. commit
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Разобраться с делением
+ * 6. Распараллелить вычисления интерполяционного полинома (только точки должны идти по порядку)
+ * 7. Перевод proof в json и обратно
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
