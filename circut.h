@@ -41,7 +41,6 @@ private:
     value_t m_output{0};
 
     friend class GlobalParams;
-    friend class W_t;
 };
 
 class Circut
@@ -69,7 +68,6 @@ private:
     gates_t m_gates{};
 
     friend class GlobalParams;
-    friend class W_t;
 };
 
 }

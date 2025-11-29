@@ -39,6 +39,7 @@ typedef std::vector<witness_t> witnesses_t;
 class InterpolationPolynom;
 typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;
+typedef InterpolationPolynom W_t;
 
 }
 

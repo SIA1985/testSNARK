@@ -75,6 +75,10 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     return proof->check();
 }
 
+bool currentVars() {
+
+}
+
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
 
@@ -141,9 +145,12 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    //todo: 6.
+    if (!currentVars()) {
+        std::cout << "Некорректные переменные!" << std::endl;
+        exit(1);
+    }
 
-    if (!currentOutput(TParams.t, {14}, gp.witnesses().size(), gp.TG())) {
+    if (!currentOutput(TParams.t, {out10}, gp.witnesses().size(), gp.TG())) {
         std::cout << "Некорректный выход!" << std::endl;
         exit(1);
     }
@@ -152,8 +159,7 @@ int main(int argc, char *argv[])
 }
 
 /*todo:
- * ! Баг: на 1318 свидетеле откуда не ждали начал появляться эффект Рунге, хотя используем сплайны!
- * Подозрение в isOperation, что по сути явялются булевыми, а интерполируются по 2-3 точки, т.е. полиномом 1-2 степени
+ * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны!
  *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)

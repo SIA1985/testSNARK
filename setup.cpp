@@ -21,48 +21,6 @@ witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev)
     return witnesses;
 }
 
-W_t::W_t(const witnesses_t &witnesses, const Circut &circut)
-{
-    std::map<value_t, std::shared_ptr<cond_t>> duplicates;
-    auto insert = [&duplicates](value_t key, witness_t value)
-    {
-        if (!duplicates[key]) {
-            duplicates[key] = std::make_shared<cond_t>();
-        }
-
-        duplicates[key]->insert(value);
-    };
-
-    auto cw = witnesses.cbegin();
-
-    auto fillMap = [&cw, &duplicates, &insert](const values_t &row)
-    {
-        for(const auto &elment : row) {
-            insert(elment, *cw++);
-        }
-    };
-
-    fillMap(circut.m_inputX);
-    fillMap(circut.m_inputW);
-
-    for(const auto& gate : circut.m_gates) {
-        insert(gate.m_input.a, *cw++);
-        insert(gate.m_input.b, *cw++);
-        insert(gate.m_output, *cw++);
-    }
-
-    for(const auto &[_, condition] : duplicates) {
-        for(const auto &witness : *condition) {
-            m_map[witness] = condition;
-        }
-    }
-}
-
-W_t::cond_t W_t::operator()(witness_t w) const
-{
-    return *m_map.at(w);
-}
-
 GlobalParams::GlobalParams(const Circut &circut)
     //todo: генерация
     : m_TG{10, 20}
@@ -158,7 +116,57 @@ void GlobalParams::generateS(const Circut &circut)
 
 void GlobalParams::generateW(const Circut &circut)
 {
-    m_W = W_t(m_witnesses, circut);
+    std::map<value_t, std::shared_ptr<cond_t>> duplicates;
+    auto insert = [&duplicates](value_t key, witness_t value)
+    {
+        if (!duplicates[key]) {
+            duplicates[key] = std::make_shared<cond_t>();
+        }
+
+        duplicates[key]->insert(value);
+    };
+
+    auto cw = m_witnesses.cbegin();
+
+    auto fillMap = [&cw, &insert](const values_t &row)
+    {
+        for(const auto &elment : row) {
+            insert(elment, *cw++);
+        }
+    };
+
+    fillMap(circut.m_inputX);
+    fillMap(circut.m_inputW);
+
+    for(const auto& gate : circut.m_gates) {
+        insert(gate.m_input.a, *cw++);
+        insert(gate.m_input.b, *cw++);
+        insert(gate.m_output, *cw++);
+    }
+
+
+
+    auto circleIterator = [](cond_t::iterator begin, cond_t::iterator it, cond_t::iterator end)
+    {
+        if (it == end) {
+            return begin;
+        }
+
+        return it;
+    };
+
+    dots_t dots;
+    for(const auto &[_, condition] : duplicates) {
+        auto begin = condition->begin();
+        auto end = condition->end();
+
+        for(auto it = begin; it != end;) {
+            dots.push_back({*it, *circleIterator(begin, ++it, end)});
+        }
+    }
+
+    m_W = W_t(dots);
+
 }
 
 }

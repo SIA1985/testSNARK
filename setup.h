@@ -14,19 +14,6 @@ namespace snrk {
 static witness_t wStart = 1.;
 witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev = false);
 
-class W_t {
-    using cond_t = std::unordered_set<witness_t>;
-public:
-    W_t() = default;
-
-    W_t(const witnesses_t &witnesses, const Circut &circut);
-
-    cond_t operator()(witness_t w) const;
-
-private:
-    std::unordered_map<witness_t, std::shared_ptr<cond_t>> m_map;
-};
-
 struct SplittedT_t
 {
     InterpolationPolynom left;
@@ -39,6 +26,8 @@ public:
     using opsFromS_t = std::unordered_map<GateType_t, dots_t>;
     using TParams_t = struct{T_t t; SplittedT_t splittedT;};
     using SParams_t = struct{S_t s; opsFromS_t opsFromS;};
+
+    using cond_t = std::unordered_set<witness_t>;
 
     using ProverParams_t = struct{TParams_t TParams; SParams_t SParams; W_t w;};
 
