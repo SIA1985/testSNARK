@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+
 namespace snrk {
 
 Value::Value()
@@ -38,6 +39,11 @@ Value::operator ValueType() const
     return *m_value;
 }
 
+ValueType* Value::get() const
+{
+    return m_value.get();
+}
+
 bool operator<(const Value &a, const Value &b)
 {
     return *a.m_value < *b.m_value;
@@ -45,8 +51,9 @@ bool operator<(const Value &a, const Value &b)
 
 //bool operator==(const Value &a, const Value &b)
 //{
-//    return a == b;
+//    return a.m_value.get() == b.m_value.get();
 //}
+
 
 Gate::Gate(GateType_t type, input_t input, value_t output)
     : m_type{type}

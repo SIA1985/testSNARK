@@ -18,7 +18,7 @@ set(PROJECT_SOURCES
     polynom.h polynom.cpp
     proof.h proof.cpp
     operation.h operation.cpp
-    types.h
+    types.h types.cpp
     main.cpp
 )
 

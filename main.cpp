@@ -29,9 +29,9 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
     auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
 
-    snrk::xs_t witness;
+    snrk::xs_t witnesses;
     for(const auto &w : ws) {
-        witness.insert(w);
+        witnesses.insert(w);
     }
 
     for(const auto &[operation, dots] : SParams.opsFromS) {
@@ -70,13 +70,26 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
         }
     }
 
-    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witness);
+    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses);
 
     return proof->check();
 }
 
-bool currentVars() {
+bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
+    //~f(x, w) = П(r - s*W(a) - f(a)) | Fp -$> r,s; a пробегается по [w1 ... wn]
+    auto tCanonic = t.toPartedCanonicPolynom();
+    auto twCanonic = tCanonic(w.toPartedCanonicPolynom());
 
+    snrk::xs_t witnesses;
+    for(const auto &w : ws) {
+        witnesses.insert(w);
+    }
+
+    auto proof = snrk::ZeroTestProof::forProver(tCanonic, twCanonic, tG, witnesses);
+
+    return proof->check();
+
+    return true;
 }
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
@@ -133,24 +146,29 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c);
     auto TParams = gp.PP().TParams;
+    auto witnesses = gp.witnesses();
+    auto tG = gp.TG();
 
-    if (!correctInputs(TParams.t, {x1, x2, {w1}}, gp.witnesses(), gp.TG())) {
+//    std::cout << gp.PP().w(9) << std::endl;
+//    return 1;
+
+    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
         std::cout << "Некорректные входы!" << std::endl;
         exit(1);
     }
 
     //todo: если падает -> не построить полином -> не получить доказательство
-    if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), gp.TG())) {
+    if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG)) {
         std::cout << "Некорректные переходы!" << std::endl;
         exit(1);
     }
 
-    if (!currentVars()) {
+    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
         std::cout << "Некорректные переменные!" << std::endl;
         exit(1);
     }
 
-    if (!currentOutput(TParams.t, {out10}, gp.witnesses().size(), gp.TG())) {
+    if (!currentOutput(TParams.t, {out10}, witnesses.size(), tG)) {
         std::cout << "Некорректный выход!" << std::endl;
         exit(1);
     }
@@ -159,7 +177,7 @@ int main(int argc, char *argv[])
 }
 
 /*todo:
- * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны!
+ * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны! (поменял тип свидетеля на целочистленный, мб поможет)
  *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0!
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)

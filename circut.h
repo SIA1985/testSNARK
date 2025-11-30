@@ -20,14 +20,14 @@ public:
     operator GateType_t() const;
     operator ValueType() const;
 
+    ValueType* get() const;
+
 private:
     std::shared_ptr<ValueType> m_value{};
 
     friend bool operator<(const Value &a, const Value &b);
+//    friend bool operator==(const Value &a, const Value &b);
 };
-
-bool operator<(const Value &a, const Value &b);
-//bool operator==(const Value &a, const Value &b);
 
 class Gate {
 

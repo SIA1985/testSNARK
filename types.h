@@ -23,6 +23,8 @@ enum GateType_t : char {
 
 class Value;
 typedef Value value_t;
+bool operator<(const Value &a, const Value &b);
+bool operator==(const Value &a, const Value &b);
 typedef std::vector<value_t> values_t;
 
 typedef ValueType X_t;
@@ -33,7 +35,7 @@ typedef std::vector<dot_t> dots_t;
 struct TG_t {X_t t; int G;};
 typedef std::set<X_t> xs_t;
 
-typedef double witness_t;
+typedef unsigned long witness_t;
 typedef std::vector<witness_t> witnesses_t;
 
 class InterpolationPolynom;

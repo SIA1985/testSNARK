@@ -8,13 +8,14 @@
 
 namespace snrk {
 
+//
 witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev)
 {
     witnesses_t witnesses;
     for(std::size_t i = 1; i <= count; i++) {
-        witnesses.push_back(
-            Chebishev ? (((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.)
-                      : i
+        witnesses.push_back( std::is_same<witness_t, double>::value && Chebishev ?
+                    (((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.)
+                    : i
         );
     }
 
@@ -116,14 +117,15 @@ void GlobalParams::generateS(const Circut &circut)
 
 void GlobalParams::generateW(const Circut &circut)
 {
-    std::map<value_t, std::shared_ptr<cond_t>> duplicates;
+    std::unordered_map<std::size_t, std::shared_ptr<cond_t>> duplicates;
     auto insert = [&duplicates](value_t key, witness_t value)
     {
-        if (!duplicates[key]) {
-            duplicates[key] = std::make_shared<cond_t>();
+        auto address = (std::size_t)key.get();
+        if (!duplicates[address]) {
+            duplicates[address] = std::make_shared<cond_t>();
         }
 
-        duplicates[key]->insert(value);
+        duplicates[address]->insert(value);
     };
 
     auto cw = m_witnesses.cbegin();
