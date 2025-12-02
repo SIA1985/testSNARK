@@ -515,24 +515,58 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
         auto otherF = itOther->second;
-        assert(otherF.degree() <= 1); //todo: решение уравнения 2й степени
+        std::vector<Range> ranges;
 
-        auto normInterval = [&other = otherF](X_t bound) -> X_t
-        {
-            if (other.degree() > 0 && other[1] == 0) {
-                return bound -= other[0];
+        switch(otherF.degree()) {
+        case 0: {
+            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
+
+            for(auto bound : {&left, &right}) {
+                *bound -= otherF[0];
+            }
+            ranges.push_back({left, right});
+            break;
+        }
+        case 1: {
+            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
+
+            for(auto bound : {&left, &right}) {
+                otherF.degree() >= 0 ? *bound -= otherF[0] : 0.0;
+                otherF.degree() > 0 ? *bound /= otherF[1] : 0.0;
             }
 
-            other.degree() >= 0 ? bound -= other[0] : 0.0;
-            other.degree() > 0 ? bound /= other[1] : 0.0;
+            ranges.push_back({left, right});
+            break;
+        }
+        case 2: {
+            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
 
-            return bound;
-        };
+            for(auto bound : {left, right}) {
+                X_t a = otherF[2], b = otherF[1], c = otherF[0] - bound;
 
-        auto left = normInterval(currentRange.leftBound());
-        auto right = normInterval(currentRange.rightBound());
+                auto discriminant = b * b - 4 * a * c;
 
-        result.insert(Range{left, right}, it->second(otherF));
+                if (cmp(discriminant, 0) == 1) {
+                    auto root1 = (-b + sqrt(discriminant)) / (2 * a);
+                    auto root2 = (-b - sqrt(discriminant)) / (2 * a);
+                    roots.push_back(root1);
+                    roots.push_back(root2);
+                } else if (cmp(discriminant, 0) == 1) {
+                    // Один повторяющийся действительный корень (дискриминант близок к нулю)
+                    auto root = -b / (2 * a);
+                    roots.push_back(root);
+                }
+            }
+
+            break;
+        }
+        default:
+            assert(false);
+        }
+
+        for(const auto &r : ranges) {
+            result.insert(r, it->second(otherF));
+        }
     });
 
     return PartedCanonicPolynom(result);
