@@ -402,6 +402,15 @@ X_t Range::rightBound() const
     return m_right;
 }
 
+Range Range::fromUnsorted(X_t a, X_t b)
+{
+    if (cmp(a, b) == -1) {
+        return {a, b};
+    }
+
+    return {b, a};
+}
+
 bool operator<(const Range &a, const Range &b)
 {
     return cmp(a.rightBound(), b.leftBound()) <= 0;
@@ -538,24 +547,33 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
             ranges.push_back({left, right});
             break;
         }
+        //todo: тестирование
         case 2: {
             X_t left = currentRange.leftBound(), right = currentRange.rightBound();
 
+            std::vector<X_t> roots;
             for(auto bound : {left, right}) {
                 X_t a = otherF[2], b = otherF[1], c = otherF[0] - bound;
 
                 auto discriminant = b * b - 4 * a * c;
 
                 if (cmp(discriminant, 0) == 1) {
-                    auto root1 = (-b + sqrt(discriminant)) / (2 * a);
-                    auto root2 = (-b - sqrt(discriminant)) / (2 * a);
-                    roots.push_back(root1);
-                    roots.push_back(root2);
-                } else if (cmp(discriminant, 0) == 1) {
-                    // Один повторяющийся действительный корень (дискриминант близок к нулю)
-                    auto root = -b / (2 * a);
-                    roots.push_back(root);
+                    roots.push_back((-b + sqrt(discriminant)) / (2 * a));
+                    roots.push_back((-b - sqrt(discriminant)) / (2 * a));
+                } else if (cmp(discriminant, 0) == 0) {
+                    roots.push_back(-b / (2 * a));
+                } else {
+                    assert(false);
                 }
+            }
+
+            auto rangesCount = roots.size() / 2;
+            assert(roots.size() % 2 == 0);
+
+            for(std::size_t i = 0; i < rangesCount; i++) {
+                auto r = Range::fromUnsorted(roots[i], roots[i + rangesCount]);
+//                std::cout << r << std::endl;
+                ranges.push_back(r);
             }
 
             break;
@@ -684,7 +702,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-//        std::cout << itRange() << " " << otherRange() << std::endl;
+        std::cout << itRange() << " " << otherRange() << std::endl;
 //        if (currentRange.inRange(1318)) {
 //            int i = 0;
 //            i += 1;;

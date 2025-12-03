@@ -113,6 +113,8 @@ public:
     X_t leftBound() const;
     X_t rightBound() const;
 
+    static Range fromUnsorted(X_t a, X_t b);
+
 private:
     X_t m_left;
     X_t m_right;
