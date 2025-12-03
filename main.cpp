@@ -78,6 +78,12 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     auto twCanonic = tCanonic(w.toPartedCanonicPolynom());
+    auto wCanonic = w.toPartedCanonicPolynom();
+
+    //тут всё верно -> дело в суперпозиции сплайнов
+    for(auto wt : ws) {
+        std::cout << tCanonic(wt) << " v " << tCanonic(wCanonic(wt)) << " x " << twCanonic(wt) << std::endl;
+    }
 
     snrk::xs_t witnesses;
     for(const auto &w : ws) {
@@ -162,10 +168,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-//    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
-//        std::cout << "Некорректные переменные!" << std::endl;
-//        exit(1);
-//    }
+    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
+        std::cout << "Некорректные переменные!" << std::endl;
+        exit(1);
+    }
 
     if (!currentOutput(TParams.t, {out10}, witnesses.size(), tG)) {
         std::cout << "Некорректный выход!" << std::endl;
