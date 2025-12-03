@@ -76,7 +76,6 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 }
 
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
-    //~f(x, w) = П(r - s*W(a) - f(a)) | Fp -$> r,s; a пробегается по [w1 ... wn]
     auto tCanonic = t.toPartedCanonicPolynom();
     auto twCanonic = tCanonic(w.toPartedCanonicPolynom());
 
@@ -163,15 +162,33 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
-        std::cout << "Некорректные переменные!" << std::endl;
-        exit(1);
-    }
+//    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
+//        std::cout << "Некорректные переменные!" << std::endl;
+//        exit(1);
+//    }
 
     if (!currentOutput(TParams.t, {out10}, witnesses.size(), tG)) {
         std::cout << "Некорректный выход!" << std::endl;
         exit(1);
     }
+
+//    snrk::PartedCanonicPolynom::map m1, m2;
+
+//    m1.insert({1, 2}, {{1, 2, 3}});
+//    m1.insert({2, 3}, {{0, 1, 2}});
+//    auto f1 = snrk::PartedCanonicPolynom(m1);
+
+//    m2.insert({1, 2}, {{2, 1}});
+//    m2.insert({2, 3}, {{3, 2, 1}});
+//    auto f2 = snrk::PartedCanonicPolynom(m2);
+
+
+////    auto f1 = snrk::CanonicPolynom({0, 1, 2});
+////    auto f2 = snrk::CanonicPolynom({3, 2, 1});
+
+//    std::cout << f1(f2(1.5)) << std::endl;
+
+//    std::cout << f1(f2)(1.5) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }

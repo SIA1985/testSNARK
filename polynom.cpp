@@ -523,68 +523,69 @@ PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom
     map result;
     operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
     {
-        auto otherF = itOther->second;
-        std::vector<Range> ranges;
+//        auto otherF = itOther->second;
+//        std::vector<Range> ranges;
 
-        switch(otherF.degree()) {
-        case 0: {
-            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
+//        switch(otherF.degree()) {
+//        case 0: {
+//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
 
-            for(auto bound : {&left, &right}) {
-                *bound -= otherF[0];
-            }
-            ranges.push_back({left, right});
-            break;
-        }
-        case 1: {
-            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
+//            for(auto bound : {&left, &right}) {
+//                *bound -= otherF[0];
+//            }
+//            ranges.push_back({left, right});
+//            break;
+//        }
+//        case 1: {
+//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
 
-            for(auto bound : {&left, &right}) {
-                otherF.degree() >= 0 ? *bound -= otherF[0] : 0.0;
-                otherF.degree() > 0 ? *bound /= otherF[1] : 0.0;
-            }
+//            for(auto bound : {&left, &right}) {
+//                otherF.degree() >= 0 ? *bound -= otherF[0] : 0.0;
+//                otherF.degree() > 0 ? *bound /= otherF[1] : 0.0;
+//            }
 
-            ranges.push_back({left, right});
-            break;
-        }
-        //todo: тестирование
-        case 2: {
-            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
+//            ranges.push_back({left, right});
+//            break;
+//        }
+//        //todo: тестирование
+//        case 2: {
+//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
 
-            std::vector<X_t> roots;
-            for(auto bound : {left, right}) {
-                X_t a = otherF[2], b = otherF[1], c = otherF[0] - bound;
+//            std::vector<X_t> roots;
+//            for(auto bound : {left, right}) {
+//                X_t a = otherF[2], b = otherF[1], c = otherF[0] - bound;
 
-                auto discriminant = b * b - 4 * a * c;
+//                auto discriminant = b * b - 4 * a * c;
 
-                if (cmp(discriminant, 0) == 1) {
-                    roots.push_back((-b + sqrt(discriminant)) / (2 * a));
-                    roots.push_back((-b - sqrt(discriminant)) / (2 * a));
-                } else if (cmp(discriminant, 0) == 0) {
-                    roots.push_back(-b / (2 * a));
-                } else {
-                    assert(false);
-                }
-            }
+//                if (cmp(discriminant, 0) >= 0) {
+//                    roots.push_back((-b + sqrt(discriminant)) / (2 * a));
+//                    roots.push_back((-b - sqrt(discriminant)) / (2 * a));
+//                } else {
+//                    assert(false);
+//                }
+//            }
 
-            auto rangesCount = roots.size() / 2;
-            assert(roots.size() % 2 == 0);
+//            auto rangesCount = roots.size() / 2;
+//            assert(roots.size() % 2 == 0);
 
-            for(std::size_t i = 0; i < rangesCount; i++) {
-                auto r = Range::fromUnsorted(roots[i], roots[i + rangesCount]);
+//            for(std::size_t i = 0; i < rangesCount; i++) {
+//                auto r = Range::fromUnsorted(roots[i], roots[i + rangesCount]);
 //                std::cout << r << std::endl;
-                ranges.push_back(r);
-            }
+//                ranges.push_back(r);
+//            }
 
-            break;
-        }
-        default:
-            assert(false);
-        }
+//            break;
+//        }
+//        default:
+//            assert(false);
+//        }
 
-        for(const auto &r : ranges) {
-            result.insert(r, it->second(otherF));
-        }
+//        for(const auto &r : ranges) {
+//            result.insert(r, it->second(otherF));
+//        }
+
+
+        result.insert(currentRange, it->second(itOther->second));
     });
 
     return PartedCanonicPolynom(result);
