@@ -77,18 +77,19 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
-    auto twCanonic = tCanonic(w.toPartedCanonicPolynom());
     auto wCanonic = w.toPartedCanonicPolynom();
 
-    //тут всё верно -> дело в суперпозиции сплайнов
+    //заменить суперпозицию на построение 2го t полинома на основании w!
+    //тут всё верно -> дело в суперпозиции сплайнов (её больше просто нигде нет!)
+
+    snrk::dots_t twDots;
+    snrk::xs_t witnesses;
     for(auto wt : ws) {
-        std::cout << tCanonic(wt) << " v " << tCanonic(wCanonic(wt)) << " x " << twCanonic(wt) << std::endl;
+        twDots.push_back({wt, tCanonic(wCanonic(wt))});
+        witnesses.insert(wt);
     }
 
-    snrk::xs_t witnesses;
-    for(const auto &w : ws) {
-        witnesses.insert(w);
-    }
+    auto twCanonic = snrk::InterpolationPolynom(twDots).toPartedCanonicPolynom();
 
     auto proof = snrk::ZeroTestProof::forProver(tCanonic, twCanonic, tG, witnesses);
 

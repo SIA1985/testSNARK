@@ -194,7 +194,7 @@ void CanonicPolynom::operator*=(const CanonicPolynom &other)
 CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
 {
     if (m_coefs.size() <= 0) {
-        return CanonicPolynom({});
+        return CanonicPolynom({m_coefs.back()});
     }
 
     CanonicPolynom result = CanonicPolynom({m_coefs.back()});
@@ -703,7 +703,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-        std::cout << itRange() << " " << otherRange() << std::endl;
+//        std::cout << itRange() << " " << otherRange() << std::endl;
 //        if (currentRange.inRange(1318)) {
 //            int i = 0;
 //            i += 1;;
