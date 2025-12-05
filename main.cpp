@@ -75,11 +75,11 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     return proof->check();
 }
 
+//мб дело в том, что надо проверять не t, а такое t, что выводит адреса
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wCanonic = w.toPartedCanonicPolynom();
 
-    //заменить суперпозицию на построение 2го t полинома на основании w!
     //тут всё верно -> дело в суперпозиции сплайнов (её больше просто нигде нет!)
 
     snrk::dots_t twDots;
