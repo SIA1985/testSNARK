@@ -220,10 +220,6 @@ public:
 
     virtual Y_t operator()(X_t x) override;
 
-    PartedCanonicPolynom operator()(const CanonicPolynom &other) const;
-
-    PartedCanonicPolynom operator()(const PartedCanonicPolynom &other) const;
-
     PartedCanonicPolynom operator+(const PartedCanonicPolynom &other) const;
 
     PartedCanonicPolynom operator-(const PartedCanonicPolynom &other) const;

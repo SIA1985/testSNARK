@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
+    mpf_set_default_prec(128);
+
     /*todo: пример из тетради проверить*/
     auto x1 = snrk::Value(5);
     auto x2 = snrk::Value(6);
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-//    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 100; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -148,22 +150,18 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {out8, out4}, {out9}});
     auto out10 = snrk::Value(14);
     c.addGate({snrk::Sum, {out9, out8}, {out10}});
-//    }
+    }
 
     snrk::GlobalParams gp(c);
     auto TParams = gp.PP().TParams;
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
-//    std::cout << gp.PP().w(9) << std::endl;
-//    return 1;
-
     if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
         std::cout << "Некорректные входы!" << std::endl;
         exit(1);
     }
 
-    //todo: если падает -> не построить полином -> не получить доказательство
     if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG)) {
         std::cout << "Некорректные переходы!" << std::endl;
         exit(1);
@@ -174,42 +172,26 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (!currentOutput(TParams.t, {out10}, witnesses.size(), tG)) {
+    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
         std::cout << "Некорректный выход!" << std::endl;
         exit(1);
     }
-
-//    snrk::PartedCanonicPolynom::map m1, m2;
-
-//    m1.insert({1, 2}, {{1, 2, 3}});
-//    m1.insert({2, 3}, {{0, 1, 2}});
-//    auto f1 = snrk::PartedCanonicPolynom(m1);
-
-//    m2.insert({1, 2}, {{2, 1}});
-//    m2.insert({2, 3}, {{3, 2, 1}});
-//    auto f2 = snrk::PartedCanonicPolynom(m2);
-
-
-////    auto f1 = snrk::CanonicPolynom({0, 1, 2});
-////    auto f2 = snrk::CanonicPolynom({3, 2, 1});
-
-//    std::cout << f1(f2(1.5)) << std::endl;
-
-//    std::cout << f1(f2)(1.5) << std::endl;
 
     std::cout << "Ok!" << std::endl;
 }
 
 /*todo:
- * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны! (поменял тип свидетеля на целочистленный, мб поможет)
+ * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны! (вроде пофиксил повышением точности)
+ *
+ * ! Идея: не давать сгенерировать сплайновый полином, если не делится !
  *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0! (проверка при генерации r, что r != t?)
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 3. Доразобраться с gp и сделать норм. commit
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
- * 5. Разобраться с делением
- * 6. Распараллелить вычисления интерполяционного полинома (только точки должны идти по порядку)
- * 7. Перевод proof в json и обратно
+ * 5. Распараллелить вычисления интерполяционного полинома (только точки должны идти по порядку)
+ * 6. Перевод proof в json и обратно
+ * 7. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
@@ -217,7 +199,7 @@ int main(int argc, char *argv[])
  * [V]3. P строит T(x) и получает comt
  * [V]4. T корректно кодирует входы
  * [V]5. Каждый вентиль корректно посчитан (иначе не создает proof)
- * []6. Стрелки соответствуют С
+ * [V]6. Стрелки соответствуют С
  * [V]7. Выход последнего вентиля =0 (как-то через ZeroTest?, скорее через Substitution)
  * []8. Оптимизации (сложностей О)
 */

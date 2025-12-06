@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <future>
 
 namespace snrk {
 
@@ -243,9 +244,13 @@ Y_t InterpolationPolynom::operator()(X_t x)
         return li;
     };
 
+    const auto batch = 5000;
     Y_t y = 0;
 
     //O = n^2
+
+    std::vector<std::future<X_t>> threads(m_dots.size() / batch /*мб +1*/);
+
     for(std::size_t i = 0; i < m_dots.size(); i++) {
         //todo: распаралеливание каждых, например, 5к точек
         y += (l(i, x) * m_dots[i].y);
@@ -439,35 +444,27 @@ PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
 PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
     int partition = fromInterpolation ? PartedCanonicPolynom::Partition : PartedCanonicPolynom::Partition - 1;
+    auto end = sortedDots.end();
 
-    for(auto it = sortedDots.begin(); it != sortedDots.end();) {
-        dots_t dots;
-        for(int i = 0; i < partition; i++) {
-            dots.push_back(*it);
-
-            it++;
-            if (it == sortedDots.end()) {
-                break;
-            }
-        }
-        if (it != sortedDots.end()) {
-            it--;
+    for(auto it = sortedDots.begin(); it != end; it = (it == end) ? it : std::prev(it)) {
+        auto start = it;
+        if (std::distance(it, end) >= partition) {
+            std::advance(it, partition);
+        } else {
+            it = end;
         }
 
-        X_t rangeEnd = dots.back().x;
-        for(std::size_t i = 0; i < partition - dots.size(); i++) {
-            rangeEnd++;
-        }
+        dots_t dots(start, it);
 
         if (fromInterpolation) {
-            m_map.insert({dots.front().x, rangeEnd}, InterpolationPolynom(dots).toCanonicPolynom());
+            m_map.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
         } else {
             xs_t xs;
             for (const auto &[x, y] : dots) {
                 xs.insert(x);
             }
 
-            m_map.insert({dots.front().x, rangeEnd}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
+            m_map.insert({dots.front().x, dots.back().x}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
         }
     }
 }
@@ -489,106 +486,6 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
     });
 
     return CustomPolynom([result](X_t x) mutable {return result[x](x);});
-}
-
-PartedCanonicPolynom PartedCanonicPolynom::operator()(const CanonicPolynom &other) const
-{
-    assert(other.degree() <= 1);
-
-    auto normInterval = [&other](X_t bound) -> X_t
-    {
-        if (other.degree() > 0 && other[1] == 0) {
-            return bound -= other[0];
-        }
-
-        other.degree() >= 0 ? bound -= other[0] : 0.0;
-        other.degree() > 0 ? bound /= other[1] : 0.0;
-
-        return bound;
-    };
-
-    map result;
-    for(auto it = m_map.cbegin(); it != m_map.cend(); it++) {
-        auto left = normInterval(it->first.leftBound());
-        auto right = normInterval(it->first.rightBound());
-
-        result.insert(Range{left, right}, it->second(other));
-    }
-
-    return PartedCanonicPolynom(result);
-}
-
-PartedCanonicPolynom PartedCanonicPolynom::operator()(const PartedCanonicPolynom &other) const
-{
-    map result;
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
-    {
-//        auto otherF = itOther->second;
-//        std::vector<Range> ranges;
-
-//        switch(otherF.degree()) {
-//        case 0: {
-//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
-
-//            for(auto bound : {&left, &right}) {
-//                *bound -= otherF[0];
-//            }
-//            ranges.push_back({left, right});
-//            break;
-//        }
-//        case 1: {
-//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
-
-//            for(auto bound : {&left, &right}) {
-//                otherF.degree() >= 0 ? *bound -= otherF[0] : 0.0;
-//                otherF.degree() > 0 ? *bound /= otherF[1] : 0.0;
-//            }
-
-//            ranges.push_back({left, right});
-//            break;
-//        }
-//        //todo: тестирование
-//        case 2: {
-//            X_t left = currentRange.leftBound(), right = currentRange.rightBound();
-
-//            std::vector<X_t> roots;
-//            for(auto bound : {left, right}) {
-//                X_t a = otherF[2], b = otherF[1], c = otherF[0] - bound;
-
-//                auto discriminant = b * b - 4 * a * c;
-
-//                if (cmp(discriminant, 0) >= 0) {
-//                    roots.push_back((-b + sqrt(discriminant)) / (2 * a));
-//                    roots.push_back((-b - sqrt(discriminant)) / (2 * a));
-//                } else {
-//                    assert(false);
-//                }
-//            }
-
-//            auto rangesCount = roots.size() / 2;
-//            assert(roots.size() % 2 == 0);
-
-//            for(std::size_t i = 0; i < rangesCount; i++) {
-//                auto r = Range::fromUnsorted(roots[i], roots[i + rangesCount]);
-//                std::cout << r << std::endl;
-//                ranges.push_back(r);
-//            }
-
-//            break;
-//        }
-//        default:
-//            assert(false);
-//        }
-
-//        for(const auto &r : ranges) {
-//            result.insert(r, it->second(otherF));
-//        }
-
-
-        result.insert(currentRange, it->second(itOther->second));
-    });
-
-    return PartedCanonicPolynom(result);
 }
 
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
