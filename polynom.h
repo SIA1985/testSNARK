@@ -48,6 +48,7 @@ class CanonicPolynom : public Polynom
 public:
     using coefs_t = std::vector<ValueType>;
     using roots_t = xs_t;
+    using devideResult_t = std::pair<CanonicPolynom, CanonicPolynom>;
 
 
     CanonicPolynom() = default;
@@ -61,6 +62,7 @@ public:
     virtual Y_t operator()(X_t x) override;
 
     CustomPolynom operator/(CanonicPolynom &other);
+    devideResult_t devide(CanonicPolynom &other);
 
     CanonicPolynom operator+(const CanonicPolynom &other) const;
 
@@ -80,6 +82,8 @@ public:
     const ValueType operator[](std::size_t i) const;
 
     std::size_t degree() const;
+
+    bool isZero() const;
 
 protected:
     /*x0, x1 .. xn*/
@@ -132,13 +136,25 @@ class RangeMap
 public:
     using const_iterator = typename std::map<Range, T>::const_iterator;
 
-    T operator[](X_t x)
+    RangeMap() = default;
+
+    RangeMap(const_iterator begin, const_iterator end)
     {
-        auto found = std::lower_bound(m_map.begin(), m_map.end(), x,
+        m_map = std::map<Range, T>(begin, end);
+    }
+
+    const_iterator find(X_t x) const
+    {
+        return std::lower_bound(m_map.begin(), m_map.end(), x,
         [](const std::pair<Range, T> &keyValue, X_t x) -> bool
         {
             return cmp(keyValue.first.rightBound(), x) == -1;
         });
+    }
+
+    T operator[](X_t x)
+    {
+        auto found = find(x);
 
         if (found != m_map.end()) {
             return found->second;
@@ -228,7 +244,13 @@ public:
 
     CustomPolynom operator/(PartedCanonicPolynom &other);
 
+    PartedCanonicPolynom mustDevide(PartedCanonicPolynom &other) const;
+
     void operator+=(const PartedCanonicPolynom &other);
+
+    Range distance() const;
+
+    PartedCanonicPolynom cut(Range distance) const;
 
     const static int Partition;
 

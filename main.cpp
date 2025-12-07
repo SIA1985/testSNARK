@@ -6,8 +6,6 @@
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
-    auto funcT = t.toPartedCanonicPolynom();
-
     snrk::dots_t inputsW;
     snrk::xs_t witness;
     for(std::size_t i = 0; i < inputs.size(); i++) {
@@ -15,8 +13,9 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
         inputsW.push_back({ws[i], inputs[i]});
     }
     auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
+    auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
 
-    auto proof = snrk::ZeroTestProof::forProver(funcT, funcV, tG, witness);
+    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness);
 
     return proof->check();
 }
@@ -27,37 +26,23 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
 
+    snrk::xs_t witnesses(ws.begin(), ws.end());
+
     auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
-
-    snrk::xs_t witnesses;
-    for(const auto &w : ws) {
-        witnesses.insert(w);
-    }
-
     for(const auto &[operation, dots] : SParams.opsFromS) {
         auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
 
         switch(operation) {
         case snrk::Sum: {
-            auto a = (left + right);
-            auto b = a * isOperation;
-            funcF = b;
+            funcF += (left + right) * isOperation;
             break;
         }
         case snrk::Product: {
-            auto a = ((left * right));
-
-            //тут бага (a и isOperation по отдельности считаю корректно) проблема в b
-            //причём начиная с 1318 появляется первая ошибка и каждые 10 раз(так как схема повторяется каждые 10 итераций)
-            //ошибка увеличивается на 15
-            auto b = a * isOperation;
-            funcF = funcF + b;
+            funcF += (left * right) * isOperation;
             break;
         }
         case snrk::Minus: {
-            auto a = (left - right);
-            auto b = a * isOperation;
-            funcF = funcF + b;
+            funcF += (left - right) * isOperation;
             break;
         }
             //todo:
@@ -79,8 +64,6 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wCanonic = w.toPartedCanonicPolynom();
-
-    //тут всё верно -> дело в суперпозиции сплайнов (её больше просто нигде нет!)
 
     snrk::dots_t twDots;
     snrk::xs_t witnesses;
@@ -129,7 +112,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-    for(int i = 0; i < 100; i++) {
+//    for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -150,7 +133,7 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {out8, out4}, {out9}});
     auto out10 = snrk::Value(14);
     c.addGate({snrk::Sum, {out9, out8}, {out10}});
-    }
+//    }
 
     snrk::GlobalParams gp(c);
     auto TParams = gp.PP().TParams;
@@ -181,17 +164,15 @@ int main(int argc, char *argv[])
 }
 
 /*todo:
- * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны! (вроде пофиксил повышением точности)
- *
- * ! Идея: не давать сгенерировать сплайновый полином, если не делится !
+ * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны ! (вроде пофиксил повышением точности)
+ * ! Вопрос: проверить, правильно, ли что q(m_R) выдаёт иногда нуль !
  *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0! (проверка при генерации r, что r != t?)
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 3. Доразобраться с gp и сделать норм. commit
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
- * 5. Распараллелить вычисления интерполяционного полинома (только точки должны идти по порядку)
- * 6. Перевод proof в json и обратно
- * 7. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
+ * 5. Перевод proof в json и обратно
+ * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <future>
+#include <numeric>
+#include <csignal>
 
 namespace snrk {
 
@@ -76,53 +78,16 @@ Y_t CanonicPolynom::operator()(X_t x)
     return y;
 }
 
+bool CanonicPolynom::isZero() const
+{
+    return cmp(std::accumulate(m_coefs.begin(), m_coefs.end(), ValueType(0)), ValueType(0)) == 0;
+}
+
 CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 {
-    int k,j;
+    auto result = devide(other);
 
-    std::size_t n = m_coefs.size() - 1;
-    std::size_t nOther = other.m_coefs.size() - 1;
-
-    /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
-    CanonicPolynom res(n + 1), rem(n + 1);
-
-    if (nOther < 0 || (nOther == 0 && std::abs(other.m_coefs[0].get_d()) < 1e-9)) {
-        throw std::invalid_argument("Division by zero polynomial or zero constant.");
-    }
-
-    if (n < nOther) {
-        res = CanonicPolynom(1);
-        res[0] = 0.0;
-        rem = *this;
-        return CustomPolynom([rem, other](X_t x) mutable -> Y_t
-        {
-            return (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
-        });
-    }
-
-    coefs_t remainderCoefs = m_coefs;
-
-    int degreeRes = n - nOther;
-    res = CanonicPolynom(degreeRes + 1);
-    for(int i = 0; i <= degreeRes; ++i) {
-        res[i] = 0.0;
-    }
-
-    for (int i = degreeRes; i >= 0; --i) {
-        ValueType factor = remainderCoefs[i + nOther] / other.m_coefs[nOther];
-        res[i] = factor;
-
-        for (int j = 0; j <= nOther; ++j) {
-            remainderCoefs[i + j] -= factor * other.m_coefs[j];
-        }
-    }
-
-    rem = CanonicPolynom(nOther);
-    for(int j = 0; j < nOther; ++j) {
-         rem[j] = remainderCoefs[j];
-    }
-
-    return CustomPolynom([res, rem, other](X_t x) mutable -> Y_t
+    return CustomPolynom([res = result.first, rem = result.second, other](X_t x) mutable -> Y_t
     {
         return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
     });
@@ -221,6 +186,53 @@ const ValueType CanonicPolynom::operator[](std::size_t i) const
 std::size_t CanonicPolynom::degree() const
 {
     return m_coefs.size() - 1;
+}
+
+CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other)
+{
+    int k,j;
+
+    std::size_t n = m_coefs.size() - 1;
+    std::size_t nOther = other.m_coefs.size() - 1;
+
+    /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
+    CanonicPolynom res(n + 1), rem(n + 1);
+
+    if (nOther < 0 || (nOther == 0 && std::abs(other.m_coefs[0].get_d()) < 1e-9)) {
+        throw std::invalid_argument("Division by zero polynomial or zero constant.");
+    }
+
+    if (n < nOther) {
+        res = CanonicPolynom(1);
+        res[0] = 0.0;
+        rem = *this;
+
+        return {res, rem};
+    }
+
+    coefs_t remainderCoefs = m_coefs;
+
+    int degreeRes = n - nOther;
+    res = CanonicPolynom(degreeRes + 1);
+    for(int i = 0; i <= degreeRes; ++i) {
+        res[i] = 0.0;
+    }
+
+    for (int i = degreeRes; i >= 0; --i) {
+        ValueType factor = remainderCoefs[i + nOther] / other.m_coefs[nOther];
+        res[i] = factor;
+
+        for (int j = 0; j <= nOther; ++j) {
+            remainderCoefs[i + j] -= factor * other.m_coefs[j];
+        }
+    }
+
+    rem = CanonicPolynom(nOther);
+    for(int j = 0; j < nOther; ++j) {
+         rem[j] = remainderCoefs[j];
+    }
+
+    return {res, rem};
 }
 
 InterpolationPolynom::InterpolationPolynom(const dots_t &dots)
@@ -488,6 +500,28 @@ CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
     return CustomPolynom([result](X_t x) mutable {return result[x](x);});
 }
 
+PartedCanonicPolynom PartedCanonicPolynom::mustDevide(PartedCanonicPolynom &other) const
+{
+    map result;
+
+    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
+    {
+        CanonicPolynom f1 = it->second;
+        CanonicPolynom f2 = itOther->second;
+
+        const auto &[res, rem] = f1.devide(f2);
+
+        if (!rem.isZero()) {
+            std::raise(SIGFPE);
+        }
+
+        result.insert(currentRange, res);
+    });
+
+    return PartedCanonicPolynom(result);
+
+}
+
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
 {
     map result;
@@ -691,6 +725,29 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         }
         }
     }
+}
+
+Range PartedCanonicPolynom::distance() const
+{
+    if (m_map.size() == 0) {
+        return Range{0, 0};
+    }
+
+    return Range{m_map.cbegin()->first.leftBound(), std::prev(m_map.cend())->first.rightBound()};
+}
+
+PartedCanonicPolynom PartedCanonicPolynom::cut(Range distance) const
+{
+    auto begin = m_map.find(distance.leftBound());
+    auto end = m_map.find(distance.rightBound());
+
+    if (begin == m_map.cend()) {
+        return PartedCanonicPolynom{};
+    }
+
+    end = (end == m_map.cend()) ? end : std::next(end);
+
+    return PartedCanonicPolynom(map(begin, end));
 }
 
 const int PartedCanonicPolynom::Partition = 3;

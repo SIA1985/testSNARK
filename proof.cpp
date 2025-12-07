@@ -19,7 +19,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
 
 X_t getR(const xs_t &witness) {
     if (witness.size() == 0) {
-        return 0; //todo
+        return 1; //todo
     }
 
     std::random_device rd;
@@ -74,14 +74,15 @@ bool PolynomSubstitutionProof::check()
 
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
 {
+    assert(g.distance() == p.distance());
+
+
     auto ptr = ptr_t(new ZeroTestProof);
 
     ptr->m_tG = tG;
 
     ptr->m_witness = witness;
 
-
-    //todo: при доказательстве входов тут p для currentRange выводит растущие значения
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
@@ -91,7 +92,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 //        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;
 //    }
 
-    auto q = InterpolationPolynom((f / z).dots(ptr->m_witness));
+
+    auto q = f.mustDevide(z);
+
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness)*/
@@ -116,6 +119,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
+    //todo: оптимизация - создание zero только для промежутка, где есть m_r
     auto z = ZeroPolynom(m_witness).toPartedCanonicPolynom();
 
     ValueType b = m_qR * z(m_r);
