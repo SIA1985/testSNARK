@@ -181,6 +181,7 @@ int main(int argc, char *argv[])
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
+    ! ТУТ ЧЁТА ЗАРАБОТАЛО !
     if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
         std::cout << "Некорректные входы!" << std::endl;
         exit(1);
