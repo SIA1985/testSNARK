@@ -13,49 +13,6 @@ bool operator<(const dot_t &a, const dot_t &b)
     return cmp(a.x, b.x) != 1;
 }
 
-
-void reverseBits(complexValues_t &values)
-{
-    int n = values.size();
-    for (int i = 1, j = 0; i < n; i++) {
-        int bit = n >> 1;
-        for (; j & bit; bit >>= 1) {
-            j ^= bit;
-        }
-        j ^= bit;
-        if (i < j) {
-            std::swap(values[i], values[j]);
-        }
-    }
-}
-
-void FFT(complexValues_t& values, bool invert)
-{
-    int n = values.size();
-
-    reverseBits(values);
-
-    for (int len = 2; len <= n; len <<= 1) {
-        double ang = 2 * M_PI / len * (invert ? -1 : 1);
-        complexValue_t wlen(std::cos(ang), std::sin(ang));
-        for (int i = 0; i < n; i += len) {
-            complexValue_t w(1);
-            for (int j = 0; j < len / 2; j++) {
-                complexValue_t u = values[i + j], v = values[i + j + len / 2] * w;
-                values[i + j] = u + v;
-                values[i + j + len / 2] = u - v;
-                w *= wlen;
-            }
-        }
-    }
-
-    if (invert) {
-        for (complexValue_t& x : values) {
-            x /= n;
-        }
-    }
-}
-
 dots_t Polynom::dots(xs_t xs)
 {
     dots_t result;
@@ -418,7 +375,6 @@ PartedCanonicPolynom InterpolationPolynom::toPartedCanonicPolynom() const
 ZeroPolynom::ZeroPolynom(const xs_t &xs)
     : m_roots{xs}
 {
-    m_coefs = CanonicPolynom::coefsFromRoots(xs);
 }
 
 PartedCanonicPolynom ZeroPolynom::toPartedCanonicPolynom() const
@@ -551,6 +507,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
 
         dots_t dots(start, it);
 
+        //а как тогда из корней строится дольше?
         if (fromInterpolation) { //O(n^2)
             m_map.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
         } else {

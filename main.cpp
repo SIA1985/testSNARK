@@ -46,7 +46,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
         //
         auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
-        //150ms - 10k свидетелей
+        //150ms - 10k свидетелей!
 
         switch(operation) {
         case snrk::Sum: {
@@ -76,10 +76,10 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
     //
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses);
-    //3000ms - 10k свидетелей
+    //150ms - 10k свидетелей
 
     return proof->check();
-    //3000ms - 10k свидетелей
+    //150ms - 10k свидетелей
 }
 
 //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
@@ -90,10 +90,11 @@ bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t
     auto wCanonic = w.toPartedCanonicPolynom();
 
     snrk::dots_t twDots;
-    snrk::xs_t witnesses;
+    snrk::xs_t witnesses(ws.begin(), ws.end());
+
+    //7500ms - 10к свидетелей
     for(auto wt : ws) {
         twDots.push_back({wt, tCanonic(wCanonic(wt))});
-        witnesses.insert(wt);
     }
 
     auto twCanonic = snrk::InterpolationPolynom(twDots).toPartedCanonicPolynom();

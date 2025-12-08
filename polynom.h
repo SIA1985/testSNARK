@@ -14,8 +14,6 @@ namespace snrk {
 
 bool operator<(const dot_t &a, const dot_t &b);
 
-void reverseBits(complexValues_t& values);
-void FFT(complexValues_t& values, bool invert);
 
 class Polynom
 {
