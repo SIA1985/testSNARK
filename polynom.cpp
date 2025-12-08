@@ -145,41 +145,6 @@ CanonicPolynom CanonicPolynom::operator*(const CanonicPolynom &other) const
         }
     }
     return result;
-
-    // 1. Подготовка данных: перевод в комплексный формат
-//    complexValues_t fa(m_coefs.begin(), m_coefs.end());
-//    complexValues_t fb(other.m_coefs.begin(), other.m_coefs.end());
-
-//    // 2. Определение размера N (степень двойки)
-//    size_t n = 1;
-//    // N должно быть достаточно большим, чтобы вместить результат A*B (размер A + размер B - 1)
-//    while (n < m_coefs.size() + other.m_coefs.size()) n <<= 1;
-
-//    // Дополнение нулями (padding) до размера N
-//    fa.resize(n);
-//    fb.resize(n);
-
-//    // 3. Прямое FFT (Переход в частотную область)
-//    FFT(fa, false);
-//    FFT(fb, false);
-
-//    // 4. Поточечное умножение в частотной области (самый быстрый шаг)
-//    for (size_t i = 0; i < n; i++) {
-//        fa[i] *= fb[i];
-//    }
-
-//    // 5. Обратное FFT (Возврат в каноническую форму)
-//    FFT(fa, true); // IFFT
-
-//    // 6. Извлечение результатов (вещественных коэффициентов)
-//    coefs_t result_coefs(m_coefs.size() + other.m_coefs.size() - 1);
-//    for (size_t i = 0; i < result_coefs.size(); i++) {
-////        // Округление необходимо из-за погрешностей float-арифметики
-////        result_coefs[i] = std::round(fa[i].real());
-//        result_coefs[i] = fa[i].real();
-//    }
-
-//    return CanonicPolynom(result_coefs);
 }
 
 CanonicPolynom CanonicPolynom::operator*(const ValueType value) const

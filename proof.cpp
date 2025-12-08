@@ -89,13 +89,8 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
-
-    auto start = std::chrono::steady_clock::now();
+    //900ms при 30к свидетелей, 100ms - 10k
     auto z = ZeroPolynom(ptr->m_witness).toPartedCanonicPolynom();
-    //3000ms - 10k свидетелей
-    auto end = std::chrono::steady_clock::now();
-    printDur("ZeroPoly: ", end, start);
-
 
 //    for(auto w : ptr->m_witness) {
 //        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;

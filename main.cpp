@@ -7,14 +7,16 @@
 
 #define printDur(text, end, start)     std::cout << text << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
+//Подготовка увеличивается согласно О(n^2)
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
     auto start = std::chrono::steady_clock::now();
 
+    snrk::xs_t witness(ws.begin(), ws.end());
+
     snrk::dots_t inputsW;
-    snrk::xs_t witness;
+    inputsW.reserve(inputs.size());
     for(std::size_t i = 0; i < inputs.size(); i++) {
-        witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
     }
     auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
@@ -32,8 +34,11 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     return result;
 }
 
+//Подготовка увеличивается согласно О(n^2)
 bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
+    auto start = std::chrono::steady_clock::now();
+
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
@@ -74,6 +79,9 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     }
     //1100ms - 10k свидетелей
 
+    auto end = std::chrono::steady_clock::now();
+    printDur("Подготовка correctGates: ", end, start);
+
     //
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses);
     //150ms - 10k свидетелей
@@ -89,8 +97,10 @@ bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wCanonic = w.toPartedCanonicPolynom();
 
-    snrk::dots_t twDots;
     snrk::xs_t witnesses(ws.begin(), ws.end());
+
+    snrk::dots_t twDots;
+    twDots.reserve(ws.size());
 
     //7500ms - 10к свидетелей
     for(auto wt : ws) {
@@ -142,6 +152,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
+    //15000ms - 30k свидетелей (< 1000)
     for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
@@ -203,7 +214,6 @@ int main(int argc, char *argv[])
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
- * 7. Убрать Чебышёва из свидетелей, так как нужны равностоящие
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

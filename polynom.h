@@ -7,6 +7,7 @@
 #include <map>
 #include <unordered_set>
 #include <cassert>
+#include <iostream>
 
 #include "types.h"
 
