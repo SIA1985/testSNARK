@@ -13,6 +13,49 @@ bool operator<(const dot_t &a, const dot_t &b)
     return cmp(a.x, b.x) != 1;
 }
 
+
+void reverseBits(complexValues_t &values)
+{
+    int n = values.size();
+    for (int i = 1, j = 0; i < n; i++) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1) {
+            j ^= bit;
+        }
+        j ^= bit;
+        if (i < j) {
+            std::swap(values[i], values[j]);
+        }
+    }
+}
+
+void FFT(complexValues_t& values, bool invert)
+{
+    int n = values.size();
+
+    reverseBits(values);
+
+    for (int len = 2; len <= n; len <<= 1) {
+        double ang = 2 * M_PI / len * (invert ? -1 : 1);
+        complexValue_t wlen(std::cos(ang), std::sin(ang));
+        for (int i = 0; i < n; i += len) {
+            complexValue_t w(1);
+            for (int j = 0; j < len / 2; j++) {
+                complexValue_t u = values[i + j], v = values[i + j + len / 2] * w;
+                values[i + j] = u + v;
+                values[i + j + len / 2] = u - v;
+                w *= wlen;
+            }
+        }
+    }
+
+    if (invert) {
+        for (complexValue_t& x : values) {
+            x /= n;
+        }
+    }
+}
+
 dots_t Polynom::dots(xs_t xs)
 {
     dots_t result;
@@ -68,20 +111,6 @@ CanonicPolynom CanonicPolynom::buildPolynomialRecursive(const roots_t& roots, ro
 
 CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
 {
-//   O(n^2)
-//    CanonicPolynom result(1);
-//    result[0] = 1.0;
-
-//    for (const auto &root : roots) {
-//        CanonicPolynom binomial(2);
-//        binomial[0] = -root;
-//        binomial[1] = 1.0;
-
-//        result = result * binomial;
-//    }
-
-//    return result.m_coefs;
-
     if (roots.empty()) {
         return {1.0};
     }
@@ -159,6 +188,41 @@ CanonicPolynom CanonicPolynom::operator*(const CanonicPolynom &other) const
         }
     }
     return result;
+
+    // 1. Подготовка данных: перевод в комплексный формат
+//    complexValues_t fa(m_coefs.begin(), m_coefs.end());
+//    complexValues_t fb(other.m_coefs.begin(), other.m_coefs.end());
+
+//    // 2. Определение размера N (степень двойки)
+//    size_t n = 1;
+//    // N должно быть достаточно большим, чтобы вместить результат A*B (размер A + размер B - 1)
+//    while (n < m_coefs.size() + other.m_coefs.size()) n <<= 1;
+
+//    // Дополнение нулями (padding) до размера N
+//    fa.resize(n);
+//    fb.resize(n);
+
+//    // 3. Прямое FFT (Переход в частотную область)
+//    FFT(fa, false);
+//    FFT(fb, false);
+
+//    // 4. Поточечное умножение в частотной области (самый быстрый шаг)
+//    for (size_t i = 0; i < n; i++) {
+//        fa[i] *= fb[i];
+//    }
+
+//    // 5. Обратное FFT (Возврат в каноническую форму)
+//    FFT(fa, true); // IFFT
+
+//    // 6. Извлечение результатов (вещественных коэффициентов)
+//    coefs_t result_coefs(m_coefs.size() + other.m_coefs.size() - 1);
+//    for (size_t i = 0; i < result_coefs.size(); i++) {
+////        // Округление необходимо из-за погрешностей float-арифметики
+////        result_coefs[i] = std::round(fa[i].real());
+//        result_coefs[i] = fa[i].real();
+//    }
+
+//    return CanonicPolynom(result_coefs);
 }
 
 CanonicPolynom CanonicPolynom::operator*(const ValueType value) const
@@ -475,13 +539,12 @@ PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
 
 PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
-    int partition = fromInterpolation ? PartedCanonicPolynom::Partition : PartedCanonicPolynom::Partition - 1;
     auto end = sortedDots.end();
 
     for(auto it = sortedDots.begin(); it != end; it = (it == end) ? it : std::prev(it)) {
         auto start = it;
-        if (std::distance(it, end) >= partition) {
-            std::advance(it, partition);
+        if (std::distance(it, end) >= PartedCanonicPolynom::Partition) {
+            std::advance(it, PartedCanonicPolynom::Partition);
         } else {
             it = end;
         }

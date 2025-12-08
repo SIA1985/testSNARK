@@ -169,25 +169,25 @@ int main(int argc, char *argv[])
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
-//    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
-//        std::cout << "Некорректные входы!" << std::endl;
-//        exit(1);
-//    }
+    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
+        std::cout << "Некорректные входы!" << std::endl;
+        exit(1);
+    }
 
     if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG)) {
         std::cout << "Некорректные переходы!" << std::endl;
         exit(1);
     }
 
-//    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
-//        std::cout << "Некорректные переменные!" << std::endl;
-//        exit(1);
-//    }
+    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
+        std::cout << "Некорректные переменные!" << std::endl;
+        exit(1);
+    }
 
-//    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
-//        std::cout << "Некорректный выход!" << std::endl;
-//        exit(1);
-//    }
+    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
+        std::cout << "Некорректный выход!" << std::endl;
+        exit(1);
+    }
 
     std::cout << "Ok!" << std::endl;
 }
@@ -202,6 +202,7 @@ int main(int argc, char *argv[])
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
+ * 7. Убрать Чебышёва из свидетелей, так как нужны равностоящие
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <chrono>
 
 namespace snrk {
 
@@ -72,6 +73,8 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
+#define printDur(text, end, start)     std::cout << text << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
 {
     assert(g.distance() == p.distance());
@@ -86,7 +89,12 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
+
+    auto start = std::chrono::steady_clock::now();
     auto z = ZeroPolynom(ptr->m_witness).toPartedCanonicPolynom();
+    auto end = std::chrono::steady_clock::now();
+    printDur("ZeroPoly: ", end, start);
+
 
 //    for(auto w : ptr->m_witness) {
 //        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;

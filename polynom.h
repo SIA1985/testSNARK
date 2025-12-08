@@ -14,6 +14,9 @@ namespace snrk {
 
 bool operator<(const dot_t &a, const dot_t &b);
 
+void reverseBits(complexValues_t& values);
+void FFT(complexValues_t& values, bool invert);
+
 class Polynom
 {
 public:
@@ -270,11 +273,11 @@ class InterpolationPolynom : public Polynom
 public:
     using coefs_t = std::vector<ValueType>;
 
+
     InterpolationPolynom() = default;
 
     InterpolationPolynom(const dots_t &dots);
 
-    //todo: распараллеливание a1/b1 * a2/b2 * ... an/bn, th1, th2 ... thn
     virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom toCanonicPolynom() const;

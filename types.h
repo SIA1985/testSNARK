@@ -4,6 +4,7 @@
 #include <vector>
 #include <gmpxx.h>
 #include <set>
+#include <complex>
 
 namespace snrk {
 
@@ -34,6 +35,9 @@ struct dot_t {X_t x; Y_t y;};
 typedef std::vector<dot_t> dots_t;
 struct TG_t {X_t t; int G;};
 typedef std::set<X_t> xs_t;
+typedef std::complex<ValueType> complexValue_t;
+typedef std::vector<complexValue_t> complexValues_t;
+
 
 typedef unsigned long witness_t;
 typedef std::vector<witness_t> witnesses_t;
