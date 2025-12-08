@@ -97,7 +97,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_comQ = q.commit(tG);
 
-    /*todo: (hash % size(witness)*/
+    /*todo: (hash % size(witness) + тут можно любое число!*/
     ptr->m_r = getR(ptr->m_witness);
 
     ptr->m_fR = f(ptr->m_r);
@@ -124,7 +124,7 @@ bool ZeroTestProof::check()
 
     ValueType b = m_qR * z(m_r);
 
-    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
+//    std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);
 }
 

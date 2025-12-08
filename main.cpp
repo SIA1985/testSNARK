@@ -3,9 +3,14 @@
 #include <iomanip>
 #include <cmath>
 #include <csignal>
+#include <chrono>
+
+#define printDur(text, end, start)     std::cout << text << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
+    auto start = std::chrono::steady_clock::now();
+
     snrk::dots_t inputsW;
     snrk::xs_t witness;
     for(std::size_t i = 0; i < inputs.size(); i++) {
@@ -15,9 +20,16 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
     auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
 
-    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness);
+    auto end = std::chrono::steady_clock::now();
+    printDur("Подготовка correctInputs: ", end, start);
 
-    return proof->check();
+    start = std::chrono::steady_clock::now();
+    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness);
+    auto result = proof->check();
+    end = std::chrono::steady_clock::now();
+    printDur("Проверка correctInputs: ", end, start);
+
+    return result;
 }
 
 bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
@@ -27,10 +39,14 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     auto result = t.result.toPartedCanonicPolynom();
 
     snrk::xs_t witnesses(ws.begin(), ws.end());
+    //400ms - 10k свидетелей
 
     auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
     for(const auto &[operation, dots] : SParams.opsFromS) {
+
+        //
         auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
+        //150ms - 10k свидетелей
 
         switch(operation) {
         case snrk::Sum: {
@@ -53,15 +69,23 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
         default:
             break;
         }
-    }
+        //60ms - 10k свидетелей
 
+    }
+    //1100ms - 10k свидетелей
+
+    //
     auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses);
+    //3000ms - 10k свидетелей
 
     return proof->check();
+    //3000ms - 10k свидетелей
 }
 
 //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
 bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
+    auto start = std::chrono::steady_clock::now();
+
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wCanonic = w.toPartedCanonicPolynom();
 
@@ -74,11 +98,16 @@ bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t
 
     auto twCanonic = snrk::InterpolationPolynom(twDots).toPartedCanonicPolynom();
 
+    auto end = std::chrono::steady_clock::now();
+    printDur("Подготовка currentVars: ", end, start);
+
+    start = std::chrono::steady_clock::now();
     auto proof = snrk::ZeroTestProof::forProver(tCanonic, twCanonic, tG, witnesses);
+    auto result = proof->check();
+    end = std::chrono::steady_clock::now();
+    printDur("Проверка currentVars: ", end, start);
 
-    return proof->check();
-
-    return true;
+    return result;
 }
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
@@ -112,7 +141,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-//    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -133,32 +162,32 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Sum, {out8, out4}, {out9}});
     auto out10 = snrk::Value(14);
     c.addGate({snrk::Sum, {out9, out8}, {out10}});
-//    }
+    }
 
     snrk::GlobalParams gp(c);
     auto TParams = gp.PP().TParams;
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
-    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
-        std::cout << "Некорректные входы!" << std::endl;
-        exit(1);
-    }
+//    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
+//        std::cout << "Некорректные входы!" << std::endl;
+//        exit(1);
+//    }
 
     if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG)) {
         std::cout << "Некорректные переходы!" << std::endl;
         exit(1);
     }
 
-    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
-        std::cout << "Некорректные переменные!" << std::endl;
-        exit(1);
-    }
+//    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
+//        std::cout << "Некорректные переменные!" << std::endl;
+//        exit(1);
+//    }
 
-    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
-        std::cout << "Некорректный выход!" << std::endl;
-        exit(1);
-    }
+//    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
+//        std::cout << "Некорректный выход!" << std::endl;
+//        exit(1);
+//    }
 
     std::cout << "Ok!" << std::endl;
 }

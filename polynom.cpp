@@ -49,20 +49,45 @@ CanonicPolynom::CanonicPolynom(std::size_t n)
     m_coefs.resize(n, ValueType(0.0));
 }
 
-CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
-{
-    CanonicPolynom result(1);
-    result[0] = 1.0;
-
-    for (const auto &root : roots) {
+CanonicPolynom CanonicPolynom::buildPolynomialRecursive(const roots_t& roots, roots_t::const_iterator start, roots_t::const_iterator end) {
+    if (start == end) {
         CanonicPolynom binomial(2);
-        binomial[0] = -root;
+        binomial[0] = -(*start);
         binomial[1] = 1.0;
-
-        result = result * binomial;
+        return binomial;
     }
 
-    return result.m_coefs;
+    auto mid = start;
+    std::advance(mid, std::distance(start, end) / 2);
+
+    CanonicPolynom leftPoly = buildPolynomialRecursive(roots, start, mid);
+    CanonicPolynom rightPoly = buildPolynomialRecursive(roots, ++mid, end);
+
+    return leftPoly * rightPoly;
+}
+
+CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
+{
+//   O(n^2)
+//    CanonicPolynom result(1);
+//    result[0] = 1.0;
+
+//    for (const auto &root : roots) {
+//        CanonicPolynom binomial(2);
+//        binomial[0] = -root;
+//        binomial[1] = 1.0;
+
+//        result = result * binomial;
+//    }
+
+//    return result.m_coefs;
+
+    if (roots.empty()) {
+        return {1.0};
+    }
+
+    CanonicPolynom resultPoly = buildPolynomialRecursive(roots, roots.begin(), std::prev(roots.end()));
+    return resultPoly.m_coefs;
 }
 
 Y_t CanonicPolynom::operator()(X_t x)
@@ -256,15 +281,10 @@ Y_t InterpolationPolynom::operator()(X_t x)
         return li;
     };
 
-    const auto batch = 5000;
     Y_t y = 0;
 
-    //O = n^2
-
-    std::vector<std::future<X_t>> threads(m_dots.size() / batch /*мб +1*/);
-
     for(std::size_t i = 0; i < m_dots.size(); i++) {
-        //todo: распаралеливание каждых, например, 5к точек
+
         y += (l(i, x) * m_dots[i].y);
     }
 
@@ -468,7 +488,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
 
         dots_t dots(start, it);
 
-        if (fromInterpolation) {
+        if (fromInterpolation) { //O(n^2)
             m_map.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
         } else {
             xs_t xs;
@@ -476,6 +496,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
                 xs.insert(x);
             }
 
+            //O(n*log^2(n))
             m_map.insert({dots.front().x, dots.back().x}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
         }
     }

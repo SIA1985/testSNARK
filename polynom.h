@@ -86,6 +86,8 @@ public:
     bool isZero() const;
 
 protected:
+    static CanonicPolynom buildPolynomialRecursive(const roots_t& roots, roots_t::const_iterator start, roots_t::const_iterator end);
+
     /*x0, x1 .. xn*/
     coefs_t m_coefs;
 };
