@@ -28,9 +28,9 @@ GlobalParams::GlobalParams(const Circut &circut)
 {
     m_witnesses = genWitnesses(wStart, circut.degree());
 
-    generateT(circut);
+    auto mappedT = generateT(circut);
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
-    std::thread tW(&GlobalParams::generateW, this, std::ref(circut));
+    std::thread tW(&GlobalParams::generateW, this, std::ref(circut), std::ref(mappedT));
 
     tS.join();
     tW.join();
@@ -53,18 +53,21 @@ TG_t GlobalParams::TG()
 
 GlobalParams::ProverParams_t GlobalParams::PP()
 {
-    return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .w = m_W};
+    return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .WParams = {m_W, m_WT}};
 }
 
-void GlobalParams::generateT(const Circut &circut)
+GlobalParams::WtoValue_t GlobalParams::generateT(const Circut &circut)
 {
     dots_t dots, leftDots, rightDots, resultDots;
+    WtoValue_t mappedT;
 
     auto cw = m_witnesses.cbegin();
-    auto fillMap = [&cw, &dots](const values_t &row)
+    auto fillMap = [&cw, &dots, &mappedT](const values_t &row)
     {
-        for(const auto& elment : row) {
-            dots.push_back({X_t(*cw++), Y_t(elment)});
+        for(const auto& element : row) {
+            dots.push_back({X_t(*cw), Y_t(element)});
+            mappedT[*cw] = element;
+            cw++;
         }
     };
 
@@ -75,14 +78,20 @@ void GlobalParams::generateT(const Circut &circut)
     auto i = m_SWitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {
-        dots.push_back({X_t(*cw++), Y_t(gate.m_input.a)});
+        dots.push_back({X_t(*cw), Y_t(gate.m_input.a)});
         leftDots.push_back({X_t(*i), Y_t(gate.m_input.a)});
+        mappedT[*cw] = gate.m_input.a;
+        cw++;
 
-        dots.push_back({X_t(*cw++), Y_t(gate.m_input.b)});
+        dots.push_back({X_t(*cw), Y_t(gate.m_input.b)});
         rightDots.push_back({X_t(*i), Y_t(gate.m_input.b)});
+        mappedT[*cw] = gate.m_input.b;
+        cw++;
 
-        dots.push_back({X_t(*cw++), Y_t(gate.m_output)});
+        dots.push_back({X_t(*cw), Y_t(gate.m_output)});
         resultDots.push_back({X_t(*i), Y_t(gate.m_output)});
+        mappedT[*cw] = gate.m_output;
+        cw++;
 
         i++;
     }
@@ -93,6 +102,8 @@ void GlobalParams::generateT(const Circut &circut)
                     .right = InterpolationPolynom(rightDots),
                     .result = InterpolationPolynom(resultDots)
                   };
+
+    return mappedT;
 }
 
 void GlobalParams::generateS(const Circut &circut)
@@ -115,8 +126,9 @@ void GlobalParams::generateS(const Circut &circut)
     m_S = S_t(dots);
 }
 
-void GlobalParams::generateW(const Circut &circut)
+void GlobalParams::generateW(const Circut &circut, WtoValue_t mappedT)
 {
+    /*addr -> свидетели*/
     std::unordered_map<std::size_t, std::shared_ptr<cond_t>> duplicates;
     auto insert = [&duplicates](value_t key, witness_t value)
     {
@@ -147,7 +159,6 @@ void GlobalParams::generateW(const Circut &circut)
     }
 
 
-
     auto circleIterator = [](cond_t::iterator begin, cond_t::iterator it, cond_t::iterator end)
     {
         if (it == end) {
@@ -158,16 +169,22 @@ void GlobalParams::generateW(const Circut &circut)
     };
 
     dots_t dots;
+    dots_t dotsWT;
+    dots.reserve(duplicates.size());
+    dotsWT.reserve(duplicates.size());
+
     for(const auto &[_, condition] : duplicates) {
         auto begin = condition->begin();
         auto end = condition->end();
 
         for(auto it = begin; it != end;) {
+            dotsWT.push_back({*it, mappedT[*it]});
             dots.push_back({*it, *circleIterator(begin, ++it, end)});
         }
     }
 
     m_W = W_t(dots);
+    m_WT = WT_t(dotsWT);
 
 }
 

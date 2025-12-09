@@ -4,7 +4,6 @@
 #include <vector>
 #include <gmpxx.h>
 #include <set>
-#include <complex>
 
 namespace snrk {
 
@@ -44,6 +43,7 @@ class InterpolationPolynom;
 typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;
 typedef InterpolationPolynom W_t;
+typedef InterpolationPolynom WT_t;
 
 }
 

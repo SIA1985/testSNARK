@@ -26,10 +26,12 @@ public:
     using opsFromS_t = std::unordered_map<GateType_t, dots_t>;
     using TParams_t = struct{T_t t; SplittedT_t splittedT;};
     using SParams_t = struct{S_t s; opsFromS_t opsFromS;};
+    using WParams_t = struct{W_t w; WT_t wt;};
+    using WtoValue_t = std::unordered_map<witness_t, value_t>;
 
     using cond_t = std::unordered_set<witness_t>;
 
-    using ProverParams_t = struct{TParams_t TParams; SParams_t SParams; W_t w;};
+    using ProverParams_t = struct{TParams_t TParams; SParams_t SParams; WParams_t WParams;};
 
 
     GlobalParams(const Circut &circut);
@@ -42,11 +44,11 @@ public:
     ProverParams_t PP();
 
 private:
-    void generateT(const Circut &circut);
+    WtoValue_t generateT(const Circut &circut);
 
     void generateS(const Circut &circut);
 
-    void generateW(const Circut &circut);
+    void generateW(const Circut &circut, WtoValue_t mappedT);
 
     witnesses_t m_witnesses;
     witnesses_t m_SWitnesses;
@@ -60,6 +62,7 @@ private:
     opsFromS_t m_opsFromS;
 
     W_t m_W;
+    WT_t m_WT;
 };
 
 }

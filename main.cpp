@@ -12,11 +12,11 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
 {
     auto start = std::chrono::steady_clock::now();
 
-    snrk::xs_t witness(ws.begin(), ws.end());
-
+    snrk::xs_t witness;
     snrk::dots_t inputsW;
     inputsW.reserve(inputs.size());
     for(std::size_t i = 0; i < inputs.size(); i++) {
+        witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
     }
     auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
@@ -91,29 +91,20 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 }
 
 //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
-bool currentVars(const snrk::W_t &w, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
+bool currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
     auto start = std::chrono::steady_clock::now();
 
     auto tCanonic = t.toPartedCanonicPolynom();
-    auto wCanonic = w.toPartedCanonicPolynom();
+    auto wtCanonic = wt.toPartedCanonicPolynom();
 
     snrk::xs_t witnesses(ws.begin(), ws.end());
 
-    snrk::dots_t twDots;
-    twDots.reserve(ws.size());
-
-    //7500ms - 10к свидетелей
-    for(auto wt : ws) {
-        twDots.push_back({wt, tCanonic(wCanonic(wt))});
-    }
-
-    auto twCanonic = snrk::InterpolationPolynom(twDots).toPartedCanonicPolynom();
 
     auto end = std::chrono::steady_clock::now();
     printDur("Подготовка currentVars: ", end, start);
 
     start = std::chrono::steady_clock::now();
-    auto proof = snrk::ZeroTestProof::forProver(tCanonic, twCanonic, tG, witnesses);
+    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, witnesses);
     auto result = proof->check();
     end = std::chrono::steady_clock::now();
     printDur("Проверка currentVars: ", end, start);
@@ -153,7 +144,7 @@ int main(int argc, char *argv[])
     snrk::Circut c({x1, x2}, {w1});
 
     //15000ms - 30k свидетелей (< 1000)
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 100; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -181,7 +172,6 @@ int main(int argc, char *argv[])
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
-    ! ТУТ ЧЁТА ЗАРАБОТАЛО !
     if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
         std::cout << "Некорректные входы!" << std::endl;
         exit(1);
@@ -192,7 +182,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if (!currentVars(gp.PP().w, TParams.t, witnesses, tG)) {
+    if (!currentVars(gp.PP().WParams.wt, TParams.t, witnesses, tG)) {
         std::cout << "Некорректные переменные!" << std::endl;
         exit(1);
     }
@@ -215,6 +205,8 @@ int main(int argc, char *argv[])
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
+ * 7. Убрать свидетелей из доказательства (оставить только количество)
+ * 8. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
