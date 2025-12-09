@@ -103,6 +103,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     /*todo: (hash % size(witness) + тут можно любое число!*/
     ptr->m_r = getR(ptr->m_witness);
+    std::cout << "com: " << ptr->m_comQ << " " << ptr->m_r << std::endl;
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
