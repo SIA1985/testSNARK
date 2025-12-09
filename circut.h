@@ -19,6 +19,7 @@ public:
     operator double() const;
     operator GateType_t() const;
     operator ValueType() const;
+    operator witness_t() const;
 
     ValueType* get() const;
 

@@ -256,6 +256,8 @@ public:
 
     PartedCanonicPolynom cut(Range distance) const;
 
+    Range atRange(X_t x) const;
+
     const static int Partition;
 
 protected:

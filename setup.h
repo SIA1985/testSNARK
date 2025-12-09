@@ -11,8 +11,9 @@
 
 namespace snrk { 
 
-static witness_t wStart = 1.;
-witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev = false);
+static witness_t wStart = 1;
+static witness_t wStep = 1;
+witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep);
 
 struct SplittedT_t
 {

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include <chrono>
 
 namespace snrk {
 
@@ -73,9 +72,7 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-#define printDur(text, end, start)     std::cout << text << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness, witness_t wStep)
 {
     assert(g.distance() == p.distance());
 
@@ -84,13 +81,11 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     ptr->m_tG = tG;
 
-    ptr->m_witness = witness;
-
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
     //900ms при 30к свидетелей, 100ms - 10k
-    auto z = ZeroPolynom(ptr->m_witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom(witness).toPartedCanonicPolynom();
 
 //    for(auto w : ptr->m_witness) {
 //        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;
@@ -102,8 +97,14 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness) + тут можно любое число!*/
-    ptr->m_r = getR(ptr->m_witness);
-    std::cout << "com: " << ptr->m_comQ << " " << ptr->m_r << std::endl;
+    ptr->m_r = getR(witness);
+
+    auto rRange = z.atRange(ptr->m_r);
+    xs_t rPratedWitnesses;
+    for(X_t w = rRange.leftBound(); w <= rRange.rightBound(); w += wStep) {
+        rPratedWitnesses.insert(w);
+    }
+    ptr->m_rPartedWitnesses = rPratedWitnesses;
 
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
@@ -124,8 +125,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    //todo: оптимизация - создание zero только для промежутка, где есть m_r
-    auto z = ZeroPolynom(m_witness).toPartedCanonicPolynom();
+    auto z = ZeroPolynom(m_rPartedWitnesses).toPartedCanonicPolynom();
 
     ValueType b = m_qR * z(m_r);
 

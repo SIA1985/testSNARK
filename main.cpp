@@ -3,15 +3,10 @@
 #include <iomanip>
 #include <cmath>
 #include <csignal>
-#include <chrono>
-
-#define printDur(text, end, start)     std::cout << text << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
 //Подготовка увеличивается согласно О(n^2)
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
-    auto start = std::chrono::steady_clock::now();
-
     snrk::xs_t witness;
     snrk::dots_t inputsW;
     inputsW.reserve(inputs.size());
@@ -19,26 +14,19 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
         witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
     }
+
     auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
     auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
 
-    auto end = std::chrono::steady_clock::now();
-    printDur("Подготовка correctInputs: ", end, start);
+    auto wStep = *(++ws.begin()) - ws.front();
+    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
 
-    start = std::chrono::steady_clock::now();
-    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness);
-    auto result = proof->check();
-    end = std::chrono::steady_clock::now();
-    printDur("Проверка correctInputs: ", end, start);
-
-    return result;
+    return proof->check();
 }
 
 //Подготовка увеличивается согласно О(n^2)
 bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
-    auto start = std::chrono::steady_clock::now();
-
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
@@ -79,11 +67,9 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     }
     //1100ms - 10k свидетелей
 
-    auto end = std::chrono::steady_clock::now();
-    printDur("Подготовка correctGates: ", end, start);
-
+    auto wStep = *(++ws.begin()) - ws.front();
     //
-    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses);
+    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses, wStep);
     //150ms - 10k свидетелей
 
     return proof->check();
@@ -92,24 +78,15 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
 //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
 bool currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
-    auto start = std::chrono::steady_clock::now();
-
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wtCanonic = wt.toPartedCanonicPolynom();
 
     snrk::xs_t witnesses(ws.begin(), ws.end());
 
+    auto wStep = *(++ws.begin()) - ws.front();
+    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, witnesses, wStep);
 
-    auto end = std::chrono::steady_clock::now();
-    printDur("Подготовка currentVars: ", end, start);
-
-    start = std::chrono::steady_clock::now();
-    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, witnesses);
-    auto result = proof->check();
-    end = std::chrono::steady_clock::now();
-    printDur("Проверка currentVars: ", end, start);
-
-    return result;
+    return proof->check();
 }
 
 bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
@@ -144,7 +121,7 @@ int main(int argc, char *argv[])
     snrk::Circut c({x1, x2}, {w1});
 
     //15000ms - 30k свидетелей (< 1000)
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::Value(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::Value(7);
@@ -172,6 +149,7 @@ int main(int argc, char *argv[])
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
+    //todo: чёта сломалась проверка
     if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
         std::cout << "Некорректные входы!" << std::endl;
         exit(1);
@@ -205,8 +183,7 @@ int main(int argc, char *argv[])
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
- * 7. Убрать свидетелей из доказательства (оставить только количество)
- * 8. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно)
+ * 7. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно)
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

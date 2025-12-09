@@ -9,14 +9,11 @@
 namespace snrk {
 
 //
-witnesses_t genWitnesses(witness_t start, std::size_t count, bool Chebishev)
+witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
 {
     witnesses_t witnesses;
-    for(std::size_t i = 1; i <= count; i++) {
-        witnesses.push_back( std::is_same<witness_t, double>::value && Chebishev ?
-                    (((start + count) - (count - start) * std::cos( M_PI * (2 * i - 1) / (2 * count) )) / 2.)
-                    : i
-        );
+    for(witness_t i = start; i <= count; i += wStep) {
+        witnesses.push_back(i);
     }
 
     return witnesses;
@@ -26,7 +23,7 @@ GlobalParams::GlobalParams(const Circut &circut)
     //todo: генерация
     : m_TG{10, 20}
 {
-    m_witnesses = genWitnesses(wStart, circut.degree());
+    m_witnesses = genWitnesses(wStart, circut.degree(), wStep);
 
     auto mappedT = generateT(circut);
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
@@ -74,7 +71,7 @@ GlobalParams::WtoValue_t GlobalParams::generateT(const Circut &circut)
     fillMap(circut.m_inputX);
     fillMap(circut.m_inputW);
 
-    m_SWitnesses = genWitnesses(wStart, circut.m_gates.size());
+    m_SWitnesses = genWitnesses(wStart, circut.m_gates.size(), wStep);
     auto i = m_SWitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {

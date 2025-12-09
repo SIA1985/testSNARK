@@ -39,6 +39,11 @@ Value::operator ValueType() const
     return *m_value;
 }
 
+Value::operator witness_t() const
+{
+    return m_value->get_ui();
+}
+
 ValueType* Value::get() const
 {
     return m_value.get();

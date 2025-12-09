@@ -756,6 +756,16 @@ PartedCanonicPolynom PartedCanonicPolynom::cut(Range distance) const
     return PartedCanonicPolynom(map(begin, end));
 }
 
+Range PartedCanonicPolynom::atRange(X_t x) const
+{
+    auto founded = m_map.find(x);
+    if (founded == m_map.cend()) {
+        return {0, 0};
+    }
+
+    return founded->first;
+}
+
 const int PartedCanonicPolynom::Partition = 3;
 
 }
