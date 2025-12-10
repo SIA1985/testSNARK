@@ -91,7 +91,16 @@ Y_t CanonicPolynom::operator()(X_t x)
 
 bool CanonicPolynom::isZero() const
 {
-    return cmp(std::accumulate(m_coefs.begin(), m_coefs.end(), ValueType(0)), ValueType(0)) == 0;
+    bool result = true;
+    for(const auto &coef : m_coefs) {
+        result = result && (cmp(coef, ValueType(0)) == 0);
+
+        if(!result) {
+            break;
+        }
+    }
+
+    return result;
 }
 
 CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
@@ -458,6 +467,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
 {
 }
 
+//O(n)
 PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
     auto end = sortedDots.end();
@@ -472,8 +482,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
 
         dots_t dots(start, it);
 
-        //а как тогда из корней строится дольше?
-        if (fromInterpolation) { //O(n^2)
+        if (fromInterpolation) {
             m_map.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
         } else {
             xs_t xs;
@@ -481,7 +490,6 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
                 xs.insert(x);
             }
 
-            //O(n*log^2(n))
             m_map.insert({dots.front().x, dots.back().x}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
         }
     }

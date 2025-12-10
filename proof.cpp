@@ -87,8 +87,8 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     //900ms при 30к свидетелей, 100ms - 10k
     auto z = ZeroPolynom(witness).toPartedCanonicPolynom();
 
-//    for(auto w : ptr->m_witness) {
-//        std::cout << w << " : " << g(w) << " - " << p(w) << std::endl;
+//    for(auto w : witness) {
+//        std::cout << w << " : " << g(w) << " - " << p(w) << " = " << f(w) << std::endl;
 //    }
 
 
