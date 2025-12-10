@@ -8,7 +8,6 @@
 
 namespace snrk {
 
-//
 witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
 {
     witnesses_t witnesses;

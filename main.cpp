@@ -56,7 +56,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
         }
             //todo:
         case snrk::Devide: {
-//            funcF += (snrk::InterpolationPolynom((left / right).dots(witness))).toPartedCanonicPolynom() * isOperation;
+//            funcF += left.mustDevide(right) * isOperation;
             break;
         }
         default:
@@ -99,7 +99,7 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNu
     return proof->check();
 }
 
-void sigfpeHandler(int signum) {
+void sigFpeHandler(int signum) {
     std::cout << "Ошибка в создании доказательства!" << std::endl;
     exit(signum);
 }
@@ -107,7 +107,7 @@ void sigfpeHandler(int signum) {
 
 int main(int argc, char *argv[])
 {
-    if (std::signal(SIGFPE, sigfpeHandler) == SIG_ERR) {
+    if (std::signal(SIGFPE, sigFpeHandler) == SIG_ERR) {
         exit(2);
     }
 
@@ -183,6 +183,8 @@ int main(int argc, char *argv[])
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
  * 7. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно)
+ * 8. ValueType -> value_t
+ * 9. Убрать копирование witnesses_t -> xs_t
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
