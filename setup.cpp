@@ -11,8 +11,9 @@ namespace snrk {
 witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
 {
     witnesses_t witnesses;
-    for(witness_t i = start; i <= count; i += wStep) {
-        witnesses.push_back(i);
+    for(witness_t i = 0; i < count; i++) {
+        witnesses.push_back(start);
+        start += wStep;
     }
 
     return witnesses;

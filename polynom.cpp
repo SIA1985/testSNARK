@@ -346,19 +346,19 @@ PartedCanonicPolynom InterpolationPolynom::toPartedCanonicPolynom() const
     return PartedCanonicPolynom(sortedDots);
 }
 
-ZeroPolynom::ZeroPolynom(const xs_t &xs)
+ZeroWitnessPolynom::ZeroWitnessPolynom(const witnesses_t &xs)
     : m_roots{xs}
 {
 }
 
-PartedCanonicPolynom ZeroPolynom::toPartedCanonicPolynom() const
+PartedCanonicPolynom ZeroWitnessPolynom::toPartedCanonicPolynom() const
 {
-    std::set<dot_t> sortedDots;
+    std::set<dot_t> dots;
     for(const auto &root : m_roots) {
-        sortedDots.insert(dot_t{root, 0});
+        dots.insert(dot_t{root, 0});
     }
 
-    return PartedCanonicPolynom(sortedDots, false);
+    return PartedCanonicPolynom(dots, false);
 }
 
 Range::Range(X_t left, X_t right)

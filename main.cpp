@@ -7,11 +7,9 @@
 //Подготовка увеличивается согласно О(n^2)
 bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
 {
-    snrk::xs_t witness;
     snrk::dots_t inputsW;
     inputsW.reserve(inputs.size());
     for(std::size_t i = 0; i < inputs.size(); i++) {
-        witness.insert(ws[i]);
         inputsW.push_back({ws[i], inputs[i]});
     }
 
@@ -19,6 +17,7 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
 
     auto wStep = *(++ws.begin()) - ws.front();
+    snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
     auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
 
     return proof->check();
@@ -30,8 +29,6 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
-
-    snrk::xs_t witnesses(ws.begin(), ws.end());
     //400ms - 10k свидетелей
 
     auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
@@ -69,7 +66,7 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 
     auto wStep = *(++ws.begin()) - ws.front();
     //
-    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, witnesses, wStep);
+    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
     //150ms - 10k свидетелей
 
     return proof->check();
@@ -77,14 +74,12 @@ bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_
 }
 
 //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
-bool currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t ws, snrk::TG_t tG) {
+bool currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG) {
     auto tCanonic = t.toPartedCanonicPolynom();
     auto wtCanonic = wt.toPartedCanonicPolynom();
 
-    snrk::xs_t witnesses(ws.begin(), ws.end());
-
     auto wStep = *(++ws.begin()) - ws.front();
-    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, witnesses, wStep);
+    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
 
     return proof->check();
 }
@@ -173,7 +168,6 @@ int main(int argc, char *argv[])
 }
 
 /*todo:
- * ! Баг: на 1318 свидетеле эффект Рунге, хотя используем сплайны ! (вроде пофиксил повышением точности)
  * ! Вопрос: проверить, правильно, ли что q(m_R) выдаёт иногда нуль + посмотреть на comQ!
  *
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0! (проверка при генерации r, что r != t?)
@@ -182,9 +176,8 @@ int main(int argc, char *argv[])
  * 4. assert на непрерывные диапазоны и их длинну из Range и RangeMap в классы, что в таких нуждаются
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
- * 7. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно)
+ * 7. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно) [при тестах на больших кол-вах свидетелей]
  * 8. ValueType -> value_t
- * 9. Убрать копирование witnesses_t -> xs_t
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

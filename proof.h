@@ -45,9 +45,7 @@ public:
     using commit_t = X_t;
     using ptr_t = std::shared_ptr<ZeroTestProof>;
 
-    /*todo: откуда брать r?*/
-    /*check: f = p -> f - p = 0*/
-    static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness, witness_t wStep);
+    static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
     virtual bool check() override;
@@ -66,7 +64,7 @@ private:
     X_t m_r;
     Y_t m_fR, m_qR;
 
-    xs_t m_rPartedWitnesses;
+    witnesses_t m_rPartedWitnesses;
 };
 
 }

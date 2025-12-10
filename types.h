@@ -37,7 +37,16 @@ typedef std::set<X_t> xs_t;
 
 
 typedef unsigned long witness_t;
-typedef std::vector<witness_t> witnesses_t;
+
+class witnesses_t: public std::vector<witness_t>
+{
+private:
+    witnesses_t() = default;
+
+    friend witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep);
+    friend class GlobalParams;
+    friend class ZeroTestProof;
+};
 
 class InterpolationPolynom;
 typedef InterpolationPolynom T_t;

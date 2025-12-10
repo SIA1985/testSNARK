@@ -17,7 +17,7 @@ bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
     return c <= eps;
 }
 
-X_t getR(const xs_t &witness) {
+X_t getR(const witnesses_t &witness) {
     if (witness.size() == 0) {
         return 1; //todo
     }
@@ -72,7 +72,7 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, xs_t witness, witness_t wStep)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep)
 {
     assert(g.distance() == p.distance());
 
@@ -85,7 +85,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_comF = f.commit(tG);
 
     //900ms при 30к свидетелей, 100ms - 10k
-    auto z = ZeroPolynom(witness).toPartedCanonicPolynom();
+    auto z = ZeroWitnessPolynom(witness).toPartedCanonicPolynom();
 
 //    for(auto w : witness) {
 //        std::cout << w << " : " << g(w) << " - " << p(w) << " = " << f(w) << std::endl;
@@ -99,10 +99,9 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_r = getR(witness);
 
     auto rRange = z.atRange(ptr->m_r);
-    xs_t rPratedWitnesses;
-    for(X_t w = rRange.leftBound(); w <= rRange.rightBound(); w += wStep) {
-        rPratedWitnesses.insert(w);
-    }
+
+    //todo: ValueType -> value_t
+    witnesses_t rPratedWitnesses = genWitnesses(rRange.leftBound().get_ui(), PartedCanonicPolynom::Partition, wStep);
     ptr->m_rPartedWitnesses = rPratedWitnesses;
 
     ptr->m_fR = f(ptr->m_r);
@@ -124,7 +123,7 @@ bool ZeroTestProof::check()
         return false;
     }
 
-    auto z = ZeroPolynom(m_rPartedWitnesses).toPartedCanonicPolynom();
+    auto z = ZeroWitnessPolynom(m_rPartedWitnesses).toPartedCanonicPolynom();
 
     ValueType b = m_qR * z(m_r);
 

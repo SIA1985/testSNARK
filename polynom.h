@@ -288,18 +288,18 @@ protected:
     dots_t m_dots;
 };
 
-class ZeroPolynom : public CanonicPolynom
+class ZeroWitnessPolynom : public CanonicPolynom
 {
 public:
     using roots_t = xs_t;
 
 
-    ZeroPolynom(const xs_t &xs);
+    ZeroWitnessPolynom(const witnesses_t &xs);
 
     PartedCanonicPolynom toPartedCanonicPolynom() const;
 
 private:
-    roots_t m_roots;
+    witnesses_t m_roots;
 };
 
 }
