@@ -92,6 +92,8 @@ protected:
 
     /*x0, x1 .. xn*/
     coefs_t m_coefs;
+
+    friend class PartedCanonicPolynom;
 };
 
 /* [left, right] */
