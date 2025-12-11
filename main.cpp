@@ -109,33 +109,33 @@ int main(int argc, char *argv[])
     mpf_set_default_prec(128);
 
     /*todo: пример из тетради проверить*/
-    auto x1 = snrk::Value(5);
-    auto x2 = snrk::Value(6);
-    auto w1 = snrk::Value(1);
+    auto x1 = snrk::value_t(5);
+    auto x2 = snrk::value_t(6);
+    auto w1 = snrk::value_t(1);
 
     snrk::Circut c({x1, x2}, {w1});
 
     //15000ms - 30k свидетелей (< 1000)
     for(int i = 0; i < 1000; i++) {
-    auto out1 = snrk::Value(11);
+    auto out1 = snrk::value_t(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
-    auto out2 = snrk::Value(7);
+    auto out2 = snrk::value_t(7);
     c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
-    auto out3 = snrk::Value(77);
+    auto out3 = snrk::value_t(77);
     c.addGate({snrk::Product, {out1, out2}, {out3}});
-    auto out4 = snrk::Value(70);
+    auto out4 = snrk::value_t(70);
     c.addGate({snrk::Minus, {out3, out2}, {out4}});
-    auto out5 = snrk::Value(7);
+    auto out5 = snrk::value_t(7);
     c.addGate({snrk::Minus, {out3, out4}, {out5}});
-    auto out6 = snrk::Value(490);
+    auto out6 = snrk::value_t(490);
     c.addGate({snrk::Product, {out4, out5}, {out6}});
-    auto out7 = snrk::Value(-4);
+    auto out7 = snrk::value_t(-4);
     c.addGate({snrk::Minus, {out2, out1}, {out7}});
-    auto out8 = snrk::Value(-28);
+    auto out8 = snrk::value_t(-28);
     c.addGate({snrk::Product, {out5, out7}, {out8}});
-    auto out9 = snrk::Value(42);
+    auto out9 = snrk::value_t(42);
     c.addGate({snrk::Sum, {out8, out4}, {out9}});
-    auto out10 = snrk::Value(14);
+    auto out10 = snrk::value_t(14);
     c.addGate({snrk::Sum, {out9, out8}, {out10}});
     }
 
@@ -177,7 +177,6 @@ int main(int argc, char *argv[])
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
  * 7. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно) [при тестах на больших кол-вах свидетелей]
- * 8. ValueType -> value_t
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

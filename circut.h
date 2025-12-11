@@ -8,28 +8,6 @@
 
 namespace snrk {
 
-class Value
-{
-public:
-    Value();
-
-    Value(ValueType value);
-
-    operator int() const;
-    operator double() const;
-    operator GateType_t() const;
-    operator ValueType() const;
-    operator witness_t() const;
-
-    ValueType* get() const;
-
-private:
-    std::shared_ptr<ValueType> m_value{};
-
-    friend bool operator<(const Value &a, const Value &b);
-//    friend bool operator==(const Value &a, const Value &b);
-};
-
 class Gate {
 
     using input_t = struct{value_t a; value_t b;};

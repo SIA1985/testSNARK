@@ -7,10 +7,10 @@
 
 namespace snrk {
 
-bool equal(const ValueType &a, const ValueType &b, double eps = 1e-9)
+bool equal(const value_t &a, const value_t &b, double eps = 1e-9)
 {
-    ValueType c = a - b;
-    if(c < 0) {
+    value_t c = a - b;
+    if(c < value_t(0)) {
         c = -c;
     }
 
@@ -67,8 +67,8 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
 
 bool PolynomSubstitutionProof::check()
 {
-    ValueType a = (m_tG.t - m_toProve.x) * m_comQ;
-    ValueType b = m_comF - m_toProve.y * m_tG.G;
+    value_t a = (m_tG.t - m_toProve.x) * m_comQ;
+    value_t b = m_comF - m_toProve.y * m_tG.G;
     return equal(a, b);
 }
 
@@ -100,7 +100,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     auto rRange = z.atRange(ptr->m_r);
 
-    //todo: ValueType -> value_t
+    //todo: value_t -> value_t
     witnesses_t rPratedWitnesses = genWitnesses(rRange.leftBound().get_ui(), PartedCanonicPolynom::Partition, wStep);
     ptr->m_rPartedWitnesses = rPratedWitnesses;
 
@@ -125,7 +125,7 @@ bool ZeroTestProof::check()
 
     auto z = ZeroWitnessPolynom(m_rPartedWitnesses).toPartedCanonicPolynom();
 
-    ValueType b = m_qR * z(m_r);
+    value_t b = m_qR * z(m_r);
 
     std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << std::endl;
     return equal(m_fR, b);

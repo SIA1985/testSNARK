@@ -8,12 +8,12 @@ namespace snrk {
 class Operation
 {
 public:
-    using input_t = struct{ValueType a; ValueType b;};
-    using opFunc_t = std::function<ValueType(input_t)>;
+    using input_t = struct{value_t a; value_t b;};
+    using opFunc_t = std::function<value_t(input_t)>;
 
     Operation(opFunc_t opFunc);
 
-    ValueType operator()(input_t input);
+    value_t operator()(input_t input);
 
 private:
     opFunc_t m_opFunc;

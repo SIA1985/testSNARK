@@ -5,61 +5,6 @@
 
 namespace snrk {
 
-Value::Value()
-    : m_value{std::make_shared<ValueType>()}
-{
-}
-
-Value::Value(ValueType value)
-    : m_value{std::make_shared<ValueType>(value)}
-{
-}
-
-Value::operator int() const
-{
-    return static_cast<int>(m_value->get_si());
-}
-
-Value::operator double() const
-{
-    return m_value->get_d();
-}
-
-Value::operator GateType_t() const
-{
-    if (floor(*m_value) != *m_value) {
-        return Unknown;
-    }
-
-    return static_cast<GateType_t>(m_value->get_ui());
-}
-
-Value::operator ValueType() const
-{
-    return *m_value;
-}
-
-Value::operator witness_t() const
-{
-    return m_value->get_ui();
-}
-
-ValueType* Value::get() const
-{
-    return m_value.get();
-}
-
-bool operator<(const Value &a, const Value &b)
-{
-    return *a.m_value < *b.m_value;
-}
-
-//bool operator==(const Value &a, const Value &b)
-//{
-//    return a.m_value.get() == b.m_value.get();
-//}
-
-
 Gate::Gate(GateType_t type, input_t input, value_t output)
     : m_type{type}
     , m_input{input}

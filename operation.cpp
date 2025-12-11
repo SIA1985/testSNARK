@@ -7,13 +7,13 @@ Operation::Operation(opFunc_t opFunc)
 {
 }
 
-mpf_class Operation::operator()(input_t ipnut)
+value_t Operation::operator()(input_t ipnut)
 {
     return m_opFunc(ipnut);
 }
 
 
-#define OPHEADER [](Operation::input_t input) -> ValueType
+#define OPHEADER [](Operation::input_t input) -> value_t
 #define OP(code) {OPHEADER code}
 
 std::unordered_map<GateType_t, Operation> Operate =

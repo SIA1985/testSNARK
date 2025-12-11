@@ -48,7 +48,7 @@ private:
 class CanonicPolynom : public Polynom
 {
 public:
-    using coefs_t = std::vector<ValueType>;
+    using coefs_t = std::vector<value_t>;
     using roots_t = xs_t;
     using devideResult_t = std::pair<CanonicPolynom, CanonicPolynom>;
 
@@ -72,7 +72,7 @@ public:
 
     CanonicPolynom operator*(const CanonicPolynom &other) const;
 
-    CanonicPolynom operator*(const ValueType value) const;
+    CanonicPolynom operator*(const value_t value) const;
 
     void operator+=(const CanonicPolynom &other);
 
@@ -80,8 +80,8 @@ public:
 
     CanonicPolynom operator()(const CanonicPolynom &other) const;
 
-    ValueType &operator[](std::size_t i);
-    const ValueType operator[](std::size_t i) const;
+    value_t &operator[](std::size_t i);
+    const value_t operator[](std::size_t i) const;
 
     std::size_t degree() const;
 
@@ -272,7 +272,7 @@ protected:
 class InterpolationPolynom : public Polynom
 {
 public:
-    using coefs_t = std::vector<ValueType>;
+    using coefs_t = std::vector<value_t>;
 
 
     InterpolationPolynom() = default;

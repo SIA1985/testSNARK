@@ -46,7 +46,7 @@ CanonicPolynom::CanonicPolynom(coefs_t coefs)
 
 CanonicPolynom::CanonicPolynom(std::size_t n)
 {
-    m_coefs.resize(n, ValueType(0.0));
+    m_coefs.resize(n, 0.0);
 }
 
 CanonicPolynom CanonicPolynom::buildPolynomialRecursive(const roots_t& roots, roots_t::const_iterator start, roots_t::const_iterator end) {
@@ -93,7 +93,7 @@ bool CanonicPolynom::isZero() const
 {
     bool result = true;
     for(const auto &coef : m_coefs) {
-        result = result && (cmp(coef, ValueType(0)) == 0);
+        result = result && (cmp(coef, value_t(0)) == 0);
 
         if(!result) {
             break;
@@ -120,8 +120,8 @@ CanonicPolynom CanonicPolynom::operator+(const CanonicPolynom &other) const
     diff.resize(max_size, 0.0);
 
     for (size_t i = 0; i < max_size; ++i) {
-        ValueType c1 = (i < m_coefs.size()) ? m_coefs[i] : 0.0;
-        ValueType c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : 0.0;
+        value_t c1 = (i < m_coefs.size()) ? m_coefs[i] : value_t(0.0);
+        value_t c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : value_t(0.0);
         diff[i] = c1 + c2;
     }
 
@@ -135,8 +135,8 @@ CanonicPolynom CanonicPolynom::operator-(const CanonicPolynom &other) const
     diff.resize(max_size, 0.0);
 
     for (size_t i = 0; i < max_size; ++i) {
-        ValueType c1 = (i < m_coefs.size()) ? m_coefs[i] : 0.0;
-        ValueType c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : 0.0;
+        value_t c1 = (i < m_coefs.size()) ? m_coefs[i] : value_t(0.0);
+        value_t c2 = (i < other.m_coefs.size()) ? other.m_coefs[i] : value_t(0.0);
         diff[i] = c1 - c2;
     }
 
@@ -156,7 +156,7 @@ CanonicPolynom CanonicPolynom::operator*(const CanonicPolynom &other) const
     return result;
 }
 
-CanonicPolynom CanonicPolynom::operator*(const ValueType value) const
+CanonicPolynom CanonicPolynom::operator*(const value_t value) const
 {
     coefs_t result(m_coefs.size(), 0);
 
@@ -180,27 +180,27 @@ void CanonicPolynom::operator*=(const CanonicPolynom &other)
 CanonicPolynom CanonicPolynom::operator()(const CanonicPolynom &other) const
 {
     if (m_coefs.size() <= 0) {
-        return CanonicPolynom({m_coefs.back()});
+        return CanonicPolynom(coefs_t{m_coefs.back()});
     }
 
-    CanonicPolynom result = CanonicPolynom({m_coefs.back()});
+    CanonicPolynom result = CanonicPolynom(coefs_t{m_coefs.back()});
 
     for (int i = m_coefs.size() - 2; i >= 0; --i) {
         result *= other;
-        result += CanonicPolynom({m_coefs[i]});
+        result += CanonicPolynom(coefs_t{m_coefs[i]});
     }
 
     return result;
 }
 
-ValueType &CanonicPolynom::operator[](std::size_t i)
+value_t &CanonicPolynom::operator[](std::size_t i)
 {
     return m_coefs[i];
 }
 
-const ValueType CanonicPolynom::operator[](std::size_t i) const
+const value_t CanonicPolynom::operator[](std::size_t i) const
 {
-    return m_coefs.size() < i ? 0.0 : m_coefs.at(i);
+    return m_coefs.size() < i ? value_t(0.0) : m_coefs.at(i);
 }
 
 std::size_t CanonicPolynom::degree() const
@@ -239,7 +239,7 @@ CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other)
     }
 
     for (int i = degreeRes; i >= 0; --i) {
-        ValueType factor = remainderCoefs[i + nOther] / other.m_coefs[nOther];
+        value_t factor = remainderCoefs[i + nOther] / other.m_coefs[nOther];
         res[i] = factor;
 
         for (int j = 0; j <= nOther; ++j) {
@@ -294,7 +294,7 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     }
 
     // Шаг 1: Вычисление разделённых разностей
-    std::vector<std::vector<ValueType>> divDiff(n, std::vector<ValueType>(n));
+    std::vector<std::vector<value_t>> divDiff(n, std::vector<value_t>(n));
     for (int i = 0; i < n; ++i) {
         divDiff[i][0] = m_dots[i].y;
     }

@@ -7,10 +7,7 @@
 
 namespace snrk {
 
-//todo: заменяемый тип
-#ifndef ValueType
-    #define ValueType mpf_class
-#endif
+typedef std::size_t address_t;
 
 enum GateType_t : char {
     Unknown = 0,
@@ -20,21 +17,6 @@ enum GateType_t : char {
     Minus,
     Devide,
 };
-
-class Value;
-typedef Value value_t;
-bool operator<(const Value &a, const Value &b);
-bool operator==(const Value &a, const Value &b);
-typedef std::vector<value_t> values_t;
-
-typedef ValueType X_t;
-typedef ValueType Y_t;
-
-struct dot_t {X_t x; Y_t y;};
-typedef std::vector<dot_t> dots_t;
-struct TG_t {X_t t; int G;};
-typedef std::set<X_t> xs_t;
-
 
 typedef unsigned long witness_t;
 
@@ -47,6 +29,40 @@ private:
     friend class GlobalParams;
     friend class ZeroTestProof;
 };
+
+class Value : public mpf_class
+{
+public:
+    Value() = default;
+    using mpf_class::mpf_class;
+
+    operator int() const;
+    operator const unsigned long() const;
+    operator double() const;
+    operator GateType_t() const;
+    operator witness_t() const;
+
+    bool operator==(int a) const;
+
+    address_t address() const;
+
+private:
+    friend bool operator<(const Value &a, const Value &b);
+//    friend bool operator==(const Value &a, const Value &b);
+};
+
+typedef Value value_t;
+bool operator<(const value_t &a, const value_t &b);
+bool operator==(const value_t &a, const value_t &b);
+typedef std::vector<value_t> values_t;
+
+typedef value_t X_t;
+typedef value_t Y_t;
+
+struct dot_t {X_t x; Y_t y;};
+typedef std::vector<dot_t> dots_t;
+struct TG_t {X_t t; int G;};
+typedef std::set<X_t> xs_t;
 
 class InterpolationPolynom;
 typedef InterpolationPolynom T_t;

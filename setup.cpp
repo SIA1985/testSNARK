@@ -62,7 +62,7 @@ GlobalParams::WtoValue_t GlobalParams::generateT(const Circut &circut)
     auto fillMap = [&cw, &dots, &mappedT](const values_t &row)
     {
         for(const auto& element : row) {
-            dots.push_back({X_t(*cw), Y_t(element)});
+            dots.push_back({*cw, element});
             mappedT[*cw] = element;
             cw++;
         }
@@ -75,18 +75,18 @@ GlobalParams::WtoValue_t GlobalParams::generateT(const Circut &circut)
     auto i = m_SWitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {
-        dots.push_back({X_t(*cw), Y_t(gate.m_input.a)});
-        leftDots.push_back({X_t(*i), Y_t(gate.m_input.a)});
+        dots.push_back({*cw, gate.m_input.a});
+        leftDots.push_back({*i, gate.m_input.a});
         mappedT[*cw] = gate.m_input.a;
         cw++;
 
-        dots.push_back({X_t(*cw), Y_t(gate.m_input.b)});
-        rightDots.push_back({X_t(*i), Y_t(gate.m_input.b)});
+        dots.push_back({*cw, gate.m_input.b});
+        rightDots.push_back({*i, gate.m_input.b});
         mappedT[*cw] = gate.m_input.b;
         cw++;
 
-        dots.push_back({X_t(*cw), Y_t(gate.m_output)});
-        resultDots.push_back({X_t(*i), Y_t(gate.m_output)});
+        dots.push_back({*cw, gate.m_output});
+        resultDots.push_back({*i, gate.m_output});
         mappedT[*cw] = gate.m_output;
         cw++;
 
@@ -129,7 +129,7 @@ void GlobalParams::generateW(const Circut &circut, WtoValue_t mappedT)
     std::unordered_map<std::size_t, std::shared_ptr<cond_t>> duplicates;
     auto insert = [&duplicates](value_t key, witness_t value)
     {
-        auto address = (std::size_t)key.get();
+        auto address = (std::size_t)key.address();
         if (!duplicates[address]) {
             duplicates[address] = std::make_shared<cond_t>();
         }
