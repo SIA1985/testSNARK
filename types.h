@@ -5,6 +5,7 @@
 #include <gmpxx.h>
 #include <set>
 #include <memory>
+#include "nlohmann/json.hpp"
 
 namespace snrk {
 
@@ -42,6 +43,7 @@ public:
     operator double() const;
     operator GateType_t() const;
     operator witness_t() const;
+    using mpf_class::operator=;
 
     address_t address() const;
 
@@ -69,12 +71,12 @@ typedef InterpolationPolynom S_t;
 typedef InterpolationPolynom W_t;
 typedef InterpolationPolynom WT_t;
 
-typedef std::string json_t;
+typedef nlohmann::json json_t;
 class Jsonable
 {
 public:
     virtual json_t toJson() const;
-    virtual bool fromJson(json_t json);
+    virtual bool fromJson(const json_t &json);
 };
 
 }

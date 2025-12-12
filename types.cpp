@@ -52,7 +52,7 @@ json_t Jsonable::toJson() const
     return "{}";
 }
 
-bool Jsonable::fromJson(json_t json)
+bool Jsonable::fromJson(const json_t &json)
 {
     return false;
 }

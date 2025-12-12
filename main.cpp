@@ -20,6 +20,8 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
     auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
 
+    std::cout << proof->toJson() << std::endl;
+
     return proof->check();
 }
 
@@ -90,6 +92,8 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNu
     auto outputDot = snrk::dot_t{lastWNum, output};
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
+
+    std::cout << proof->toJson() << std::endl;
 
     return proof->check();
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include "nlohmann/json.hpp"
 
 namespace snrk {
 
@@ -36,10 +37,25 @@ X_t getR(const witnesses_t &witness) {
     return *randIt;
 }
 
-mp_exp_t e = 10;
+mp_exp_t e = -10;
 #define name(a) #a
-#define quoe(str) "\"" + str + "\""
-#define valueToJson(value) json_t(name(value) ": " quoe(value.get_str(e)))
+
+#define containsJson(json, a) json.contains(name(a))
+
+#define varToJson(json, var)        json[name(var)] = var
+#define varFromJson(json, var)      var = json[name(var)].get<decltype(var)>()
+
+#define valueToJson(json, value)    json[name(value)] = value.get_str(e)
+#define valueFromJson(json, value)  value = (std::string)json[name(value)]
+
+#define dotToJson(json, dot) {json_t _j; _j["x"] = dot.x.get_str(e); _j["y"] = dot.y.get_str(e); json[name(dot)] = _j;}
+#define dotFromJson(json, dot) {dot.x = (std::string)json[name(dot)]["x"]; dot.y = (std::string)json[name(dot)]["y"];}
+
+#define tgToJson(json, tg) {json_t _j; _j["t"] = tg.t.get_str(e); _j["G"] = tg.G; json[name(tg)] = _j;}
+#define tgFromJson(json, tg) {tg.t = (std::string)json[name(tg)]["t"]; tg.G = json[name(tg)]["G"];}
+
+#define jsonableToJson(json, j) json[name(j)] = j.toJson()
+#define jsonableFromJson(json, j) j.fromJson(json[name(j)])
 
 Proof::Proof(json_t json)
 {
@@ -82,20 +98,42 @@ bool PolynomSubstitutionProof::check()
     return equal(a, b);
 }
 
-std::string PolynomSubstitutionProof::toJson() const
+json_t PolynomSubstitutionProof::toJson() const
 {
-//    commit_t m_comF;
-//    commit_t m_comQ;
+    json_t json;
 
-//    dot_t m_toProve;
+    valueToJson(json, m_comF);
+    valueToJson(json, m_comQ);
 
-//    TG_t m_tG;
+    dotToJson(json, m_toProve);
+    tgToJson(json, m_tG);
 
-    std::cout << valueToJson(m_comF);
+    return json;
 }
 
-bool PolynomSubstitutionProof::fromJson(json_t json)
+bool PolynomSubstitutionProof::fromJson(const json_t &json)
 {
+    if (!containsJson(json, m_comF)) {
+        return false;
+    }
+    valueFromJson(json, m_comF);
+
+    if (!containsJson(json, m_comQ)) {
+        return false;
+    }
+    valueFromJson(json, m_comQ);
+
+    if (!containsJson(json, m_toProve)) {
+        return false;
+    }
+    dotFromJson(json, m_toProve);
+
+    if (!containsJson(json, m_tG)) {
+        return false;
+    }
+    tgFromJson(json, m_tG);
+
+    return true;
 }
 
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep)
@@ -126,7 +164,6 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
 
     auto rRange = z.atRange(ptr->m_r);
 
-    //todo: value_t -> value_t
     witnesses_t rPratedWitnesses = genWitnesses(rRange.leftBound().get_ui(), PartedCanonicPolynom::Partition, wStep);
     ptr->m_rPartedWitnesses = rPratedWitnesses;
 
@@ -157,14 +194,75 @@ bool ZeroTestProof::check()
     return equal(m_fR, b);
 }
 
-std::string ZeroTestProof::toJson() const
+json_t ZeroTestProof::toJson() const
 {
+    json_t json;
 
+    tgToJson(json, m_tG);
+
+    valueToJson(json, m_comF);
+    jsonableToJson(json, m_fRproof);
+
+    valueToJson(json, m_comQ);
+    jsonableToJson(json, m_qRproof);
+
+    valueToJson(json, m_r);
+    valueToJson(json, m_fR);
+    valueToJson(json, m_qR);
+
+    varToJson(json, m_rPartedWitnesses);
+
+    return json;
 }
 
-bool ZeroTestProof::fromJson(json_t json)
+bool ZeroTestProof::fromJson(const json_t &json)
 {
+    if (!containsJson(json, m_tG)) {
+        return false;
+    }
+    tgFromJson(json, m_tG);
 
+    if (!containsJson(json, m_comF)) {
+        return false;
+    }
+    valueFromJson(json, m_comF);
+
+    if (!containsJson(json, m_fRproof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_fRproof);
+
+    if (!containsJson(json, m_comQ)) {
+        return false;
+    }
+    valueFromJson(json, m_comQ);
+
+    if (!containsJson(json, m_qRproof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_qRproof);
+
+    if (!containsJson(json, m_r)) {
+        return false;
+    }
+    valueFromJson(json, m_r);
+
+    if (!containsJson(json, m_fR)) {
+        return false;
+    }
+    valueFromJson(json, m_fR);
+
+    if (!containsJson(json, m_qR)) {
+        return false;
+    }
+    valueFromJson(json, m_qR);
+
+    if (!containsJson(json, m_rPartedWitnesses)) {
+        return false;
+    }
+    varFromJson(json, m_rPartedWitnesses);
+
+    return true;
 }
 
 
@@ -175,17 +273,44 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
 bool ProverProof::check()
 {
-
+    return false;
 }
 
-std::string ProverProof::toJson() const
+json_t ProverProof::toJson() const
 {
+    json_t json;
 
+    jsonableToJson(json, m_inputsProof);
+    jsonableToJson(json, m_gatesProof);
+    jsonableToJson(json, m_varsProof);
+    jsonableToJson(json, m_outputProof);
+
+    return json;
 }
 
-bool ProverProof::fromJson(json_t json)
+bool ProverProof::fromJson(const json_t &json)
 {
+    if (!containsJson(json, m_inputsProof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_inputsProof);
 
+    if (!containsJson(json, m_gatesProof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_gatesProof);
+
+    if (!containsJson(json, m_varsProof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_varsProof);
+
+    if (!containsJson(json, m_outputProof)) {
+        return false;
+    }
+    jsonableFromJson(json, m_outputProof);
+
+    return true;
 }
 
 }

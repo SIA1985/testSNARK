@@ -27,8 +27,8 @@ public:
 
     virtual bool check() override;
 
-    virtual std::string toJson() const override;
-    virtual bool fromJson(json_t json) override;
+    virtual json_t toJson() const override;
+    virtual bool fromJson(const json_t &json) override;
 
 private:
     PolynomSubstitutionProof() = default;
@@ -55,8 +55,8 @@ public:
 
     virtual bool check() override;
 
-    virtual std::string toJson() const override;
-    virtual bool fromJson(json_t json) override;
+    virtual json_t toJson() const override;
+    virtual bool fromJson(const json_t &json) override;
 
 private:
     ZeroTestProof() = default;
@@ -84,8 +84,8 @@ public:
 
     virtual bool check() override;
 
-    virtual std::string toJson() const override;
-    virtual bool fromJson(json_t json) override;
+    virtual json_t toJson() const override;
+    virtual bool fromJson(const json_t &json) override;
 
 private:
     ZeroTestProof m_inputsProof;
