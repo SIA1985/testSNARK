@@ -36,6 +36,16 @@ X_t getR(const witnesses_t &witness) {
     return *randIt;
 }
 
+mp_exp_t e = 10;
+#define name(a) #a
+#define quoe(str) "\"" + str + "\""
+#define valueToJson(value) json_t(name(value) ": " quoe(value.get_str(e)))
+
+Proof::Proof(json_t json)
+{
+    fromJson(json);
+}
+
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
@@ -70,6 +80,22 @@ bool PolynomSubstitutionProof::check()
     value_t a = (m_tG.t - m_toProve.x) * m_comQ;
     value_t b = m_comF - m_toProve.y * m_tG.G;
     return equal(a, b);
+}
+
+std::string PolynomSubstitutionProof::toJson() const
+{
+//    commit_t m_comF;
+//    commit_t m_comQ;
+
+//    dot_t m_toProve;
+
+//    TG_t m_tG;
+
+    std::cout << valueToJson(m_comF);
+}
+
+bool PolynomSubstitutionProof::fromJson(json_t json)
+{
 }
 
 ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep)
@@ -129,6 +155,37 @@ bool ZeroTestProof::check()
 
     std::cout << std::setprecision(20) << m_fR << " " << m_qR << " " << z(m_r) << " : " << m_comQ << std::endl;
     return equal(m_fR, b);
+}
+
+std::string ZeroTestProof::toJson() const
+{
+
+}
+
+bool ZeroTestProof::fromJson(json_t json)
+{
+
+}
+
+
+ProverProof::ProverProof(const GlobalParams &gp)
+{
+
+}
+
+bool ProverProof::check()
+{
+
+}
+
+std::string ProverProof::toJson() const
+{
+
+}
+
+bool ProverProof::fromJson(json_t json)
+{
+
 }
 
 }

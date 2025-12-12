@@ -6,10 +6,11 @@
 
 namespace snrk {
 
-class Proof
+class Proof : public Jsonable
 {
 public:
     Proof() = default;
+    Proof(json_t json);
     virtual ~Proof() = default;
 
     virtual bool check() = 0;
@@ -26,6 +27,9 @@ public:
 
     virtual bool check() override;
 
+    virtual std::string toJson() const override;
+    virtual bool fromJson(json_t json) override;
+
 private:
     PolynomSubstitutionProof() = default;
 
@@ -37,6 +41,7 @@ private:
     TG_t m_tG;
 
     friend class ZeroTestProof;
+    friend class ProverProof;
 };
 
 class ZeroTestProof : public Proof
@@ -49,6 +54,9 @@ public:
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
     virtual bool check() override;
+
+    virtual std::string toJson() const override;
+    virtual bool fromJson(json_t json) override;
 
 private:
     ZeroTestProof() = default;
@@ -65,6 +73,25 @@ private:
     Y_t m_fR, m_qR;
 
     witnesses_t m_rPartedWitnesses;
+
+    friend class ProverProof;
+};
+
+class ProverProof : public Proof
+{
+public:
+    ProverProof(const GlobalParams &gp);
+
+    virtual bool check() override;
+
+    virtual std::string toJson() const override;
+    virtual bool fromJson(json_t json) override;
+
+private:
+    ZeroTestProof m_inputsProof;
+    ZeroTestProof m_gatesProof;
+    ZeroTestProof m_varsProof;
+    PolynomSubstitutionProof m_outputProof;
 };
 
 }

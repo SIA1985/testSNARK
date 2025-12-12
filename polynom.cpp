@@ -109,7 +109,7 @@ CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
 
     return CustomPolynom([res = result.first, rem = result.second, other](X_t x) mutable -> Y_t
     {
-        return res(x) + (rem(x) == 0 ? Y_t(0) : rem(x) / other(x));
+        return res(x) + (rem(x) == X_t(0) ? Y_t(0) : rem(x) / other(x));
     });
 }
 
@@ -366,8 +366,6 @@ Range::Range(X_t left, X_t right)
     , m_right{right}
 {
     assert(cmp(right, left) != -1);
-    //todo: этот assert для заполнения
-    //    assert(cmp(right - left + 1, PartedCanonicPolynom::Partition) == 0);
 }
 
 bool Range::inRangeStrict(X_t x) const

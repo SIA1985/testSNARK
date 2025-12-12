@@ -4,6 +4,7 @@
 #include <vector>
 #include <gmpxx.h>
 #include <set>
+#include <memory>
 
 namespace snrk {
 
@@ -42,8 +43,6 @@ public:
     operator GateType_t() const;
     operator witness_t() const;
 
-    bool operator==(int a) const;
-
     address_t address() const;
 
 private:
@@ -69,6 +68,14 @@ typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;
 typedef InterpolationPolynom W_t;
 typedef InterpolationPolynom WT_t;
+
+typedef std::string json_t;
+class Jsonable
+{
+public:
+    virtual json_t toJson() const;
+    virtual bool fromJson(json_t json);
+};
 
 }
 

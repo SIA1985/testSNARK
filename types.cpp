@@ -32,11 +32,6 @@ Value::operator witness_t() const
     return static_cast<witness_t>(get_ui());
 }
 
-bool Value::operator==(int a) const
-{
-    return cmp(*this, a) == 0;
-}
-
 address_t Value::address() const
 {
     return address_t(this);
@@ -47,10 +42,19 @@ bool operator<(const Value &a, const Value &b)
     return cmp(a, b) == -1;
 }
 
-//bool operator==(const Value &a, const Value &b)
-//{
-//    return a.m_value.get() == b.m_value.get();
-//}
+bool operator==(const Value &a, const Value &b)
+{
+    return cmp(a, b) == 0;
+}
 
+json_t Jsonable::toJson() const
+{
+    return "{}";
+}
+
+bool Jsonable::fromJson(json_t json)
+{
+    return false;
+}
 
 }
