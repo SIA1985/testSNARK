@@ -215,6 +215,11 @@ public:
         return m_map.size();
     }
 
+    void merge(RangeMap other)
+    {
+        m_map.merge(other.m_map);
+    }
+
 private:
     std::map<Range, T> m_map;
 };

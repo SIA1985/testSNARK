@@ -468,28 +468,58 @@ PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
 //O(n)
 PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
-    auto end = sortedDots.end();
+    //todo: +случай, когда не надо распараллеливать
+    using iterator = std::set<dot_t>::const_iterator;
 
-    for(auto it = sortedDots.begin(); it != end; it = (it == end) ? it : std::prev(it)) {
-        auto start = it;
-        if (std::distance(it, end) >= PartedCanonicPolynom::Partition) {
-            std::advance(it, PartedCanonicPolynom::Partition);
-        } else {
-            it = end;
-        }
+    int threadCount = 6;
+    assert(threadCount % Partition == 0);
+    std::vector<std::thread> threads;
+    threads.reserve(threadCount);
+    std::vector<map> maps(threadCount);
 
-        dots_t dots(start, it);
-
-        if (fromInterpolation) {
-            m_map.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
-        } else {
-            xs_t xs;
-            for (const auto &[x, y] : dots) {
-                xs.insert(x);
+    auto func = [fromInterpolation](iterator begin, iterator end, map& m) {
+        for(auto it = begin; it != end; it = (it == end) ? it : std::prev(it)) {
+            auto start = it;
+            if (std::distance(it, end) >= Partition) {
+                std::advance(it, Partition);
+            } else {
+                it = end;
             }
 
-            m_map.insert({dots.front().x, dots.back().x}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
+            dots_t dots(start, it);
+
+            if (fromInterpolation) {
+                m.insert({dots.front().x, dots.back().x}, InterpolationPolynom(dots).toCanonicPolynom());
+            } else {
+                xs_t xs;
+                for (const auto &[x, y] : dots) {
+                    xs.insert(x);
+                }
+
+                m.insert({dots.front().x, dots.back().x}, CanonicPolynom(CanonicPolynom::coefsFromRoots(xs)));
+            }
         }
+    };
+
+    iterator it = sortedDots.begin(), end;
+    int threadLoad = std::round((float)sortedDots.size() / threadCount);
+    for(int i = 0; i < threadCount; i++) {
+        auto begin = it;
+        std::advance(it, threadLoad);
+        if (std::distance(begin, it) > std::distance(begin, sortedDots.end())) {
+            end = sortedDots.end();
+        } else {
+            end = it;
+        }
+        threads.push_back(std::thread(func, begin, end, std::ref(maps[i])));
+    }
+
+    for(auto &thread : threads) {
+        thread.join();
+    }
+
+    for(const auto &map : maps) {
+        m_map.merge(map);
     }
 }
 

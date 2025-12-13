@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 5000; i++) {
     auto out1 = snrk::value_t(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::value_t(7);
