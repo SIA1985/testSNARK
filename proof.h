@@ -81,7 +81,9 @@ private:
 class ProverProof : public Proof
 {
 public:
-    ProverProof(const GlobalParams &gp);
+    ProverProof() = default;
+
+    ProverProof(const GlobalParams &gp, const values_t &input, value_t output);
 
     virtual bool check() override;
 
@@ -90,6 +92,16 @@ protected:
     virtual bool fromJson(const json_t &json) override;
 
 private:
+    //Подготовка увеличивается согласно О(n^2)
+    void correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG);
+    //Подготовка увеличивается согласно О(n^2)
+    void correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG);
+    //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
+    void currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG);
+    void currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG);
+
+
+
     ZeroTestProof m_inputsProof;
     ZeroTestProof m_gatesProof;
     ZeroTestProof m_varsProof;

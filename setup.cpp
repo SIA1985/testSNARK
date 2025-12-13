@@ -43,12 +43,12 @@ witnesses_t GlobalParams::SWitnesses() const
     return m_SWitnesses;
 }
 
-TG_t GlobalParams::TG()
+TG_t GlobalParams::TG() const
 {
     return m_TG;
 }
 
-GlobalParams::ProverParams_t GlobalParams::PP()
+GlobalParams::ProverParams_t GlobalParams::PP() const
 {
     return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .WParams = {m_W, m_WT}};
 }

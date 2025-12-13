@@ -195,14 +195,42 @@ bool ZeroTestProof::fromJson(const json_t &json)
 }
 
 
-ProverProof::ProverProof(const GlobalParams &gp)
+ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t output)
 {
+    auto TParams = gp.PP().TParams;
+    auto witnesses = gp.witnesses();
+    auto tG = gp.TG();
 
+    //todo: мб по потокам?
+    correctInputs(TParams.t, input, witnesses, tG);
+    correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG);
+    currentVars(gp.PP().WParams.wt, TParams.t, witnesses, tG);
+    currentOutput(TParams.t, output, witnesses.size(), tG);
 }
 
 bool ProverProof::check()
 {
-    return false;
+    if (!m_inputsProof.check()) {
+        std::cout << "Некорректные входы!" << std::endl;
+        return false;
+    }
+
+    if (!m_gatesProof.check()) {
+        std::cout << "Некорректные переходы!" << std::endl;
+        return false;
+    }
+
+    if (!m_varsProof.check()) {
+        std::cout << "Некорректные переменные!" << std::endl;
+        return false;
+    }
+
+    if (!m_outputProof.check()) {
+        std::cout << "Некорректный выход!" << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 json_t ProverProof::toJson() const
@@ -225,6 +253,86 @@ bool ProverProof::fromJson(const json_t &json)
     FromJson(json, m_outputProof);
 
     return true;
+}
+
+void ProverProof::correctInputs(const T_t &t, values_t inputs, const witnesses_t &ws, TG_t tG)
+{
+    snrk::dots_t inputsW;
+    inputsW.reserve(inputs.size());
+    for(std::size_t i = 0; i < inputs.size(); i++) {
+        inputsW.push_back({ws[i], inputs[i]});
+    }
+
+    auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
+    auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
+
+    auto wStep = *(++ws.begin()) - ws.front();
+    snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
+    m_inputsProof = *snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
+}
+
+void ProverProof::correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
+{
+    auto left = t.left.toPartedCanonicPolynom();
+    auto right = t.right.toPartedCanonicPolynom();
+    auto result = t.result.toPartedCanonicPolynom();
+    //400ms - 10k свидетелей
+
+    auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
+    for(const auto &[operation, dots] : SParams.opsFromS) {
+
+        //
+        auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
+        //150ms - 10k свидетелей!
+
+        switch(operation) {
+        case snrk::Sum: {
+            funcF += (left + right) * isOperation;
+            break;
+        }
+        case snrk::Product: {
+            funcF += (left * right) * isOperation;
+            break;
+        }
+        case snrk::Minus: {
+            funcF += (left - right) * isOperation;
+            break;
+        }
+            //todo:
+        case snrk::Devide: {
+//            funcF += left.mustDevide(right) * isOperation;
+            break;
+        }
+        default:
+            break;
+        }
+        //60ms - 10k свидетелей
+
+    }
+    //1100ms - 10k свидетелей
+
+    auto wStep = *(++ws.begin()) - ws.front();
+    //
+    m_gatesProof = *snrk::ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
+    //150ms - 10k свидетелей
+}
+
+void ProverProof::currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG)
+{
+    auto tCanonic = t.toPartedCanonicPolynom();
+    auto wtCanonic = wt.toPartedCanonicPolynom();
+
+    auto wStep = *(++ws.begin()) - ws.front();
+    m_varsProof = *snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
+}
+
+void ProverProof::currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG)
+{
+    auto tCanonic = t.toPartedCanonicPolynom();
+
+    auto outputDot = snrk::dot_t{lastWNum, output};
+
+    m_outputProof = *snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 }
 
 }

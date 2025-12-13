@@ -4,97 +4,6 @@
 #include <cmath>
 #include <csignal>
 
-//Подготовка увеличивается согласно О(n^2)
-bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG)
-{
-    snrk::dots_t inputsW;
-    inputsW.reserve(inputs.size());
-    for(std::size_t i = 0; i < inputs.size(); i++) {
-        inputsW.push_back({ws[i], inputs[i]});
-    }
-
-    auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
-    auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
-
-    auto wStep = *(++ws.begin()) - ws.front();
-    snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
-    auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
-
-    return proof->check();
-}
-
-//Подготовка увеличивается согласно О(n^2)
-bool correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
-{
-    auto left = t.left.toPartedCanonicPolynom();
-    auto right = t.right.toPartedCanonicPolynom();
-    auto result = t.result.toPartedCanonicPolynom();
-    //400ms - 10k свидетелей
-
-    auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
-    for(const auto &[operation, dots] : SParams.opsFromS) {
-
-        //
-        auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
-        //150ms - 10k свидетелей!
-
-        switch(operation) {
-        case snrk::Sum: {
-            funcF += (left + right) * isOperation;
-            break;
-        }
-        case snrk::Product: {
-            funcF += (left * right) * isOperation;
-            break;
-        }
-        case snrk::Minus: {
-            funcF += (left - right) * isOperation;
-            break;
-        }
-            //todo:
-        case snrk::Devide: {
-//            funcF += left.mustDevide(right) * isOperation;
-            break;
-        }
-        default:
-            break;
-        }
-        //60ms - 10k свидетелей
-
-    }
-    //1100ms - 10k свидетелей
-
-    auto wStep = *(++ws.begin()) - ws.front();
-    //
-    auto proof = snrk::ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
-    //150ms - 10k свидетелей
-
-    return proof->check();
-    //150ms - 10k свидетелей
-}
-
-//мб дело в том, что надо проверять не t, а такое t, что выводит адреса
-bool currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG) {
-    auto tCanonic = t.toPartedCanonicPolynom();
-    auto wtCanonic = wt.toPartedCanonicPolynom();
-
-    auto wStep = *(++ws.begin()) - ws.front();
-    auto proof = snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
-
-    return proof->check();
-}
-
-bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG) {
-    auto tCanonic = t.toPartedCanonicPolynom();
-
-    auto outputDot = snrk::dot_t{lastWNum, output};
-
-    auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
-
-//    std::cout << proof->toJson() << std::endl;
-
-    return proof->check();
-}
 
 void sigFpeHandler(int signum) {
     std::cout << "Ошибка в создании доказательства!" << std::endl;
@@ -142,31 +51,14 @@ int main(int argc, char *argv[])
     }
 
     snrk::GlobalParams gp(c);
-    auto TParams = gp.PP().TParams;
-    auto witnesses = gp.witnesses();
-    auto tG = gp.TG();
 
-    if (!correctInputs(TParams.t, {x1, x2, {w1}}, witnesses, tG)) {
-        std::cout << "Некорректные входы!" << std::endl;
-        exit(1);
+    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {14});
+
+    if (proof.check()) {
+        std::cout << "Ok!" << std::endl;
+    } else {
+        std::cout << "Not ok!" << std::endl;
     }
-
-    if (!correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG)) {
-        std::cout << "Некорректные переходы!" << std::endl;
-        exit(1);
-    }
-
-    if (!currentVars(gp.PP().WParams.wt, TParams.t, witnesses, tG)) {
-        std::cout << "Некорректные переменные!" << std::endl;
-        exit(1);
-    }
-
-    if (!currentOutput(TParams.t, {14}, witnesses.size(), tG)) {
-        std::cout << "Некорректный выход!" << std::endl;
-        exit(1);
-    }
-
-    std::cout << "Ok!" << std::endl;
 }
 
 /*todo:
@@ -175,9 +67,8 @@ int main(int argc, char *argv[])
  * 1. Если t == x, тогда PolynomSubstitutionProof.check() выдаёт 0! (проверка при генерации r, что r != t?)
  * 2. Графически (в комментариях) представить таблицу (начиная с 1 и тп)
  * 3. Доразобраться с gp и сделать норм. commit
- * 5. Перевод proof в json и обратно
- * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
- * 7. Выяснить, почему Partition > 3 не работает
+ * !4. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
+ * 5. Выяснить, почему Partition > 3 не работает
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

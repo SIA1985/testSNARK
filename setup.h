@@ -40,9 +40,9 @@ public:
     witnesses_t witnesses() const;
     witnesses_t SWitnesses() const;
 
-    TG_t TG();
+    TG_t TG() const;
 
-    ProverParams_t PP();
+    ProverParams_t PP() const;
 
 private:
     WtoValue_t generateT(const Circut &circut);
