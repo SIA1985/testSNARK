@@ -4,7 +4,9 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
+#include <thread>
+#include <csignal>
 
 namespace snrk {
 
@@ -18,7 +20,7 @@ bool equal(const value_t &a, const value_t &b, double eps = 1e-9)
     return c <= eps;
 }
 
-X_t getR(const witnesses_t &witness) {
+X_t getR(const witnesses_t &witness, value_t t) {
     if (witness.size() == 0) {
         return 1; //todo
     }
@@ -28,11 +30,18 @@ X_t getR(const witnesses_t &witness) {
 
     auto size = witness.size();
 
+    witnesses_t::const_iterator randIt;
     std::uniform_int_distribution<decltype(size)> distrib(0, size - 1);
-    auto random_offset = distrib(gen);
+    int attemps = 3;
 
-    auto randIt = witness.begin();
-    std::advance(randIt, random_offset);
+    do {
+        randIt = witness.begin();
+        std::advance(randIt, distrib(gen));
+
+        if (--attemps == 0) {
+            std::raise(SIGTERM);
+        }
+    }while(value_t(*randIt) == t);
 
     return *randIt;
 }
@@ -120,7 +129,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_comQ = q.commit(tG);
 
     /*todo: (hash % size(witness) + тут можно любое число!*/
-    ptr->m_r = getR(witness);
+    ptr->m_r = getR(witness, tG.t);
 
     auto rRange = z.atRange(ptr->m_r);
 
@@ -201,11 +210,19 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
 
-    //todo: мб по потокам?
-    correctInputs(TParams.t, input, witnesses, tG);
-    correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), tG);
-    currentVars(gp.PP().WParams.wt, TParams.t, witnesses, tG);
-    currentOutput(TParams.t, output, witnesses.size(), tG);
+    #define r(a) std::ref(a)
+
+    std::thread th1(&ProverProof::correctInputs, this, r(TParams.t), r(input), r(witnesses), tG);
+    std::thread th2(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), tG);
+    std::thread th3(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(TParams.t), r(witnesses), tG);
+    std::thread th4(&ProverProof::currentOutput, this, r(TParams.t), output, witnesses.size(), tG);
+
+    #undef r
+
+    th1.join();
+    th2.join();
+    th3.join();
+    th4.join();
 }
 
 bool ProverProof::check()
