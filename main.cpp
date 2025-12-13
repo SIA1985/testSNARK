@@ -20,8 +20,6 @@ bool correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnes
     snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
     auto proof = snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
 
-    std::cout << proof->toJson() << std::endl;
-
     return proof->check();
 }
 
@@ -93,7 +91,7 @@ bool currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNu
 
     auto proof = snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 
-    std::cout << proof->toJson() << std::endl;
+//    std::cout << proof->toJson() << std::endl;
 
     return proof->check();
 }
@@ -180,7 +178,6 @@ int main(int argc, char *argv[])
  * 5. Перевод proof в json и обратно
  * !6. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)
  * 7. Выяснить, почему Partition > 3 не работает
- * 8. Объединить построение T, S, W в один цикл (хотя и так довольно быстро, ибо линейно) [при тестах на больших кол-вах свидетелей]
 */
 /* ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде

@@ -37,31 +37,6 @@ X_t getR(const witnesses_t &witness) {
     return *randIt;
 }
 
-mp_exp_t e = -10;
-#define name(a) #a
-
-#define containsJson(json, a) json.contains(name(a))
-
-#define varToJson(json, var)        json[name(var)] = var
-#define varFromJson(json, var)      var = json[name(var)].get<decltype(var)>()
-
-#define valueToJson(json, value)    json[name(value)] = value.get_str(e)
-#define valueFromJson(json, value)  value = (std::string)json[name(value)]
-
-#define dotToJson(json, dot) {json_t _j; _j["x"] = dot.x.get_str(e); _j["y"] = dot.y.get_str(e); json[name(dot)] = _j;}
-#define dotFromJson(json, dot) {dot.x = (std::string)json[name(dot)]["x"]; dot.y = (std::string)json[name(dot)]["y"];}
-
-#define tgToJson(json, tg) {json_t _j; _j["t"] = tg.t.get_str(e); _j["G"] = tg.G; json[name(tg)] = _j;}
-#define tgFromJson(json, tg) {tg.t = (std::string)json[name(tg)]["t"]; tg.G = json[name(tg)]["G"];}
-
-#define jsonableToJson(json, j) json[name(j)] = j.toJson()
-#define jsonableFromJson(json, j) j.fromJson(json[name(j)])
-
-Proof::Proof(json_t json)
-{
-    fromJson(json);
-}
-
 PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
@@ -102,36 +77,21 @@ json_t PolynomSubstitutionProof::toJson() const
 {
     json_t json;
 
-    valueToJson(json, m_comF);
-    valueToJson(json, m_comQ);
+    ToJson(json, m_comF);
+    ToJson(json, m_comQ);
 
-    dotToJson(json, m_toProve);
-    tgToJson(json, m_tG);
+    ToJson(json, m_toProve);
+    ToJson(json, m_tG);
 
     return json;
 }
 
 bool PolynomSubstitutionProof::fromJson(const json_t &json)
 {
-    if (!containsJson(json, m_comF)) {
-        return false;
-    }
-    valueFromJson(json, m_comF);
-
-    if (!containsJson(json, m_comQ)) {
-        return false;
-    }
-    valueFromJson(json, m_comQ);
-
-    if (!containsJson(json, m_toProve)) {
-        return false;
-    }
-    dotFromJson(json, m_toProve);
-
-    if (!containsJson(json, m_tG)) {
-        return false;
-    }
-    tgFromJson(json, m_tG);
+    FromJson(json, m_comF);
+    FromJson(json, m_comQ);
+    FromJson(json, m_toProve);
+    FromJson(json, m_tG);
 
     return true;
 }
@@ -198,69 +158,38 @@ json_t ZeroTestProof::toJson() const
 {
     json_t json;
 
-    tgToJson(json, m_tG);
+    ToJson(json, m_tG);
 
-    valueToJson(json, m_comF);
-    jsonableToJson(json, m_fRproof);
+    ToJson(json, m_comF);
+    ToJson(json, m_fRproof);
 
-    valueToJson(json, m_comQ);
-    jsonableToJson(json, m_qRproof);
+    ToJson(json, m_comQ);
+    ToJson(json, m_qRproof);
 
-    valueToJson(json, m_r);
-    valueToJson(json, m_fR);
-    valueToJson(json, m_qR);
+    ToJson(json, m_r);
+    ToJson(json, m_fR);
+    ToJson(json, m_qR);
 
-    varToJson(json, m_rPartedWitnesses);
+    ToJson(json, m_rPartedWitnesses);
 
     return json;
 }
 
 bool ZeroTestProof::fromJson(const json_t &json)
 {
-    if (!containsJson(json, m_tG)) {
-        return false;
-    }
-    tgFromJson(json, m_tG);
+    FromJson(json, m_tG);
 
-    if (!containsJson(json, m_comF)) {
-        return false;
-    }
-    valueFromJson(json, m_comF);
+    FromJson(json, m_comF);
+    FromJson(json, m_fRproof);
 
-    if (!containsJson(json, m_fRproof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_fRproof);
+    FromJson(json, m_comQ);
+    FromJson(json, m_qRproof);
 
-    if (!containsJson(json, m_comQ)) {
-        return false;
-    }
-    valueFromJson(json, m_comQ);
+    FromJson(json, m_r);
+    FromJson(json, m_fR);
+    FromJson(json, m_qR);
 
-    if (!containsJson(json, m_qRproof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_qRproof);
-
-    if (!containsJson(json, m_r)) {
-        return false;
-    }
-    valueFromJson(json, m_r);
-
-    if (!containsJson(json, m_fR)) {
-        return false;
-    }
-    valueFromJson(json, m_fR);
-
-    if (!containsJson(json, m_qR)) {
-        return false;
-    }
-    valueFromJson(json, m_qR);
-
-    if (!containsJson(json, m_rPartedWitnesses)) {
-        return false;
-    }
-    varFromJson(json, m_rPartedWitnesses);
+    FromJson(json, m_rPartedWitnesses);
 
     return true;
 }
@@ -280,35 +209,20 @@ json_t ProverProof::toJson() const
 {
     json_t json;
 
-    jsonableToJson(json, m_inputsProof);
-    jsonableToJson(json, m_gatesProof);
-    jsonableToJson(json, m_varsProof);
-    jsonableToJson(json, m_outputProof);
+    ToJson(json, m_inputsProof);
+    ToJson(json, m_gatesProof);
+    ToJson(json, m_varsProof);
+    ToJson(json, m_outputProof);
 
     return json;
 }
 
 bool ProverProof::fromJson(const json_t &json)
 {
-    if (!containsJson(json, m_inputsProof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_inputsProof);
-
-    if (!containsJson(json, m_gatesProof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_gatesProof);
-
-    if (!containsJson(json, m_varsProof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_varsProof);
-
-    if (!containsJson(json, m_outputProof)) {
-        return false;
-    }
-    jsonableFromJson(json, m_outputProof);
+    FromJson(json, m_inputsProof);
+    FromJson(json, m_gatesProof);
+    FromJson(json, m_varsProof);
+    FromJson(json, m_outputProof);
 
     return true;
 }

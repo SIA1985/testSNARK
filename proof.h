@@ -10,7 +10,6 @@ class Proof : public Jsonable
 {
 public:
     Proof() = default;
-    Proof(json_t json);
     virtual ~Proof() = default;
 
     virtual bool check() = 0;
@@ -27,6 +26,7 @@ public:
 
     virtual bool check() override;
 
+protected:
     virtual json_t toJson() const override;
     virtual bool fromJson(const json_t &json) override;
 
@@ -55,6 +55,7 @@ public:
 
     virtual bool check() override;
 
+protected:
     virtual json_t toJson() const override;
     virtual bool fromJson(const json_t &json) override;
 
@@ -84,6 +85,7 @@ public:
 
     virtual bool check() override;
 
+protected:
     virtual json_t toJson() const override;
     virtual bool fromJson(const json_t &json) override;
 

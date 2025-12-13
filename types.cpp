@@ -3,6 +3,16 @@
 namespace snrk
 {
 
+void to_json(json_t& j, const witnesses_t& ws)
+{
+    j["array"] = static_cast<const std::vector<witness_t>&>(ws);
+}
+
+void from_json(const snrk::json_t& j, witnesses_t& ws)
+{
+    ws = j.at("array").get<std::vector<witness_t>>();
+}
+
 Value::operator int() const
 {
     return static_cast<int>(get_si());
@@ -32,6 +42,16 @@ Value::operator witness_t() const
     return static_cast<witness_t>(get_ui());
 }
 
+void to_json(json_t& j, const dot_t& dot) {
+    j["x"] = dot.x;
+    j["y"] = dot.y;
+}
+
+void from_json(const snrk::json_t& j, dot_t& dot) {
+    dot.x = j.at("x").get<value_t>();
+    dot.y = j.at("y").get<value_t>();
+}
+
 address_t Value::address() const
 {
     return address_t(this);
@@ -47,6 +67,28 @@ bool operator==(const Value &a, const Value &b)
     return cmp(a, b) == 0;
 }
 
+void to_json(json_t& j, const value_t& value)
+{
+    j["double"] = value.get_d();
+}
+
+void from_json(const snrk::json_t& j, value_t& value)
+{
+    value = j.at("double").get<double>();
+}
+
+void to_json(json_t& j, const TG_t& tG)
+{
+    j["t"] = tG.t;
+    j["G"] = tG.G;
+}
+
+void from_json(const snrk::json_t& j, TG_t& tG)
+{
+    tG.t = j.at("t").get<value_t>();
+    tG.G = j.at("G");
+}
+
 json_t Jsonable::toJson() const
 {
     return "{}";
@@ -55,6 +97,16 @@ json_t Jsonable::toJson() const
 bool Jsonable::fromJson(const json_t &json)
 {
     return false;
+}
+
+void to_json(json_t& j, const Jsonable& jsonable)
+{
+    j["obj"] = jsonable.toJson();
+}
+
+void from_json(const snrk::json_t& j, Jsonable& jsonable)
+{
+    jsonable.fromJson(j.at("obj"));
 }
 
 }
