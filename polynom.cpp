@@ -468,15 +468,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
 //O(n)
 PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
-    //todo: +случай, когда не надо распараллеливать
     using iterator = std::set<dot_t>::const_iterator;
-
-    int threadCount = 6;
-    assert(threadCount % Partition == 0);
-    std::vector<std::thread> threads;
-    threads.reserve(threadCount);
-    std::vector<map> maps(threadCount);
-
     auto func = [fromInterpolation](iterator begin, iterator end, map& m) {
         for(auto it = begin; it != end; it = (it == end) ? it : std::prev(it)) {
             auto start = it;
@@ -501,18 +493,35 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
         }
     };
 
+    if(sortedDots.size() < 15'000) {
+        func(sortedDots.begin(), sortedDots.end(), m_map);
+        return;
+    }
+
+    int threadCount = 3;
+    assert(threadCount % Partition == 0);
+    std::vector<std::thread> threads;
+    threads.reserve(threadCount);
+    std::vector<map> maps(threadCount);
+
     iterator it = sortedDots.begin(), end;
-    int threadLoad = std::round((float)sortedDots.size() / threadCount);
+    int dist = 0;
+    int threadLoad = std::ceil((float)sortedDots.size() / threadCount);
     for(int i = 0; i < threadCount; i++) {
         auto begin = it;
         std::advance(it, threadLoad);
-        if (std::distance(begin, it) > std::distance(begin, sortedDots.end())) {
+        if (std::distance(begin, it) >= std::distance(begin, sortedDots.end())) {
             end = sortedDots.end();
+            dist += std::distance(begin, sortedDots.end());
         } else {
             end = it;
+            dist += std::distance(begin, it);
         }
         threads.push_back(std::thread(func, begin, end, std::ref(maps[i])));
+        --it;
     }
+
+    assert(dist == sortedDots.size());
 
     for(auto &thread : threads) {
         thread.join();

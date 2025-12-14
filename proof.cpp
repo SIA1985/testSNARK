@@ -50,7 +50,7 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, 
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
 
-    auto q = snrk::CustomPolynom([&f, u = toProve.x](snrk::X_t x) -> snrk::Y_t
+    auto q = CustomPolynom([&f, u = toProve.x](X_t x) -> Y_t
     {
         return (f(x) - f(u)) / (x - u);
     });
@@ -117,12 +117,7 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     auto f = g - p;
     ptr->m_comF = f.commit(tG);
 
-    //900ms при 30к свидетелей, 100ms - 10k
     auto z = ZeroWitnessPolynom(witness).toPartedCanonicPolynom();
-
-//    for(auto w : witness) {
-//        std::cout << w << " : " << g(w) << " - " << p(w) << " = " << f(w) << std::endl;
-//    }
 
     auto q = f.mustDevide(z);
 
@@ -209,20 +204,20 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto TParams = gp.PP().TParams;
     auto witnesses = gp.witnesses();
     auto tG = gp.TG();
+    auto tCanonic = TParams.t.toPartedCanonicPolynom();
+
+    correctInputs(tCanonic, input, witnesses, tG);
+    currentOutput(tCanonic, output, witnesses.size(), tG);
 
     #define r(a) std::ref(a)
 
-    std::thread th1(&ProverProof::correctInputs, this, r(TParams.t), r(input), r(witnesses), tG);
-    std::thread th2(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), tG);
-    std::thread th3(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(TParams.t), r(witnesses), tG);
-    std::thread th4(&ProverProof::currentOutput, this, r(TParams.t), output, witnesses.size(), tG);
+    std::thread th1(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), tG);
+    std::thread th2(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(tCanonic), r(witnesses), tG);
 
     #undef r
 
     th1.join();
     th2.join();
-    th3.join();
-    th4.join();
 }
 
 bool ProverProof::check()
@@ -272,51 +267,51 @@ bool ProverProof::fromJson(const json_t &json)
     return true;
 }
 
-void ProverProof::correctInputs(const T_t &t, values_t inputs, const witnesses_t &ws, TG_t tG)
+void ProverProof::correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, TG_t tG)
 {
-    snrk::dots_t inputsW;
+    dots_t inputsW;
     inputsW.reserve(inputs.size());
     for(std::size_t i = 0; i < inputs.size(); i++) {
         inputsW.push_back({ws[i], inputs[i]});
     }
 
-    auto funcV = snrk::InterpolationPolynom(inputsW).toPartedCanonicPolynom();
-    auto funcTCut = t.toPartedCanonicPolynom().cut(funcV.distance());
+    auto funcV = InterpolationPolynom(inputsW).toPartedCanonicPolynom();
+    auto funcTCut = tCanonic.cut(funcV.distance());
 
     auto wStep = *(++ws.begin()) - ws.front();
-    snrk::witnesses_t witness = snrk::genWitnesses(ws.front(), inputs.size(), wStep);
-    m_inputsProof = *snrk::ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
+    witnesses_t witness = genWitnesses(ws.front(), inputs.size(), wStep);
+    m_inputsProof = *ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
 }
 
-void ProverProof::correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG)
+void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, TG_t tG)
 {
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
     //400ms - 10k свидетелей
 
-    auto funcF = snrk::PartedCanonicPolynom(snrk::PartedCanonicPolynom::map{});
+    auto funcF = PartedCanonicPolynom(PartedCanonicPolynom::map{});
     for(const auto &[operation, dots] : SParams.opsFromS) {
 
         //
-        auto isOperation = snrk::InterpolationPolynom(dots).toPartedCanonicPolynom();
+        auto isOperation = InterpolationPolynom(dots).toPartedCanonicPolynom();
         //150ms - 10k свидетелей!
 
         switch(operation) {
-        case snrk::Sum: {
+        case Sum: {
             funcF += (left + right) * isOperation;
             break;
         }
-        case snrk::Product: {
+        case Product: {
             funcF += (left * right) * isOperation;
             break;
         }
-        case snrk::Minus: {
+        case Minus: {
             funcF += (left - right) * isOperation;
             break;
         }
             //todo:
-        case snrk::Devide: {
+        case Devide: {
 //            funcF += left.mustDevide(right) * isOperation;
             break;
         }
@@ -330,26 +325,24 @@ void ProverProof::correctGates(const snrk::SplittedT_t &t, const snrk::GlobalPar
 
     auto wStep = *(++ws.begin()) - ws.front();
     //
-    m_gatesProof = *snrk::ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
+    m_gatesProof = *ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
     //150ms - 10k свидетелей
 }
 
-void ProverProof::currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG)
+void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, const witnesses_t &ws, TG_t tG)
 {
-    auto tCanonic = t.toPartedCanonicPolynom();
     auto wtCanonic = wt.toPartedCanonicPolynom();
 
     auto wStep = *(++ws.begin()) - ws.front();
-    m_varsProof = *snrk::ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
+    m_varsProof = *ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
 }
 
-void ProverProof::currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG)
+void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, TG_t tG)
 {
-    auto tCanonic = t.toPartedCanonicPolynom();
+    auto outputDot = dot_t{lastWNum, output};
+    std::cout << tCanonic(lastWNum) << " == " << output << std::endl;
 
-    auto outputDot = snrk::dot_t{lastWNum, output};
-
-    m_outputProof = *snrk::PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
+    m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 }
 
 }

@@ -48,8 +48,9 @@ int main(int argc, char *argv[])
     auto w1 = snrk::value_t(1);
 
     snrk::Circut c({x1, x2}, {w1});
+    auto out10 = snrk::value_t(14);
 
-    for(int i = 0; i < 5000; i++) {
+    for(int i = 0; i < 1000; i++) {
     auto out1 = snrk::value_t(11);
     c.addGate({snrk::Sum, {x1, x2}, {out1}});
     auto out2 = snrk::value_t(7);
@@ -68,13 +69,12 @@ int main(int argc, char *argv[])
     c.addGate({snrk::Product, {out5, out7}, {out8}});
     auto out9 = snrk::value_t(42);
     c.addGate({snrk::Sum, {out8, out4}, {out9}});
-    auto out10 = snrk::value_t(14);
     c.addGate({snrk::Sum, {out9, out8}, {out10}});
     }
 
     snrk::GlobalParams gp(c);
 
-    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {14});
+    snrk::ProverProof proof(gp, {x1, x2, {w1}}, out10);
 
     if (proof.check()) {
         std::cout << "Ok!" << std::endl;
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 /*todo:
  * ! Вопрос: проверить, правильно, ли что q(m_R) выдаёт иногда нуль + посмотреть на comQ!
  * ! Вопрос: почему Partition > 3 не работает
- * (Тут дело в если точек меньше, чем Partition(=4), то раз на входе 3 точки -> полином(2)/полином(3))
+ * (Тут дело в если точек меньше, чем Partition(=4), то раз на входе 3 точки -> полином(^2)/полином(^3))
  *
  * 1. Доразобраться с gp и сделать норм. commit
  * !2. Распараллелить вычисления в сплайновый (при создании 0-полинома долго)

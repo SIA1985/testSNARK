@@ -93,12 +93,12 @@ protected:
 
 private:
     //Подготовка увеличивается согласно О(n^2)
-    void correctInputs(const snrk::T_t &t, snrk::values_t inputs, const snrk::witnesses_t &ws, snrk::TG_t tG);
+    void correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, TG_t tG);
     //Подготовка увеличивается согласно О(n^2)
-    void correctGates(const snrk::SplittedT_t &t, const snrk::GlobalParams::SParams_t SParams, const snrk::witnesses_t &ws, snrk::TG_t tG);
+    void correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, TG_t tG);
     //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
-    void currentVars(const snrk::WT_t &wt, const snrk::T_t &t, const snrk::witnesses_t &ws, snrk::TG_t tG);
-    void currentOutput(const snrk::T_t &t, snrk::value_t output, std::size_t lastWNum, snrk::TG_t tG);
+    void currentVars(const WT_t &wt,  PartedCanonicPolynom &tCanonic, const witnesses_t &ws, TG_t tG);
+    void currentOutput(PartedCanonicPolynom &t, value_t output, std::size_t lastWNum, TG_t tG);
 
 
 
