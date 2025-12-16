@@ -517,8 +517,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
             end = it;
             dist += std::distance(begin, it);
         }
-        threads.push_back(std::thread(func, begin, end, std::ref(maps[i])));
-        --it;
+        threads.push_back(std::thread(func, (begin == sortedDots.begin() ? begin: --begin), end, std::ref(maps[i])));
     }
 
     assert(dist == sortedDots.size());

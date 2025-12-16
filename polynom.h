@@ -217,6 +217,19 @@ public:
 
     void merge(RangeMap other)
     {
+        if (m_map.size() == 0) {
+            m_map = other.m_map;
+            return;
+        }
+
+        auto first = m_map.begin()->first;
+        auto last = std::prev(m_map.end())->first;
+        auto otherFirst = other.m_map.begin()->first;
+        auto otherLast = std::prev(other.m_map.end())->first;
+
+        assert(first.leftBound() == otherLast.rightBound() ||
+               otherFirst.leftBound() == last.rightBound());
+
         m_map.merge(other.m_map);
     }
 

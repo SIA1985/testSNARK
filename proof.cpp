@@ -340,7 +340,6 @@ void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, co
 void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, TG_t tG)
 {
     auto outputDot = dot_t{lastWNum, output};
-    std::cout << tCanonic(lastWNum) << " == " << output << std::endl;
 
     m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
 }
