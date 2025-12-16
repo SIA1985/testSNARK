@@ -288,14 +288,11 @@ void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
     auto result = t.result.toPartedCanonicPolynom();
-    //400ms - 10k свидетелей
 
     auto funcF = PartedCanonicPolynom(PartedCanonicPolynom::map{});
     for(const auto &[operation, dots] : SParams.opsFromS) {
 
-        //
         auto isOperation = InterpolationPolynom(dots).toPartedCanonicPolynom();
-        //150ms - 10k свидетелей!
 
         switch(operation) {
         case Sum: {
@@ -312,21 +309,18 @@ void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams
         }
             //todo:
         case Devide: {
-//            funcF += left.mustDevide(right) * isOperation;
+            xs_t sortedDots(ws.begin(), ws.end());
+            funcF += InterpolationPolynom((left / right).dots(sortedDots)).toPartedCanonicPolynom() * isOperation;
             break;
         }
         default:
             break;
         }
-        //60ms - 10k свидетелей
 
     }
-    //1100ms - 10k свидетелей
 
     auto wStep = *(++ws.begin()) - ws.front();
-    //
     m_gatesProof = *ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
-    //150ms - 10k свидетелей
 }
 
 void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, const witnesses_t &ws, TG_t tG)

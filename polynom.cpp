@@ -498,7 +498,7 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
         return;
     }
 
-    int threadCount = 3;
+    int threadCount = THREAD_SPLINE;
     assert(threadCount % Partition == 0);
     std::vector<std::thread> threads;
     threads.reserve(threadCount);
@@ -510,16 +510,14 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
     for(int i = 0; i < threadCount; i++) {
         auto begin = it;
         std::advance(it, threadLoad);
-        if (std::distance(begin, it) >= std::distance(begin, sortedDots.end())) {
+        if (std::distance(begin, it) >= std::distance(begin, std::prev(sortedDots.end()))) {
             end = sortedDots.end();
-            dist += std::distance(begin, sortedDots.end());
         } else {
             end = it;
-            dist += std::distance(begin, it);
         }
+        dist += std::distance(begin, end);
         threads.push_back(std::thread(func, (begin == sortedDots.begin() ? begin: --begin), end, std::ref(maps[i])));
     }
-
     assert(dist == sortedDots.size());
 
     for(auto &thread : threads) {

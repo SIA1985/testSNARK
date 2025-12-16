@@ -1,3 +1,5 @@
+#define THREAD_SPLINE 3
+
 #include "snark.h"
 #include <iostream>
 #include <iomanip>
@@ -14,7 +16,6 @@ void sigTermHandler(int signum) {
     std::cout << "Внутренняя ошибка!" << std::endl;
     exit(signum);
 }
-
 
 /*
  * Схема (С):
@@ -48,33 +49,26 @@ int main(int argc, char *argv[])
     auto w1 = snrk::value_t(1);
 
     snrk::Circut c({x1, x2}, {w1});
-    auto out10 = snrk::value_t(14);
 
-    for(int i = 0; i < 1000; i++) {
-    auto out1 = snrk::value_t(11);
-    c.addGate({snrk::Sum, {x1, x2}, {out1}});
-    auto out2 = snrk::value_t(7);
-    c.addGate({snrk::Sum, {x2, {w1}}, {out2}});
-    auto out3 = snrk::value_t(77);
-    c.addGate({snrk::Product, {out1, out2}, {out3}});
-    auto out4 = snrk::value_t(70);
-    c.addGate({snrk::Minus, {out3, out2}, {out4}});
-    auto out5 = snrk::value_t(7);
-    c.addGate({snrk::Minus, {out3, out4}, {out5}});
-    auto out6 = snrk::value_t(490);
-    c.addGate({snrk::Product, {out4, out5}, {out6}});
-    auto out7 = snrk::value_t(-4);
-    c.addGate({snrk::Minus, {out2, out1}, {out7}});
-    auto out8 = snrk::value_t(-28);
-    c.addGate({snrk::Product, {out5, out7}, {out8}});
-    auto out9 = snrk::value_t(42);
-    c.addGate({snrk::Sum, {out8, out4}, {out9}});
-    c.addGate({snrk::Sum, {out9, out8}, {out10}});
+    /*Про деление: первые 3 строчки с ним работают*/
+    for(int i = 0; i < 100; i++) {
+    auto out1 = snrk::value_t(5);
+    c.addGate({snrk::Devide, {x1, w1}, out1});
+    auto out2 = snrk::value_t(1);
+    c.addGate({snrk::Devide, {x1, out1}, out2});
+    auto out3 = snrk::value_t(5);
+    c.addGate({snrk::Product, {x1, w1}, out3});
+    auto out4 = snrk::value_t(4);
+    c.addGate({snrk::Minus, {x1, w1}, out4});
+    auto out5 = snrk::value_t(6);
+    c.addGate({snrk::Sum, {x1, w1}, out5});
+    auto out6 = snrk::value_t(5);
+    c.addGate({snrk::Devide, {x1, w1}, out6});
     }
 
     snrk::GlobalParams gp(c);
 
-    snrk::ProverProof proof(gp, {x1, x2, {w1}}, out10);
+    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
 
     if (proof.check()) {
         std::cout << "Ok!" << std::endl;
@@ -90,7 +84,8 @@ int main(int argc, char *argv[])
  *
  * 1. Доразобраться с gp и сделать норм. commit
 */
-/* ЭТАПЫ
+/* Спринт 1(Plonk):
+ * ЭТАПЫ
  * [V]1. Получение С - скорее в табличном виде
  * [V]2. Setup(C): генерация S(x) - селекторного полинома и W(o) - полином ограничений на конкретную перестановку
  * [V]3. P строит T(x) и получает comt
@@ -100,4 +95,10 @@ int main(int argc, char *argv[])
  * [V]7. Выход последнего вентиля =0 (как-то через ZeroTest?, скорее через Substitution)
  * [V]8. Оптимизации (сложностей О)
  * [V]9. Распраллеливание в нагруженных функциях
+ *
+ * Спринт 2 (VM):
+ * []1. Расширить круг операций (+ деление, логические операции, побитовые операии?)
+ * []2. Оформить библиотеку plonk для виртуальной машины
+ * []3. Разработка виртуальной машины (разбить на задачи для этого спринта)
+ * (модули: [вход, доказательство] -> [алгоритм, схема] -> [выход, доказательство])
 */

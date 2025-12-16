@@ -1,6 +1,10 @@
 #ifndef POLYNOM_H
 #define POLYNOM_H
 
+#ifndef THREAD_SPLINE
+    #define THREAD_SPLINE 3
+#endif
+
 #include "circut.h"
 
 #include <functional>
@@ -8,6 +12,7 @@
 #include <unordered_set>
 #include <cassert>
 #include <iostream>
+
 
 #include "types.h"
 
