@@ -113,7 +113,7 @@ void GlobalParams::generateS(const Circut &circut)
 
         dots.push_back({sw, currentOperation});
 
-        FOROPS {
+        for(auto operation : {Sum, Product}) {
             m_opsFromS[operation].push_back(
                         operation == currentOperation ? dot_t{sw, 1} : dot_t{sw, 0}
             );

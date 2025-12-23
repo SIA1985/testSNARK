@@ -303,18 +303,8 @@ void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams
             funcF += (left * right) * isOperation;
             break;
         }
-        case Minus: {
-            funcF += (left - right) * isOperation;
-            break;
-        }
-            //todo:
-        case Devide: {
-            xs_t sortedDots(ws.begin(), ws.end());
-            funcF += InterpolationPolynom((left / right).dots(sortedDots)).toPartedCanonicPolynom() * isOperation;
-            break;
-        }
         default:
-            break;
+            assert(false);
         }
 
     }

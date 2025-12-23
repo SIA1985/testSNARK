@@ -39,7 +39,19 @@ void Circut::addGate(const gate_t &gate)
 {
     /*todo: мютекс, если многопоточка*/
 
-    m_gates.push_back(gate);
+    switch(gate.m_type) {
+    case Minus: {
+        m_gates.push_back({Sum, {gate.m_output, gate.m_input.b}, {gate.m_input.a}});
+        break;
+    }
+    case Devide: {
+        m_gates.push_back({Product, {gate.m_output, gate.m_input.b}, {gate.m_input.a}});
+        break;
+    }
+    default: {
+        m_gates.push_back(gate);
+    }
+    }
 }
 
 }

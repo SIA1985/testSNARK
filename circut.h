@@ -20,6 +20,7 @@ private:
     value_t m_output{0};
 
     friend class GlobalParams;
+    friend class Circut;
 };
 
 class Circut
