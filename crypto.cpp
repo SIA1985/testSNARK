@@ -1,5 +1,7 @@
 #include "crypto.h"
 
+#include "types.h"
+#define MCL_USE_GMP 1
 #include <mcl/bls12_381.hpp>
 
 namespace snrk {
@@ -39,10 +41,10 @@ void x()
 
     // 7. Проверка равенства
     if (e1 == e2) {
-        std::cout << "Успех: Билинейное свойство подтверждено!" << std::endl;
-        std::cout << "e(aP, bQ) == e(P, Q)^(ab)" << std::endl;
+//        std::cout << "Успех: Билинейное свойство подтверждено!" << std::endl;
+//        std::cout << "e(aP, bQ) == e(P, Q)^(ab)" << std::endl;
     } else {
-        std::cout << "Ошибка: спаривания не совпали." << std::endl;
+//        std::cout << "Ошибка: спаривания не совпали." << std::endl;
     }
 
     // 8. Типичный пример для проверки подписи BLS:
@@ -57,7 +59,7 @@ void x()
     pairing(e4, P, aQ);
 
     if (e3 == e4) {
-        std::cout << "Проверка e(aP, Q) == e(P, aQ) пройдена." << std::endl;
+//        std::cout << "Проверка e(aP, Q) == e(P, aQ) пройдена." << std::endl;
     }
 }
 
