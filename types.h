@@ -70,7 +70,10 @@ typedef std::vector<value_t> values_t;
 typedef value_t X_t;
 typedef value_t Y_t;
 
-struct dot_t {X_t x; Y_t y;};
+template<typename X = X_t, typename Y = Y_t>
+struct DotType{X x; Y y;};
+
+typedef DotType<X_t, Y_t> dot_t;
 void to_json(json_t& j, const dot_t& dot);
 void from_json(const snrk::json_t& j, dot_t& dot);
 
@@ -102,6 +105,10 @@ protected:
 };
 void to_json(json_t& j, const Jsonable& jsonable);
 void from_json(const snrk::json_t& j, Jsonable& jsonable);
+
+typedef mpz_class int_t;
+typedef DotType<int_t, int_t> intDot_t;
+
 }
 
 #endif // TYPES_H

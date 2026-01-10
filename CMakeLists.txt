@@ -19,10 +19,11 @@ set(PROJECT_SOURCES
     proof.h proof.cpp
     operation.h operation.cpp
     types.h types.cpp
+    crypto.h crypto.cpp
     main.cpp
 )
 
 add_executable(testSNARK
     ${PROJECT_SOURCES})
 
-target_link_libraries(testSNARK PUBLIC gmp gmpxx)
+target_link_libraries(testSNARK PUBLIC gmp gmpxx mcl)
