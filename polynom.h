@@ -32,8 +32,7 @@ public:
     virtual Y_t operator()(X_t x) = 0;
     dots_t dots(xs_t xs);
 
-    /*todo: передача gp*/
-    virtual Y_t commit(TG_t tG);
+    virtual commit_t commit(GPK_t &gpk);
 };
 
 class CustomPolynom : public Polynom
@@ -91,6 +90,8 @@ public:
     std::size_t degree() const;
 
     bool isZero() const;
+
+    virtual commit_t commit(GPK_t &gpk) override;
 
 protected:
     static CanonicPolynom buildPolynomialRecursive(const roots_t& roots, roots_t::const_iterator start, roots_t::const_iterator end);

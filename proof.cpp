@@ -46,7 +46,7 @@ X_t getR(const witnesses_t &witness, value_t t) {
     return *randIt;
 }
 
-PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, TG_t tG)
+PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, GPK_t GPK)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
 
@@ -55,76 +55,78 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, 
         return (f(x) - f(u)) / (x - u);
     });
 
-    ptr->m_comF = f.commit(tG);
-    ptr->m_comQ = q.commit(tG);
+    ptr->m_comF = f.commit(GPK);
+    ptr->m_comQ = q.commit(GPK);
     ptr->m_toProve = toProve;
-    ptr->m_tG = tG;
+    ptr->m_GPK = GPK;
 
     return ptr;
 }
 
-PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG)
+PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t comF, commit_t comQ, dot_t toProve, GPK_t GPK)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
 
     ptr->m_comF = comF;
     ptr->m_comQ = comQ;
     ptr->m_toProve = toProve;
-    ptr->m_tG = tG;
+    ptr->m_GPK = GPK;
 
     return ptr;
 }
 
 bool PolynomSubstitutionProof::check()
 {
-    value_t a = (m_tG.t - m_toProve.x) * m_comQ;
-    value_t b = m_comF - m_toProve.y * m_tG.G;
-    return equal(a, b);
+    //todo:
+//    value_t a = (m_tG.t - m_toProve.x) * m_comQ;
+//    value_t b = m_comF - m_toProve.y * m_tG.G;
+//    return equal(a, b);
 }
 
 json_t PolynomSubstitutionProof::toJson() const
 {
     json_t json;
 
-    ToJson(json, m_comF);
-    ToJson(json, m_comQ);
+    //todo:
+//    ToJson(json, m_comF);
+//    ToJson(json, m_comQ);
 
     ToJson(json, m_toProve);
-    ToJson(json, m_tG);
+//    ToJson(json, m_tG);
 
     return json;
 }
 
 bool PolynomSubstitutionProof::fromJson(const json_t &json)
 {
-    FromJson(json, m_comF);
-    FromJson(json, m_comQ);
+//    FromJson(json, m_comF);
+//    FromJson(json, m_comQ);
     FromJson(json, m_toProve);
-    FromJson(json, m_tG);
+//    FromJson(json, m_tG);
 
     return true;
 }
 
-ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep)
+ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, GPK_t GPK, const witnesses_t &witness, witness_t wStep)
 {
     assert(g.distance() == p.distance());
 
 
     auto ptr = ptr_t(new ZeroTestProof);
 
-    ptr->m_tG = tG;
+    ptr->m_GPK = GPK;
 
     auto f = g - p;
-    ptr->m_comF = f.commit(tG);
+    ptr->m_comF = f.commit(GPK);
 
     auto z = ZeroWitnessPolynom(witness).toPartedCanonicPolynom();
 
     auto q = f.mustDevide(z);
 
-    ptr->m_comQ = q.commit(tG);
+    ptr->m_comQ = q.commit(GPK);
 
     /*todo: (hash % size(witness) + тут можно любое число!*/
-    ptr->m_r = getR(witness, tG.t);
+    ptr->m_r = 1;//getR(witness, tG.t);
 
     auto rRange = z.atRange(ptr->m_r);
 
@@ -134,8 +136,8 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
 
-    ptr->m_fRproof = *PolynomSubstitutionProof::forProver(f, {ptr->m_r, ptr->m_fR}, ptr->m_tG);
-    ptr->m_qRproof = *PolynomSubstitutionProof::forProver(q, {ptr->m_r, ptr->m_qR}, ptr->m_tG);
+    ptr->m_fRproof = *PolynomSubstitutionProof::forProver(f, {ptr->m_r, ptr->m_fR}, ptr->m_GPK);
+    ptr->m_qRproof = *PolynomSubstitutionProof::forProver(q, {ptr->m_r, ptr->m_qR}, ptr->m_GPK);
 
     return ptr;
 }
@@ -162,12 +164,13 @@ json_t ZeroTestProof::toJson() const
 {
     json_t json;
 
-    ToJson(json, m_tG);
+    //todo:
+//    ToJson(json, m_GPK);
 
-    ToJson(json, m_comF);
+//    ToJson(json, m_comF);
     ToJson(json, m_fRproof);
 
-    ToJson(json, m_comQ);
+//    ToJson(json, m_comQ);
     ToJson(json, m_qRproof);
 
     ToJson(json, m_r);
@@ -181,12 +184,13 @@ json_t ZeroTestProof::toJson() const
 
 bool ZeroTestProof::fromJson(const json_t &json)
 {
-    FromJson(json, m_tG);
+    //todo:
+//    FromJson(json, m_GPK);
 
-    FromJson(json, m_comF);
+//    FromJson(json, m_comF);
     FromJson(json, m_fRproof);
 
-    FromJson(json, m_comQ);
+//    FromJson(json, m_comQ);
     FromJson(json, m_qRproof);
 
     FromJson(json, m_r);
@@ -203,16 +207,16 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 {
     auto TParams = gp.PP().TParams;
     auto witnesses = gp.witnesses();
-    auto tG = gp.TG();
+    auto GPK = gp.GPK();
     auto tCanonic = TParams.t.toPartedCanonicPolynom();
 
-    correctInputs(tCanonic, input, witnesses, tG);
-    currentOutput(tCanonic, output, witnesses.size(), tG);
+    correctInputs(tCanonic, input, witnesses, GPK);
+    currentOutput(tCanonic, output, witnesses.size(), GPK);
 
     #define r(a) std::ref(a)
 
-    std::thread th1(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), tG);
-    std::thread th2(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(tCanonic), r(witnesses), tG);
+    std::thread th1(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), GPK);
+    std::thread th2(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(tCanonic), r(witnesses), GPK);
 
     #undef r
 
@@ -267,7 +271,7 @@ bool ProverProof::fromJson(const json_t &json)
     return true;
 }
 
-void ProverProof::correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, TG_t tG)
+void ProverProof::correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, GPK_t GPK)
 {
     dots_t inputsW;
     inputsW.reserve(inputs.size());
@@ -280,10 +284,10 @@ void ProverProof::correctInputs(const PartedCanonicPolynom &tCanonic, values_t i
 
     auto wStep = *(++ws.begin()) - ws.front();
     witnesses_t witness = genWitnesses(ws.front(), inputs.size(), wStep);
-    m_inputsProof = *ZeroTestProof::forProver(funcTCut, funcV, tG, witness, wStep);
+    m_inputsProof = *ZeroTestProof::forProver(funcTCut, funcV, GPK, witness, wStep);
 }
 
-void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, TG_t tG)
+void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK)
 {
     auto left = t.left.toPartedCanonicPolynom();
     auto right = t.right.toPartedCanonicPolynom();
@@ -310,22 +314,22 @@ void ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams
     }
 
     auto wStep = *(++ws.begin()) - ws.front();
-    m_gatesProof = *ZeroTestProof::forProver(funcF, result, tG, ws, wStep);
+    m_gatesProof = *ZeroTestProof::forProver(funcF, result, GPK, ws, wStep);
 }
 
-void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, const witnesses_t &ws, TG_t tG)
+void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, const witnesses_t &ws, GPK_t GPK)
 {
     auto wtCanonic = wt.toPartedCanonicPolynom();
 
     auto wStep = *(++ws.begin()) - ws.front();
-    m_varsProof = *ZeroTestProof::forProver(tCanonic, wtCanonic, tG, ws, wStep);
+    m_varsProof = *ZeroTestProof::forProver(tCanonic, wtCanonic, GPK, ws, wStep);
 }
 
-void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, TG_t tG)
+void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, GPK_t GPK)
 {
     auto outputDot = dot_t{lastWNum, output};
 
-    m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, tG);
+    m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, GPK);
 }
 
 }

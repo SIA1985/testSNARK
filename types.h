@@ -6,6 +6,8 @@
 #include <set>
 #include <memory>
 #include "nlohmann/json.hpp"
+#define MCL_USE_GMP 1
+#include <mcl/bls12_381.hpp>
 
 namespace snrk {
 
@@ -50,6 +52,7 @@ public:
     operator double() const;
     operator GateType_t() const;
     operator witness_t() const;
+    operator mcl::Fr() const;
     using mpf_class::operator=;
 
     address_t address() const;
@@ -79,9 +82,9 @@ void from_json(const snrk::json_t& j, dot_t& dot);
 
 typedef std::vector<dot_t> dots_t;
 
-struct TG_t {X_t t; int G;};
-void to_json(json_t& j, const TG_t& tG);
-void from_json(const snrk::json_t& j, TG_t& tG);
+typedef std::vector<mcl::G1> GPK_t;
+void to_json(json_t& j, const GPK_t& gpk);
+void from_json(const snrk::json_t& j, GPK_t& gpk);
 
 typedef std::set<X_t> xs_t;
 
@@ -106,8 +109,7 @@ protected:
 void to_json(json_t& j, const Jsonable& jsonable);
 void from_json(const snrk::json_t& j, Jsonable& jsonable);
 
-typedef mpz_class int_t;
-typedef DotType<int_t, int_t> intDot_t;
+typedef mcl::G1 commit_t;
 
 }
 

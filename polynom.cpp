@@ -23,10 +23,10 @@ dots_t Polynom::dots(xs_t xs)
     return result;
 }
 
-Y_t Polynom::commit(TG_t tG)
+commit_t Polynom::commit(GPK_t &gpk)
 {
-    /*пока = f(t)*G напрямую*/
-    return this->operator()(tG.t) * tG.G;
+    /*Полином не поддерживает обязательство*/
+    assert(false);
 }
 
 CustomPolynom::CustomPolynom(const func_t &customFunction)
@@ -101,6 +101,19 @@ bool CanonicPolynom::isZero() const
     }
 
     return result;
+}
+
+commit_t CanonicPolynom::commit(GPK_t &gpk)
+{
+    /*gpk = [1, tg, t^2g...]*/
+    assert(gpk.size() == m_coefs.size());
+
+    std::vector<mcl::Fr> frCoef(m_coefs.begin(), m_coefs.end());
+
+    commit_t com;
+    mcl::G1::mulVec(com, gpk.data(), frCoef.data(), gpk.size());
+
+    return com;
 }
 
 CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)

@@ -35,12 +35,12 @@ public:
     using ProverParams_t = struct{TParams_t TParams; SParams_t SParams; WParams_t WParams;};
 
 
-    GlobalParams(const Circut &circut);
+    GlobalParams(const Circut &circut, const GPK_t &GPK);
 
     witnesses_t witnesses() const;
     witnesses_t SWitnesses() const;
 
-    TG_t TG() const;
+    GPK_t GPK() const;
 
     ProverParams_t PP() const;
 
@@ -54,7 +54,7 @@ private:
     witnesses_t m_witnesses;
     witnesses_t m_SWitnesses;
 
-    TG_t m_TG;
+    GPK_t m_GPK;
 
     T_t m_T;
     SplittedT_t m_splittedT;

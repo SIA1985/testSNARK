@@ -18,11 +18,10 @@ public:
 class PolynomSubstitutionProof : public Proof
 {
 public:
-    using commit_t = X_t;
     using ptr_t = std::shared_ptr<PolynomSubstitutionProof>;
 
-    static ptr_t forProver(Polynom &f, dot_t toProve, TG_t tG);
-    static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, TG_t tG);
+    static ptr_t forProver(Polynom &f, dot_t toProve, GPK_t GPK);
+    static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, GPK_t GPK);
 
     virtual bool check() override;
 
@@ -38,7 +37,7 @@ private:
 
     dot_t m_toProve;
 
-    TG_t m_tG;
+    GPK_t m_GPK;
 
     friend class ZeroTestProof;
     friend class ProverProof;
@@ -47,10 +46,9 @@ private:
 class ZeroTestProof : public Proof
 {
 public:
-    using commit_t = X_t;
     using ptr_t = std::shared_ptr<ZeroTestProof>;
 
-    static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, TG_t tG, const witnesses_t &witness, witness_t wStep);
+    static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, GPK_t GPK, const witnesses_t &witness, witness_t wStep);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
     virtual bool check() override;
@@ -62,7 +60,7 @@ protected:
 private:
     ZeroTestProof() = default;
 
-    TG_t m_tG;
+    GPK_t m_GPK;
 
     commit_t m_comF;
     PolynomSubstitutionProof m_fRproof;
@@ -93,12 +91,12 @@ protected:
 
 private:
     //Подготовка увеличивается согласно О(n^2)
-    void correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, TG_t tG);
+    void correctInputs(const PartedCanonicPolynom &tCanonic, values_t inputs, const witnesses_t &ws, GPK_t GPK);
     //Подготовка увеличивается согласно О(n^2)
-    void correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, TG_t tG);
+    void correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
     //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
-    void currentVars(const WT_t &wt,  PartedCanonicPolynom &tCanonic, const witnesses_t &ws, TG_t tG);
-    void currentOutput(PartedCanonicPolynom &t, value_t output, std::size_t lastWNum, TG_t tG);
+    void currentVars(const WT_t &wt,  PartedCanonicPolynom &tCanonic, const witnesses_t &ws, GPK_t GPK);
+    void currentOutput(PartedCanonicPolynom &t, value_t output, std::size_t lastWNum, GPK_t GPK);
 
 
 

@@ -44,12 +44,11 @@ int main(int argc, char *argv[])
 
     mpf_set_default_prec(128);
 
-    /*todo: пример из тетради проверить*/
-    auto x1 = snrk::value_t(5);
-    auto x2 = snrk::value_t(6);
-    auto w1 = snrk::value_t(1);
+//    auto x1 = snrk::value_t(5);
+//    auto x2 = snrk::value_t(6);
+//    auto w1 = snrk::value_t(1);
 
-    snrk::Circut c({x1, x2}, {w1});
+//    snrk::Circut c({x1, x2}, {w1});
 
 //    for(int i = 0; i < 100; i++) {
 //    auto out1 = snrk::value_t(5);
@@ -66,7 +65,25 @@ int main(int argc, char *argv[])
 //    c.addGate({snrk::Devide, {x1, w1}, out6});
 //    }
 
-//    snrk::GlobalParams gp(c);
+    //todo: GPK
+    initPairing(mcl::BLS12_381); //временно
+
+    mcl::G1 g;
+    mcl::mapToG1(g, 1);
+    mcl::Fr t = 3;
+    snrk::GPK_t GPK;
+    GPK.push_back(g);
+
+    for (int i = 0; i < 2; i++) {
+        mcl::G1::mul(g, g, t);
+        GPK.push_back(g);
+    }
+
+    snrk::CanonicPolynom p({1, 2, 3});
+    std::cout << p.commit(GPK) << std::endl;
+
+
+//    snrk::GlobalParams gp(c, GPK);
 
 //    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
 
@@ -82,7 +99,11 @@ int main(int argc, char *argv[])
  * ! Вопрос: почему Partition > 3 не работает
  * (Тут дело в если точек меньше, чем Partition(=4), то раз на входе 3 точки -> полином(^2)/полином(^3))
  *
- * 1. Доразобраться с gp и сделать норм. commit
+ * 1. Доразобраться с gp
+ * 2. Commit для фукнции с 1м сплайном
+ * 3. Сделать схему PLONK
+ * 4. Агрегация коммитов
+ * 5. Адаптация под PLONK
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson

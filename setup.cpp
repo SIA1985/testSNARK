@@ -19,10 +19,11 @@ witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
     return witnesses;
 }
 
-GlobalParams::GlobalParams(const Circut &circut)
-    //todo: генерация
-    : m_TG{10, 20}
+GlobalParams::GlobalParams(const Circut &circut, const GPK_t &GPK)
+    : m_GPK{GPK}
 {
+    initPairing(mcl::BLS12_381);
+
     m_witnesses = genWitnesses(wStart, circut.degree(), wStep);
 
     auto mappedT = generateT(circut);
@@ -43,9 +44,9 @@ witnesses_t GlobalParams::SWitnesses() const
     return m_SWitnesses;
 }
 
-TG_t GlobalParams::TG() const
+GPK_t GlobalParams::GPK() const
 {
-    return m_TG;
+    return m_GPK;
 }
 
 GlobalParams::ProverParams_t GlobalParams::PP() const

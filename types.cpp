@@ -42,6 +42,11 @@ Value::operator witness_t() const
     return static_cast<witness_t>(get_ui());
 }
 
+Value::operator mcl::Fr() const
+{
+    return get_ui();
+}
+
 void to_json(json_t& j, const dot_t& dot) {
     j["x"] = dot.x;
     j["y"] = dot.y;
@@ -77,16 +82,18 @@ void from_json(const snrk::json_t& j, value_t& value)
     value = j.at("double").get<double>();
 }
 
-void to_json(json_t& j, const TG_t& tG)
+//todo:
+void to_json(json_t& j, const GPK_t& gpk)
 {
-    j["t"] = tG.t;
-    j["G"] = tG.G;
+//    j["t"] = tG.t;
+//    j["G"] = tG.G;
 }
 
-void from_json(const snrk::json_t& j, TG_t& tG)
+//todo:
+void from_json(const snrk::json_t& j, GPK_t& gpk)
 {
-    tG.t = j.at("t").get<value_t>();
-    tG.G = j.at("G");
+//    tG.t = j.at("t").get<value_t>();
+//    tG.G = j.at("G");
 }
 
 json_t Jsonable::toJson() const
