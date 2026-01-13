@@ -106,12 +106,12 @@ bool CanonicPolynom::isZero() const
 commit_t CanonicPolynom::commit(GPK_t &gpk)
 {
     /*gpk = [1, tg, t^2g...]*/
-    assert(gpk.size() == m_coefs.size());
+    assert(gpk.keys.size() == m_coefs.size());
 
     std::vector<mcl::Fr> frCoef(m_coefs.begin(), m_coefs.end());
 
     commit_t com;
-    mcl::G1::mulVec(com, gpk.data(), frCoef.data(), gpk.size());
+    mcl::G1::mulVec(com, gpk.keys.data(), frCoef.data(), gpk.keys.size());
 
     return com;
 }

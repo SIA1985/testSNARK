@@ -66,21 +66,33 @@ int main(int argc, char *argv[])
 //    }
 
     //todo: GPK
-    initPairing(mcl::BLS12_381); //временно
+    mcl::initPairing(mcl::BLS12_381); //временно
 
     mcl::G1 g;
     mcl::mapToG1(g, 1);
     mcl::Fr t = 3;
     snrk::GPK_t GPK;
-    GPK.push_back(g);
+    GPK.g = g;
+    GPK.keys.push_back(g);
 
     for (int i = 0; i < 2; i++) {
         mcl::G1::mul(g, g, t);
-        GPK.push_back(g);
+        GPK.keys.push_back(g);
     }
 
     snrk::CanonicPolynom p({1, 2, 3});
-    std::cout << p.commit(GPK) << std::endl;
+    snrk::dot_t toProve{1, p(1)};
+    auto proof = snrk::PolynomSubstitutionProof::forProver(p, toProve, GPK);
+
+    mcl::G2 g2, tG2;
+    mcl::mapToG2(g2, 1);
+    mcl::G2::mul(tG2, g2, t);
+
+    if (proof->check(tG2, g2)) {
+        std::cout << "Ok!" << std::endl;
+    } else {
+        std::cout << "Not ok!" << std::endl;
+    }
 
 
 //    snrk::GlobalParams gp(c, GPK);
@@ -104,6 +116,7 @@ int main(int argc, char *argv[])
  * 3. Сделать схему PLONK
  * 4. Агрегация коммитов
  * 5. Адаптация под PLONK
+ * 6. Общий пруф, где исключены повторения обязательств и тп
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson

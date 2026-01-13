@@ -75,12 +75,23 @@ PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forVerifier(commit_t c
     return ptr;
 }
 
-bool PolynomSubstitutionProof::check()
+bool PolynomSubstitutionProof::check(mcl::G2 tG2, mcl::G2 G2)
 {
-    //todo:
-//    value_t a = (m_tG.t - m_toProve.x) * m_comQ;
-//    value_t b = m_comF - m_toProve.y * m_tG.G;
-//    return equal(a, b);
+    mcl::G2 zG2, forE1;
+    mcl::G2::mul(zG2, G2, mcl::Fr(m_toProve.x));
+    mcl::G2::sub(forE1, tG2, zG2);
+
+    mcl::GT e1;
+    mcl::pairing(e1, m_comQ, forE1);
+
+    mcl::G1 yG, forE2;
+    mcl::G1::mul(yG, m_GPK.g, mcl::Fr(m_toProve.y));
+    mcl::G1::sub(forE2, m_comF, yG);
+
+    mcl::GT e2;
+    mcl::pairing(e2, forE2, G2);
+
+    return e1 == e2;
 }
 
 json_t PolynomSubstitutionProof::toJson() const
@@ -142,13 +153,13 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     return ptr;
 }
 
-bool ZeroTestProof::check()
+bool ZeroTestProof::check(mcl::G2 tG2, mcl::G2 G2)
 {
-    if (!m_fRproof.check()) {
+    if (!m_fRproof.check(tG2, G2)) {
         return false;
     }
 
-    if (!m_qRproof.check()) {
+    if (!m_qRproof.check(tG2, G2)) {
         return false;
     }
 
@@ -224,24 +235,24 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     th2.join();
 }
 
-bool ProverProof::check()
+bool ProverProof::check(mcl::G2 tG2, mcl::G2 G2)
 {
-    if (!m_inputsProof.check()) {
+    if (!m_inputsProof.check(tG2, G2)) {
         std::cout << "Некорректные входы!" << std::endl;
         return false;
     }
 
-    if (!m_gatesProof.check()) {
+    if (!m_gatesProof.check(tG2, G2)) {
         std::cout << "Некорректные переходы!" << std::endl;
         return false;
     }
 
-    if (!m_varsProof.check()) {
+    if (!m_varsProof.check(tG2, G2)) {
         std::cout << "Некорректные переменные!" << std::endl;
         return false;
     }
 
-    if (!m_outputProof.check()) {
+    if (!m_outputProof.check(tG2, G2)) {
         std::cout << "Некорректный выход!" << std::endl;
         return false;
     }

@@ -12,7 +12,7 @@ public:
     Proof() = default;
     virtual ~Proof() = default;
 
-    virtual bool check() = 0;
+    virtual bool check(mcl::G2 tG2, mcl::G2 G2) = 0;
 };
 
 class PolynomSubstitutionProof : public Proof
@@ -23,7 +23,7 @@ public:
     static ptr_t forProver(Polynom &f, dot_t toProve, GPK_t GPK);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, GPK_t GPK);
 
-    virtual bool check() override;
+    virtual bool check(mcl::G2 tG2, mcl::G2 G2) override;
 
 protected:
     virtual json_t toJson() const override;
@@ -51,7 +51,7 @@ public:
     static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, GPK_t GPK, const witnesses_t &witness, witness_t wStep);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, Y_t f_r, Y_t q_r);
 
-    virtual bool check() override;
+    virtual bool check(mcl::G2 tG2, mcl::G2 G2) override;
 
 protected:
     virtual json_t toJson() const override;
@@ -83,7 +83,7 @@ public:
 
     ProverProof(const GlobalParams &gp, const values_t &input, value_t output);
 
-    virtual bool check() override;
+    virtual bool check(mcl::G2 tG2, mcl::G2 G2) override;
 
 protected:
     virtual json_t toJson() const override;
