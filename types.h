@@ -82,7 +82,8 @@ void from_json(const snrk::json_t& j, dot_t& dot);
 
 typedef std::vector<dot_t> dots_t;
 
-struct GPK_t { std::vector<mcl::G1> keys; mcl::G1 g;};
+typedef std::vector<mcl::G1> keys_t;
+struct GPK_t {keys_t keys; mcl::G1 g;};
 void to_json(json_t& j, const GPK_t& gpk);
 void from_json(const snrk::json_t& j, GPK_t& gpk);
 

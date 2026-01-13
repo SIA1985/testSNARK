@@ -46,14 +46,14 @@ X_t getR(const witnesses_t &witness, value_t t) {
     return *randIt;
 }
 
-PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(Polynom &f, dot_t toProve, GPK_t GPK)
+PolynomSubstitutionProof::ptr_t PolynomSubstitutionProof::forProver(CanonicPolynom &f, dot_t toProve, GPK_t GPK)
 {
     auto ptr = ptr_t(new PolynomSubstitutionProof);
+    auto u = toProve.x;
+    auto v = f(u);
+    auto xSubU = CanonicPolynom({-u, 1});
 
-    auto q = CustomPolynom([&f, u = toProve.x](X_t x) -> Y_t
-    {
-        return (f(x) - f(u)) / (x - u);
-    });
+    auto q = (f - CanonicPolynom({v, 0})).mustDevide(xSubU);
 
     ptr->m_comF = f.commit(GPK);
     ptr->m_comQ = q.commit(GPK);
@@ -147,8 +147,8 @@ ZeroTestProof::ptr_t ZeroTestProof::forProver(PartedCanonicPolynom &g, PartedCan
     ptr->m_fR = f(ptr->m_r);
     ptr->m_qR = q(ptr->m_r);
 
-    ptr->m_fRproof = *PolynomSubstitutionProof::forProver(f, {ptr->m_r, ptr->m_fR}, ptr->m_GPK);
-    ptr->m_qRproof = *PolynomSubstitutionProof::forProver(q, {ptr->m_r, ptr->m_qR}, ptr->m_GPK);
+//    ptr->m_fRproof = *PolynomSubstitutionProof::forProver(f, {ptr->m_r, ptr->m_fR}, ptr->m_GPK);
+//    ptr->m_qRproof = *PolynomSubstitutionProof::forProver(q, {ptr->m_r, ptr->m_qR}, ptr->m_GPK);
 
     return ptr;
 }
@@ -222,7 +222,7 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto tCanonic = TParams.t.toPartedCanonicPolynom();
 
     correctInputs(tCanonic, input, witnesses, GPK);
-    currentOutput(tCanonic, output, witnesses.size(), GPK);
+//    currentOutput(tCanonic, output, witnesses.size(), GPK);
 
     #define r(a) std::ref(a)
 
@@ -336,11 +336,11 @@ void ProverProof::currentVars(const WT_t &wt, PartedCanonicPolynom &tCanonic, co
     m_varsProof = *ZeroTestProof::forProver(tCanonic, wtCanonic, GPK, ws, wStep);
 }
 
-void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, GPK_t GPK)
-{
-    auto outputDot = dot_t{lastWNum, output};
+//void ProverProof::currentOutput(PartedCanonicPolynom &tCanonic, value_t output, std::size_t lastWNum, GPK_t GPK)
+//{
+//    auto outputDot = dot_t{lastWNum, output};
 
-    m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, GPK);
-}
+//    m_outputProof = *PolynomSubstitutionProof::forProver(tCanonic, outputDot, GPK);
+//}
 
 }

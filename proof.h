@@ -20,7 +20,7 @@ class PolynomSubstitutionProof : public Proof
 public:
     using ptr_t = std::shared_ptr<PolynomSubstitutionProof>;
 
-    static ptr_t forProver(Polynom &f, dot_t toProve, GPK_t GPK);
+    static ptr_t forProver(CanonicPolynom &f, dot_t toProve, GPK_t GPK);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, GPK_t GPK);
 
     virtual bool check(mcl::G2 tG2, mcl::G2 G2) override;
@@ -96,7 +96,7 @@ private:
     void correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
     //мб дело в том, что надо проверять не t, а такое t, что выводит адреса
     void currentVars(const WT_t &wt,  PartedCanonicPolynom &tCanonic, const witnesses_t &ws, GPK_t GPK);
-    void currentOutput(PartedCanonicPolynom &t, value_t output, std::size_t lastWNum, GPK_t GPK);
+//    void currentOutput(PartedCanonicPolynom &t, value_t output, std::size_t lastWNum, GPK_t GPK);
 
 
 

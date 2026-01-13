@@ -106,9 +106,13 @@ bool CanonicPolynom::isZero() const
 commit_t CanonicPolynom::commit(GPK_t &gpk)
 {
     /*gpk = [1, tg, t^2g...]*/
-    assert(gpk.keys.size() == m_coefs.size());
+    assert(gpk.keys.size() >= m_coefs.size());
 
     std::vector<mcl::Fr> frCoef(m_coefs.begin(), m_coefs.end());
+
+    auto keysMax = gpk.keys.begin();
+    std::advance(keysMax, m_coefs.size());
+    keys_t keys(gpk.keys.begin(), keysMax);
 
     commit_t com;
     mcl::G1::mulVec(com, gpk.keys.data(), frCoef.data(), gpk.keys.size());
@@ -221,7 +225,7 @@ std::size_t CanonicPolynom::degree() const
     return m_coefs.size() - 1;
 }
 
-CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other)
+CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other) const
 {
     int k,j;
 
@@ -267,6 +271,17 @@ CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other)
 
     return {res, rem};
 }
+
+CanonicPolynom CanonicPolynom::mustDevide(CanonicPolynom &other) const
+{
+    const auto &[res, rem] = devide(other);
+
+    if (!rem.isZero()) {
+        std::raise(SIGFPE);
+    }
+
+    return res;
+};
 
 InterpolationPolynom::InterpolationPolynom(const dots_t &dots)
     : m_dots{dots}
@@ -570,11 +585,7 @@ PartedCanonicPolynom PartedCanonicPolynom::mustDevide(PartedCanonicPolynom &othe
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
 
-        const auto &[res, rem] = f1.devide(f2);
-
-        if (!rem.isZero()) {
-            std::raise(SIGFPE);
-        }
+        auto res = f1.mustDevide(f2);
 
         result.insert(currentRange, res);
     });

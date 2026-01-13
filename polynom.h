@@ -68,7 +68,8 @@ public:
     virtual Y_t operator()(X_t x) override;
 
     CustomPolynom operator/(CanonicPolynom &other);
-    devideResult_t devide(CanonicPolynom &other);
+    devideResult_t devide(CanonicPolynom &other) const;
+    CanonicPolynom mustDevide(CanonicPolynom &other) const;
 
     CanonicPolynom operator+(const CanonicPolynom &other) const;
 
