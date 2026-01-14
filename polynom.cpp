@@ -10,7 +10,7 @@ namespace snrk {
 
 bool operator<(const dot_t &a, const dot_t &b)
 {
-    return cmp(a.x, b.x) != 1;
+    return a.x <= b.x; // != 1;
 }
 
 dots_t Polynom::dots(xs_t xs)
@@ -23,7 +23,7 @@ dots_t Polynom::dots(xs_t xs)
     return result;
 }
 
-commit_t Polynom::commit(GPK_t &gpk)
+commit_t Polynom::commit(GPK_t &gpk) const
 {
     /*Полином не поддерживает обязательство*/
     assert(false);
@@ -69,7 +69,7 @@ CanonicPolynom CanonicPolynom::buildPolynomialRecursive(const roots_t& roots, ro
 CanonicPolynom::coefs_t CanonicPolynom::coefsFromRoots(roots_t roots)
 {
     if (roots.empty()) {
-        return {1.0};
+        return {value_t(1)};
     }
 
     CanonicPolynom resultPoly = buildPolynomialRecursive(roots, roots.begin(), std::prev(roots.end()));
@@ -93,7 +93,7 @@ bool CanonicPolynom::isZero() const
 {
     bool result = true;
     for(const auto &coef : m_coefs) {
-        result = result && (cmp(coef, value_t(0)) == 0);
+        result = result && (coef == value_t(0));
 
         if(!result) {
             break;
@@ -103,7 +103,7 @@ bool CanonicPolynom::isZero() const
     return result;
 }
 
-commit_t CanonicPolynom::commit(GPK_t &gpk)
+commit_t CanonicPolynom::commit(GPK_t &gpk) const
 {
     /*gpk = [1, tg, t^2g...]*/
     assert(gpk.keys.size() >= m_coefs.size());
@@ -115,7 +115,7 @@ commit_t CanonicPolynom::commit(GPK_t &gpk)
     keys_t keys(gpk.keys.begin(), keysMax);
 
     commit_t com;
-    mcl::G1::mulVec(com, gpk.keys.data(), frCoef.data(), gpk.keys.size());
+    snrk::G1::mulVec(com, gpk.keys.data(), frCoef.data(), m_coefs.size());
 
     return com;
 }
@@ -235,7 +235,7 @@ CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other) con
     /*todo: deg(res) = n - nOther, deg(rem) = nOther - 1*/
     CanonicPolynom res(n + 1), rem(n + 1);
 
-    if (nOther < 0 || (nOther == 0 && std::abs(other.m_coefs[0].get_d()) < 1e-9)) {
+    if (nOther < 0 || nOther == 0 && other.m_coefs[0] == value_t(0)) {
         throw std::invalid_argument("Division by zero polynomial or zero constant.");
     }
 
@@ -247,7 +247,7 @@ CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other) con
         return {res, rem};
     }
 
-    coefs_t remainderCoefs = m_coefs;
+    coefs_t remainderCoefs(m_coefs.begin(), m_coefs.end());
 
     int degreeRes = n - nOther;
     res = CanonicPolynom(degreeRes + 1);
@@ -393,17 +393,17 @@ Range::Range(X_t left, X_t right)
     : m_left{left}
     , m_right{right}
 {
-    assert(cmp(right, left) != -1);
+    assert(right >= left); //!=-1
 }
 
 bool Range::inRangeStrict(X_t x) const
 {
-    return cmp(m_right, x) == 1 && cmp(m_left, x) == -1;
+    return m_right > x && m_left < x;
 }
 
 bool Range::inRange(X_t x) const
 {
-    return cmp(m_right, x) >= 0 && cmp(m_left, x) <= 0;
+    return m_right >= x && m_left <= x;
 }
 
 Range::pos_t Range::isCrossStrict(const Range &other) const
@@ -425,7 +425,7 @@ Range::pos_t Range::isCrossStrict(const Range &other) const
         return crossed;
     }
 
-    if(cmp(m_left, other.m_right) >= 0) {
+    if(m_left >= other.m_right) {
         return right;
     } else {
         return left;
@@ -461,7 +461,7 @@ X_t Range::rightBound() const
 
 Range Range::fromUnsorted(X_t a, X_t b)
 {
-    if (cmp(a, b) == -1) {
+    if (a < b) {
         return {a, b};
     }
 
@@ -470,12 +470,12 @@ Range Range::fromUnsorted(X_t a, X_t b)
 
 bool operator<(const Range &a, const Range &b)
 {
-    return cmp(a.rightBound(), b.leftBound()) <= 0;
+    return a.rightBound() <= b.leftBound();
 }
 
 bool operator==(const Range &a, const Range &b)
 {
-    return cmp(a.leftBound(), b.leftBound()) == 0 && cmp(a.rightBound(), b.rightBound()) == 0;
+    return a.leftBound() == b.leftBound() && a.rightBound() == b.rightBound();
 }
 
 bool operator<=(const Range &a, const Range &b)
@@ -485,7 +485,7 @@ bool operator<=(const Range &a, const Range &b)
 
 std::ostream &operator<<(std::ostream &out, const Range &r)
 {
-    return out << "{" << r.leftBound().get_d() << ", " << r.rightBound().get_d() << "}";
+    return out << "{" << r.leftBound() << ", " << r.rightBound() << "}";
 }
 
 PartedCanonicPolynom::PartedCanonicPolynom(const map &map)
@@ -646,9 +646,9 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         auto copyFirst = mapCopy.cbegin();
         auto copyOtherFirst = mapCopyOther.cbegin();
 
-        if (cmp(copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()) == -1) {
+        if (copyFirst->first.leftBound() < copyOtherFirst->first.leftBound()) {
             mapCopyOther.insert(Range{copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()}, copyOtherFirst->second);
-        } else if (cmp(copyFirst->first.leftBound(), copyOtherFirst->first.leftBound()) == 1){
+        } else if (copyFirst->first.leftBound() > copyOtherFirst->first.leftBound()){
             mapCopy.insert(Range{copyOtherFirst->first.leftBound(), copyFirst->first.leftBound()}, copyFirst->second);
         }
     }
@@ -656,9 +656,9 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
         auto copyLast = (--mapCopy.cend());
         auto copyOtherLast = (--mapCopyOther.cend());
 
-        if (cmp(copyLast->first.rightBound(), copyOtherLast->first.rightBound()) == -1) {
+        if (copyLast->first.rightBound() < copyOtherLast->first.rightBound()) {
             mapCopy.insert(Range{copyLast->first.rightBound(), copyOtherLast->first.rightBound()}, copyLast->second);
-        } else if (cmp(copyLast->first.rightBound(), copyOtherLast->first.rightBound()) == 1) {
+        } else if (copyLast->first.rightBound() > copyOtherLast->first.rightBound()) {
             mapCopyOther.insert(Range{copyOtherLast->first.rightBound(), copyLast->first.rightBound()}, copyOtherLast->second);
         }
     }
@@ -686,17 +686,17 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
     auto moveDuringCross = [&safeIt, &safeInc](map::const_iterator *it, map::const_iterator end, Range cross)
     {
-        if (cmp(safeIt((*it), end)->first.rightBound(), cross.leftBound()) == 0 ||
-            cmp(safeIt((*it), end)->first.leftBound(), cross.rightBound()) == 0 ||
-            cmp(safeIt((*it), end)->first.rightBound(), cross.rightBound()) == 0) {
+        if (safeIt((*it), end)->first.rightBound() == cross.leftBound() ||
+            safeIt((*it), end)->first.leftBound() == cross.rightBound() ||
+            safeIt((*it), end)->first.rightBound() == cross.rightBound()) {
             safeInc(*it, end);
         }
     };
 
     auto onInside = [&currentRange, &predCall](Range r, Range cross)
     {
-        if (cmp(r.leftBound(), cross.leftBound()) == -1 &&
-            cmp(currentRange.rightBound(), r.leftBound()) <= 0) {
+        if (r.leftBound() < cross.leftBound() &&
+            currentRange.rightBound() <= r.leftBound()) {
             currentRange = Range{r.leftBound(), cross.leftBound()};
             predCall();
         }
@@ -725,7 +725,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
             auto cross = itRange().crossByStrict(otherRange());
 
             map::const_iterator *left, *right, leftEnd, rightEnd;
-            if (cmp(itRange().leftBound(),  otherRange().leftBound()) == -1) {
+            if (itRange().leftBound() < otherRange().leftBound()) {
                 left = &it;
                 leftEnd = end;
                 right = &itOther;
@@ -737,7 +737,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
                 rightEnd = end;
             }
 
-            if (cmp(currentRange.rightBound(), (*left)->first.leftBound()) <= 0) {
+            if (currentRange.rightBound() <= (*left)->first.leftBound()) {
                 currentRange = Range{(*left)->first.leftBound(), cross.leftBound()};
                 predCall();
             }
@@ -830,6 +830,31 @@ Range PartedCanonicPolynom::atRange(X_t x) const
     }
 
     return founded->first;
+}
+
+commit_t PartedCanonicPolynom::commit(GPK_t &gpk) const
+{
+    value_t r;
+    std::string data;
+    std::vector<commit_t> commits;
+
+    for (auto b = m_map.cbegin(); b != m_map.cend(); b++) {
+        auto com = b->second.commit(gpk);
+        commits.push_back(com);
+        data += com.getStr(16);
+    }
+    r.setHashOf(data);
+
+    values_t powers(commits.size());
+    powers[0] = 1;
+    for (size_t i = 1; i < commits.size(); ++i) {
+        powers[i] = powers[i - 1] * r;
+    }
+
+    commit_t cTotal;
+    G1::mulVec(cTotal, commits.data(), powers.data(), commits.size());
+
+    return cTotal;
 }
 
 const int PartedCanonicPolynom::Partition = 3;

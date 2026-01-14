@@ -13,39 +13,49 @@ void from_json(const snrk::json_t& j, witnesses_t& ws)
     ws = j.at("array").get<std::vector<witness_t>>();
 }
 
+Value::Value(mcl::Fr fr)
+{
+    *this = fr;
+}
+
 Value::operator int() const
 {
-    return static_cast<int>(get_si());
+    return static_cast<int>(getInt64());
 }
 
 Value::operator const unsigned long() const
 {
-    return get_ui();
+    return getUint64();
 }
 
 Value::operator double() const
 {
-    return get_d();
+    return getInt64();
 }
 
 Value::operator GateType_t() const
 {
-    if (floor(*this) != *this) {
-        return Unknown;
-    }
+//    if (floor(*this) != *this) {
+//        return Unknown;
+//    }
 
-    return static_cast<GateType_t>(get_ui());
+    return static_cast<GateType_t>(*getUnit());
 }
 
-Value::operator witness_t() const
+//Value::operator witness_t() const
+//{
+//    return static_cast<witness_t>(getUint64());
+//}
+
+Value::operator mpz_class() const
 {
-    return static_cast<witness_t>(get_ui());
+    return getMpz();
 }
 
-Value::operator mcl::Fr() const
-{
-    return get_ui();
-}
+//Value::operator mcl::Fr() const
+//{
+//    return get_ui();
+//}
 
 void to_json(json_t& j, const dot_t& dot) {
     j["x"] = dot.x;
@@ -62,19 +72,20 @@ address_t Value::address() const
     return address_t(this);
 }
 
-bool operator<(const Value &a, const Value &b)
-{
-    return cmp(a, b) == -1;
-}
+//bool operator<(const Value &a, const Value &b)
+//{
+//    return cmp(a, b) == -1;
+//}
 
-bool operator==(const Value &a, const Value &b)
-{
-    return cmp(a, b) == 0;
-}
+//bool operator==(const Value &a, const Value &b)
+//{
+//    return cmp(a, b) == 0;
+//}
 
+//todo:
 void to_json(json_t& j, const value_t& value)
 {
-    j["double"] = value.get_d();
+    j["double"] = value.getUint64();
 }
 
 void from_json(const snrk::json_t& j, value_t& value)

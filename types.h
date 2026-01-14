@@ -41,30 +41,33 @@ private:
 void to_json(json_t& j, const witnesses_t& ws);
 void from_json(const snrk::json_t& j, witnesses_t& ws);
 
-class Value : public mpf_class
+class Value : public mcl::Fr
 {
 public:
     Value() = default;
-    using mpf_class::mpf_class;
+    Value(mcl::Fr fr);
+    using mcl::Fr::Fr;
 
     operator int() const;
     operator const unsigned long() const;
     operator double() const;
     operator GateType_t() const;
-    operator witness_t() const;
-    operator mcl::Fr() const;
-    using mpf_class::operator=;
+//    operator witness_t() const;
+//    operator mcl::Fr() const;
+    operator mpz_class() const;
+    using mcl::Fr::operator=;
+    using mcl::Fr::operator<;
 
     address_t address() const;
 
 private:
-    friend bool operator<(const Value &a, const Value &b);
+//    friend bool operator<(const Value &a, const Value &b);
 //    friend bool operator==(const Value &a, const Value &b);
 };
 
 typedef Value value_t;
-bool operator<(const value_t &a, const value_t &b);
-bool operator==(const value_t &a, const value_t &b);
+//bool operator<(const value_t &a, const value_t &b);
+//bool operator==(const value_t &a, const value_t &b);
 void to_json(json_t& j, const value_t& value);
 void from_json(const snrk::json_t& j, value_t& value);
 
@@ -82,8 +85,12 @@ void from_json(const snrk::json_t& j, dot_t& dot);
 
 typedef std::vector<dot_t> dots_t;
 
-typedef std::vector<mcl::G1> keys_t;
-struct GPK_t {keys_t keys; mcl::G1 g;};
+typedef mcl::bn::G1 G1;
+typedef mcl::bn::G2 G2;
+typedef mcl::bn::GT GT;
+typedef G1 commit_t;
+typedef std::vector<G1> keys_t;
+struct GPK_t {keys_t keys; G1 g;};
 void to_json(json_t& j, const GPK_t& gpk);
 void from_json(const snrk::json_t& j, GPK_t& gpk);
 
@@ -109,9 +116,6 @@ protected:
 };
 void to_json(json_t& j, const Jsonable& jsonable);
 void from_json(const snrk::json_t& j, Jsonable& jsonable);
-
-typedef mcl::G1 commit_t;
-
 }
 
 #endif // TYPES_H

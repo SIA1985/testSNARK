@@ -22,8 +22,6 @@ witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
 GlobalParams::GlobalParams(const Circut &circut, const GPK_t &GPK)
     : m_GPK{GPK}
 {
-    initPairing(mcl::BLS12_381);
-
     m_witnesses = genWitnesses(wStart, circut.degree(), wStep);
 
     auto mappedT = generateT(circut);

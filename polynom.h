@@ -32,7 +32,7 @@ public:
     virtual Y_t operator()(X_t x) = 0;
     dots_t dots(xs_t xs);
 
-    virtual commit_t commit(GPK_t &gpk);
+    virtual commit_t commit(GPK_t &gpk) const;
 };
 
 class CustomPolynom : public Polynom
@@ -92,7 +92,7 @@ public:
 
     bool isZero() const;
 
-    virtual commit_t commit(GPK_t &gpk) override;
+    virtual commit_t commit(GPK_t &gpk) const override;
 
 protected:
     static CanonicPolynom buildPolynomialRecursive(const roots_t& roots, roots_t::const_iterator start, roots_t::const_iterator end);
@@ -161,7 +161,7 @@ public:
         return std::lower_bound(m_map.begin(), m_map.end(), x,
         [](const std::pair<Range, T> &keyValue, X_t x) -> bool
         {
-            return cmp(keyValue.first.rightBound(), x) == -1;
+            return keyValue.first.rightBound() < x;
         });
     }
 
@@ -173,7 +173,7 @@ public:
             return found->second;
         }
 
-        if (cmp(m_map.begin()->first.leftBound(), x) == 1) {
+        if (m_map.begin()->first.leftBound() > x) {
             return m_map.begin()->second;
         }
 
@@ -275,6 +275,8 @@ public:
     PartedCanonicPolynom cut(Range distance) const;
 
     Range atRange(X_t x) const;
+
+    virtual commit_t commit(GPK_t &gpk) const override;
 
     const static int Partition;
 

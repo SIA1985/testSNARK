@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
     }
 
     mpf_set_default_prec(128);
+    mcl::initPairing(mcl::BLS12_381);
 
 //    auto x1 = snrk::value_t(5);
 //    auto x2 = snrk::value_t(6);
@@ -65,18 +66,16 @@ int main(int argc, char *argv[])
 //    c.addGate({snrk::Devide, {x1, w1}, out6});
 //    }
 
-    //todo: GPK
-    mcl::initPairing(mcl::BLS12_381); //временно
-
-    mcl::G1 g;
+    snrk::G1 g;
     mcl::mapToG1(g, 1);
     mcl::Fr t = 3;
     snrk::GPK_t GPK;
     GPK.g = g;
     GPK.keys.push_back(g);
 
-    for (int i = 0; i < 2; i++) {
-        mcl::G1::mul(g, g, t);
+    //todo: mulvec
+    for (int i = 0; i < 10; i++) {
+        snrk::G1::mul(g, g, t);
         GPK.keys.push_back(g);
     }
 
@@ -84,9 +83,9 @@ int main(int argc, char *argv[])
     snrk::dot_t toProve{1, p(1)};
     auto proof = snrk::PolynomSubstitutionProof::forProver(p, toProve, GPK);
 
-    mcl::G2 g2, tG2;
+    snrk::G2 g2, tG2;
     mcl::mapToG2(g2, 1);
-    mcl::G2::mul(tG2, g2, t);
+    snrk::G2::mul(tG2, g2, t);
 
     if (proof->check(tG2, g2)) {
         std::cout << "Ok!" << std::endl;
@@ -99,7 +98,7 @@ int main(int argc, char *argv[])
 
 //    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
 
-//    if (proof.check()) {
+//    if (proof.check(tG2, g2)) {
 //        std::cout << "Ok!" << std::endl;
 //    } else {
 //        std::cout << "Not ok!" << std::endl;
@@ -118,6 +117,7 @@ int main(int argc, char *argv[])
  * 5. Адаптация под PLONK
  * 6. Общий пруф, где исключены повторения обязательств и тп
  * 7. Пруф подстановки по сути тот же 0-тест!
+ * 8. Рефакторинг: убрать CustomPolynom, так как есть mustDevide
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson
