@@ -79,9 +79,17 @@ int main(int argc, char *argv[])
         GPK.keys.push_back(g);
     }
 
-    snrk::CanonicPolynom p({1, 2, 3});
-    snrk::dot_t toProve{1, p(1)};
-    auto proof = snrk::PolynomSubstitutionProof::forProver(p, toProve, GPK);
+    snrk::PartedCanonicPolynom::map m1;
+    m1.insert({1, 2}, {{1, 2, 1}});
+    m1.insert({2, 3}, {{3, 2, 1}});
+    snrk::PartedCanonicPolynom p(m1);
+
+    snrk::PartedCanonicPolynom::map m2;
+    m2.insert({1, 2}, {{1, 2, 1}});
+    m2.insert({2, 3}, {{2, 2, 1}});
+    snrk::PartedCanonicPolynom f(m2);
+
+    auto proof = snrk::PlonkProof::forProver(p, p, GPK, snrk::genWitnesses(1, 4, 1), 1);
 
     snrk::G2 g2, tG2;
     mcl::mapToG2(g2, 1);
@@ -117,7 +125,9 @@ int main(int argc, char *argv[])
  * 5. Адаптация под PLONK
  * 6. Общий пруф, где исключены повторения обязательств и тп
  * 7. Пруф подстановки по сути тот же 0-тест!
- * 8. Рефакторинг: убрать CustomPolynom, так как есть mustDevide
+ * 8. Рефакторинг: убрать CustomPolynom, так как есть mustDevide,
+ *    mustDevide -> operator / + sigFpe, убрать лишние операторы
+ * 9. А мб. свидетели зашиты в диапазоны?
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson
