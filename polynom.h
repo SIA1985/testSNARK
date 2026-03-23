@@ -35,20 +35,6 @@ public:
     virtual commit_t commit(GPK_t &gpk) const;
 };
 
-class CustomPolynom : public Polynom
-{
-public:
-    using func_t = std::function<Y_t(X_t)>;
-
-
-    CustomPolynom(const func_t &customFunction);
-
-    virtual Y_t operator()(X_t x) override;
-
-private:
-    func_t m_customFunction;
-};
-
 class CanonicPolynom : public Polynom
 {
 public:
@@ -67,9 +53,9 @@ public:
 
     virtual Y_t operator()(X_t x) override;
 
-    CustomPolynom operator/(CanonicPolynom &other);
-    devideResult_t devide(CanonicPolynom &other) const;
-    CanonicPolynom mustDevide(CanonicPolynom &other) const;
+    CanonicPolynom operator/(CanonicPolynom &other) const;
+
+    devideResult_t tryDevide(CanonicPolynom &other) const;
 
     CanonicPolynom operator+(const CanonicPolynom &other) const;
 
@@ -264,9 +250,7 @@ public:
 
     PartedCanonicPolynom operator*(const PartedCanonicPolynom &other) const;
 
-    CustomPolynom operator/(PartedCanonicPolynom &other);
-
-    PartedCanonicPolynom mustDevide(PartedCanonicPolynom &other) const;
+    PartedCanonicPolynom operator/(PartedCanonicPolynom &other) const;
 
     void operator+=(const PartedCanonicPolynom &other);
 

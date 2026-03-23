@@ -29,16 +29,6 @@ commit_t Polynom::commit(GPK_t &gpk) const
     assert(false);
 }
 
-CustomPolynom::CustomPolynom(const func_t &customFunction)
-    : m_customFunction{customFunction}
-{
-}
-
-Y_t CustomPolynom::operator()(X_t x)
-{
-    return m_customFunction(x);
-}
-
 CanonicPolynom::CanonicPolynom(coefs_t coefs)
     : m_coefs{coefs}
 {
@@ -120,14 +110,15 @@ commit_t CanonicPolynom::commit(GPK_t &gpk) const
     return com;
 }
 
-CustomPolynom CanonicPolynom::operator/(CanonicPolynom &other)
+CanonicPolynom CanonicPolynom::operator/(CanonicPolynom &other) const
 {
-    auto result = devide(other);
+    const auto &[res, rem] = tryDevide(other);
 
-    return CustomPolynom([res = result.first, rem = result.second, other](X_t x) mutable -> Y_t
-    {
-        return res(x) + (rem(x) == X_t(0) ? Y_t(0) : rem(x) / other(x));
-    });
+    if (!rem.isZero()) {
+        std::raise(SIGFPE);
+    }
+
+    return res;
 }
 
 CanonicPolynom CanonicPolynom::operator+(const CanonicPolynom &other) const
@@ -225,7 +216,7 @@ std::size_t CanonicPolynom::degree() const
     return m_coefs.size() - 1;
 }
 
-CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other) const
+CanonicPolynom::devideResult_t CanonicPolynom::tryDevide(CanonicPolynom &other) const
 {
     int k,j;
 
@@ -271,17 +262,6 @@ CanonicPolynom::devideResult_t CanonicPolynom::devide(CanonicPolynom &other) con
 
     return {res, rem};
 }
-
-CanonicPolynom CanonicPolynom::mustDevide(CanonicPolynom &other) const
-{
-    const auto &[res, rem] = devide(other);
-
-    if (!rem.isZero()) {
-        std::raise(SIGFPE);
-    }
-
-    return res;
-};
 
 InterpolationPolynom::InterpolationPolynom(const dots_t &dots)
     : m_dots{dots}
@@ -562,21 +542,7 @@ Y_t PartedCanonicPolynom::operator()(X_t x)
     return m_map[x](x);
 }
 
-CustomPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other)
-{
-    RangeMap<CustomPolynom> result;
-
-    operatorPrivate(other, [&result](map::const_iterator it, map::const_iterator itOther, Range currentRange)
-    {
-        CanonicPolynom f1 = it->second;
-        CanonicPolynom f2 = itOther->second;
-        result.insert(currentRange, f1 / f2);
-    });
-
-    return CustomPolynom([result](X_t x) mutable {return result[x](x);});
-}
-
-PartedCanonicPolynom PartedCanonicPolynom::mustDevide(PartedCanonicPolynom &other) const
+PartedCanonicPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other) const
 {
     map result;
 
@@ -585,13 +551,12 @@ PartedCanonicPolynom PartedCanonicPolynom::mustDevide(PartedCanonicPolynom &othe
         CanonicPolynom f1 = it->second;
         CanonicPolynom f2 = itOther->second;
 
-        auto res = f1.mustDevide(f2);
+        auto res = f1 / f2;
 
         result.insert(currentRange, res);
     });
 
     return PartedCanonicPolynom(result);
-
 }
 
 PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const

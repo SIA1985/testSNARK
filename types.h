@@ -33,7 +33,6 @@ private:
 
     friend witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep);
     friend class GlobalParams;
-    friend class ZeroTestProof;
 
     friend void to_json(json_t& j, const witnesses_t& ws);
     friend void from_json(const snrk::json_t& j, witnesses_t& ws);
