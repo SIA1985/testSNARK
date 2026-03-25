@@ -244,6 +244,8 @@ public:
 
     virtual Y_t operator()(X_t x) override;
 
+    CanonicPolynom operator[](X_t x);
+
     PartedCanonicPolynom operator+(const PartedCanonicPolynom &other) const;
 
     PartedCanonicPolynom operator-(const PartedCanonicPolynom &other) const;

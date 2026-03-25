@@ -542,6 +542,11 @@ Y_t PartedCanonicPolynom::operator()(X_t x)
     return m_map[x](x);
 }
 
+CanonicPolynom PartedCanonicPolynom::operator[](X_t x)
+{
+    return m_map[x];
+}
+
 PartedCanonicPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other) const
 {
     map result;

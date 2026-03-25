@@ -45,11 +45,11 @@ int main(int argc, char *argv[])
     mpf_set_default_prec(128);
     mcl::initPairing(mcl::BLS12_381);
 
-//    auto x1 = snrk::value_t(5);
-//    auto x2 = snrk::value_t(6);
-//    auto w1 = snrk::value_t(1);
+    auto x1 = snrk::value_t(5);
+    auto x2 = snrk::value_t(6);
+    auto w1 = snrk::value_t(1);
 
-//    snrk::Circut c({x1, x2}, {w1});
+    snrk::Circut c({x1, x2}, {w1});
 
 //    for(int i = 0; i < 100; i++) {
 //    auto out1 = snrk::value_t(5);
@@ -66,6 +66,11 @@ int main(int argc, char *argv[])
 //    c.addGate({snrk::Devide, {x1, w1}, out6});
 //    }
 
+    auto out1 = snrk::value_t(11);
+    c.addGate({snrk::Sum, {x1, x2}, out1});
+    auto out2 = snrk::value_t(10);
+    c.addGate({snrk::Minus, {out1, w1}, out2});
+
     snrk::G1 g;
     mcl::mapToG1(g, 1);
     mcl::Fr t = 3;
@@ -79,34 +84,33 @@ int main(int argc, char *argv[])
         GPK.keys.push_back(g);
     }
 
-    snrk::PartedCanonicPolynom::map m1;
-    m1.insert({1, 2}, {{1, 2, 1}});
-    m1.insert({2, 3}, {{3, 2, 1}});
-    snrk::PartedCanonicPolynom p(m1);
-
-    snrk::PartedCanonicPolynom::map m2;
-    m2.insert({1, 2}, {{1, 2, 1}});
-    m2.insert({2, 3}, {{2, 2, 1}});
-    snrk::PartedCanonicPolynom f(m2);
-
-    auto proof = snrk::PlonkProof::forProver(p, p, GPK, snrk::genWitnesses(1, 4, 1), 1);
-
     snrk::G2 g2, tG2;
     mcl::mapToG2(g2, 1);
     snrk::G2::mul(tG2, g2, t);
 
-    if (proof->check(tG2, g2)) {
+    snrk::GlobalParams gp(c, GPK);
+
+    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
+
+    if (proof.check(tG2, g2)) {
         std::cout << "Ok!" << std::endl;
     } else {
         std::cout << "Not ok!" << std::endl;
     }
 
+//    snrk::PartedCanonicPolynom::map m1;
+//    m1.insert({1, 2}, {{1, 2, 1}});
+//    m1.insert({2, 3}, {{3, 2, 1}});
+//    snrk::PartedCanonicPolynom p(m1);
 
-//    snrk::GlobalParams gp(c, GPK);
+//    snrk::PartedCanonicPolynom::map m2;
+//    m2.insert({1, 2}, {{1, 2, 1}});
+//    m2.insert({2, 3}, {{2, 2, 1}});
+//    snrk::PartedCanonicPolynom f(m2);
 
-//    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
+//    auto proof = snrk::PlonkProof::forProver(p, p, GPK, snrk::genWitnesses(1, 4, 1), 1);
 
-//    if (proof.check(tG2, g2)) {
+//    if (proof->check(tG2, g2)) {
 //        std::cout << "Ok!" << std::endl;
 //    } else {
 //        std::cout << "Not ok!" << std::endl;

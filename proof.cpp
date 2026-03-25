@@ -122,8 +122,9 @@ bool PlonkProof::fromJson(const json_t &json)
 ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t output)
 {
     auto TParams = gp.PP().TParams;
-    auto GPK = gp.GPK();
     auto witnesses = gp.witnesses();
+
+    m_GPK = gp.GPK();
 
     //todo: Зачем label в транскрипт?
 
@@ -132,9 +133,14 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 
     //2. Получаем обязательства splittedT и добавляем в T
 
-    m_commitA = TParams.splittedT.left.commit(GPK);
-    m_commitB = TParams.splittedT.right.commit(GPK);
-    m_commitC = TParams.splittedT.result.commit(GPK);
+    auto left = TParams.splittedT.left.toPartedCanonicPolynom();
+    m_commitA = left.commit(m_GPK);
+
+    auto right = TParams.splittedT.right.toPartedCanonicPolynom();
+    m_commitB = right.commit(m_GPK);
+
+    auto result = TParams.splittedT.result.toPartedCanonicPolynom();
+    m_commitC = result.commit(m_GPK);
 
     tr.appendPoint("commitA", m_commitA);
     tr.appendPoint("commitB", m_commitB);
@@ -144,14 +150,14 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     //3. Какой-то полином-аккумулятор, что у меня является W(x) и WT(x)
 
     //4. Деление на Zero-полином (comQ -> T)
-    auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), GPK);
+    auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), m_GPK);
     auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
 //    ptr->m_comF = f.commit(GPK);
 
     auto z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
     auto q = f / z;
 
-    m_commitQ = q.commit(GPK);
+    m_commitQ = q.commit(m_GPK);
     tr.appendPoint("commitQ", m_commitQ);
 
     //5. Получение точки раскрытия из Т
@@ -165,23 +171,25 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 //    auto Rw;
     m_rQ = q(m_r);
 
-//    auto tCanonic = TParams.t.toPartedCanonicPolynom();
-
-    #define r(a) std::ref(a)
-
-//    std::thread th1(&ProverProof::correctGates, this, r(TParams.splittedT), gp.PP().SParams, gp.SWitnesses(), GPK);
-//    std::thread th2(&ProverProof::currentVars, this, gp.PP().WParams.wt, r(tCanonic), r(witnesses), GPK);
-
-    #undef r
-
-//    th1.join();
-//    th2.join();
+    m_commitAQ = getCommitQ(left[m_r], m_r, m_GPK);
+    m_commitBQ = getCommitQ(right[m_r], m_r, m_GPK);
+    m_commitCQ = getCommitQ(result[m_r], m_r, m_GPK);
 }
 
 bool ProverProof::check(G2 tG2, G2 g2)
 {
-//    auto aProof = PlonkProof::forVerifier();
-    return true;
+    auto result = true;
+
+    auto aProof = PlonkProof::forVerifier(m_commitA, m_commitAQ, {m_r, m_rA}, m_GPK);
+    auto bProof = PlonkProof::forVerifier(m_commitB, m_commitBQ, {m_r, m_rB}, m_GPK);
+    auto cProof = PlonkProof::forVerifier(m_commitC, m_commitCQ, {m_r, m_rC}, m_GPK);
+    //tg2, g2 для проверки pi-пруфа
+
+    for(auto &proof : {aProof, bProof, cProof}) {
+        result = result && proof->check(tG2, g2);
+    }
+
+    return result;
 }
 
 json_t ProverProof::toJson() const
@@ -196,6 +204,17 @@ bool ProverProof::fromJson(const json_t &json)
 {
     //todo:
     return false;
+}
+
+commit_t ProverProof::getCommitQ(CanonicPolynom f, X_t toProve, GPK_t GPK) const
+{
+    auto u = toProve;
+    auto v = f(u);
+    auto xSubU = CanonicPolynom({-u, 1});
+
+    auto q = (f - CanonicPolynom({v, 0})) / xSubU;
+
+    return q.commit(GPK);
 }
 
 PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK)
