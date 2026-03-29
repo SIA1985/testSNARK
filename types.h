@@ -89,7 +89,7 @@ typedef mcl::bn::G2 G2;
 typedef mcl::bn::GT GT;
 typedef G1 commit_t;
 typedef std::vector<G1> keys_t;
-struct GPK_t {keys_t keys; G1 g;};
+struct GPK_t {keys_t keys; G1 g1;};
 void to_json(json_t& j, const GPK_t& gpk);
 void from_json(const snrk::json_t& j, GPK_t& gpk);
 

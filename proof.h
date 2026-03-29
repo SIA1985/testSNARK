@@ -74,13 +74,12 @@ protected:
     virtual bool fromJson(const json_t &json) override;
 
 private:
-    commit_t getCommitQ(CanonicPolynom f, X_t toProve, GPK_t GPK) const;
     //Подготовка увеличивается согласно О(n^2)
     PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
 
-    commit_t m_commitA, m_commitAQ, m_commitB, m_commitBQ, m_commitC, m_commitCQ, m_commitW, m_commitWQ, m_commitQ;
+    commit_t m_commitA, m_commitB, m_commitC, m_commitW, m_commitQ;
+    commit_t m_pi;
     Y_t m_rA, m_rB, m_rC, m_rW, m_rQ;
-    X_t m_r;
     GPK_t m_GPK;
 };
 

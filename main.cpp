@@ -73,20 +73,24 @@ int main(int argc, char *argv[])
 
     snrk::G1 g;
     mcl::mapToG1(g, 1);
-    mcl::Fr t = 3;
-    snrk::GPK_t GPK;
-    GPK.g = g;
-    GPK.keys.push_back(g);
 
-    //todo: mulvec
-    for (int i = 0; i < 10; i++) {
-        snrk::G1::mul(g, g, t);
-        GPK.keys.push_back(g);
+    mcl::Fr t = 3;        // todo: в реальности должен быть случайным
+
+    snrk::GPK_t GPK;
+    GPK.g1 = g;
+
+    snrk::G1 current_power = g;
+    GPK.keys.push_back(current_power);
+
+    for (int i = 1; i <= 10; i++) {
+        snrk::G1::mul(current_power, current_power, t);
+        GPK.keys.push_back(current_power);
     }
 
     snrk::G2 g2, tG2;
     mcl::mapToG2(g2, 1);
     snrk::G2::mul(tG2, g2, t);
+
 
     snrk::GlobalParams gp(c, GPK);
 
@@ -123,12 +127,13 @@ int main(int argc, char *argv[])
  * (Тут дело в если точек меньше, чем Partition(=4), то раз на входе 3 точки -> полином(^2)/полином(^3))
  *
  * 1. Доразобраться с gp
- * 2. Commit для фукнции с 1м сплайном
- * 3. Сделать схему PLONK
- * 4. Агрегация коммитов
- * 5. Адаптация под PLONK (нет плавающей точки)
- * 6. Общий пруф, где исключены повторения обязательств и тп
- * 7. А мб. свидетели зашиты в диапазоны?
+ * 2. Сделать схему PLONK
+ * 3. Агрегация коммитов
+ * 4. Адаптация под PLONK (нет плавающей точки)
+ * 5. Общий пруф, где исключены повторения обязательств и тп
+ * 6. А мб. свидетели зашиты в диапазоны?
+ * 7. Проверить, действительно ли работает криптография?
+ * 8. Оптимизация: если таблица разбивается на полиномы степеней больше 3, то разбивать (но на кратное 3)!
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson

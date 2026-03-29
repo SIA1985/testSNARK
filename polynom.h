@@ -59,7 +59,11 @@ public:
 
     CanonicPolynom operator+(const CanonicPolynom &other) const;
 
+    CanonicPolynom operator+(const value_t value) const;
+
     CanonicPolynom operator-(const CanonicPolynom &other) const;
+
+    CanonicPolynom operator-(const value_t value) const;
 
     CanonicPolynom operator*(const CanonicPolynom &other) const;
 
@@ -67,7 +71,11 @@ public:
 
     void operator+=(const CanonicPolynom &other);
 
+    void operator+=(const value_t value);
+
     void operator*=(const CanonicPolynom &other);
+
+    void operator*=(const value_t value);
 
     CanonicPolynom operator()(const CanonicPolynom &other) const;
 
@@ -134,6 +142,7 @@ class RangeMap
 {
 public:
     using const_iterator = typename std::map<Range, T>::const_iterator;
+    using iterator = typename std::map<Range, T>::iterator;
 
     RangeMap() = default;
 
@@ -203,6 +212,16 @@ public:
         return m_map.cend();
     }
 
+    iterator begin()
+    {
+        return m_map.begin();
+    }
+
+    iterator end()
+    {
+        return m_map.end();
+    }
+
     std::size_t size() const
     {
         return m_map.size();
@@ -233,7 +252,7 @@ private:
 class PartedCanonicPolynom : public Polynom
 {
 public:
-    using map = RangeMap<CanonicPolynom>;
+    using map_t = RangeMap<CanonicPolynom>;
 
 
     PartedCanonicPolynom() = default;
@@ -248,11 +267,19 @@ public:
 
     PartedCanonicPolynom operator+(const PartedCanonicPolynom &other) const;
 
+    PartedCanonicPolynom operator+(const value_t value) const;
+
     PartedCanonicPolynom operator-(const PartedCanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator-(const value_t value) const;
 
     PartedCanonicPolynom operator*(const PartedCanonicPolynom &other) const;
 
+    PartedCanonicPolynom operator*(const value_t value) const;
+
     PartedCanonicPolynom operator/(PartedCanonicPolynom &other) const;
+
+    PartedCanonicPolynom operator/(CanonicPolynom &other) const;
 
     void operator+=(const PartedCanonicPolynom &other);
 
@@ -272,7 +299,7 @@ protected:
                                               Range currentRange)>;
     void operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const;
 
-     map m_map;
+     map_t m_map;
 };
 
 class InterpolationPolynom : public Polynom

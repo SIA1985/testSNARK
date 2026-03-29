@@ -98,7 +98,7 @@ bool PlonkProof::check(G2 tG2, G2 g2)
     mcl::pairing(e1, m_comQ, forE1);
 
     G1 yG, forE2;
-    G1::mul(yG, m_GPK.g, m_toProve.y);
+    G1::mul(yG, m_GPK.g1, m_toProve.y);
     G1::sub(forE2, m_comF, yG);
 
     GT e2;
@@ -146,13 +146,11 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     tr.appendPoint("commitB", m_commitB);
     tr.appendPoint("commitC", m_commitC);
 
-
     //3. Какой-то полином-аккумулятор, что у меня является W(x) и WT(x)
 
     //4. Деление на Zero-полином (comQ -> T)
     auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), m_GPK);
     auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
-//    ptr->m_comF = f.commit(GPK);
 
     auto z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
     auto q = f / z;
@@ -161,35 +159,75 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     tr.appendPoint("commitQ", m_commitQ);
 
     //5. Получение точки раскрытия из Т
-    m_r = tr("r");
+    auto r = tr("r");
 
-    //6. Получение значений всех полиномов выше (a, b, c, w, q) (для последующей проверки в SubstitutionProof,
+    //Получение значений всех полиномов выше (a, b, c, w, q) (для последующей проверки в SubstitutionProof,
     //   точнее он будет фигурировать в проверке в "разобранном" виде)
-    m_rA = TParams.splittedT.left(m_r);
-    m_rB = TParams.splittedT.right(m_r);
-    m_rC = TParams.splittedT.result(m_r);
+    m_rA = left(r);
+    m_rB = right(r);
+    m_rC = result(r);
 //    auto Rw;
-    m_rQ = q(m_r);
+    m_rQ = q(r);
 
-    m_commitAQ = getCommitQ(left[m_r], m_r, m_GPK);
-    m_commitBQ = getCommitQ(right[m_r], m_r, m_GPK);
-    m_commitCQ = getCommitQ(result[m_r], m_r, m_GPK);
+    tr.appendScalar("rA", m_rA);
+    tr.appendScalar("rB", m_rB);
+    tr.appendScalar("rC", m_rC);
+    //    auto Rw;
+    tr.appendScalar("rQ", m_rQ);
+
+    //6. Получения доказательства pi
+    auto v = tr("v");
+
+    PartedCanonicPolynom F;
+    value_t currentV = 1;
+    for(auto &poly : {(left - m_rA), (right - m_rB), (result - m_rC), (q - m_rQ)}) {
+        F += poly * currentV;
+        currentV *= v;
+    }
+
+    auto Z = CanonicPolynom({-r, 1});
+    auto Q = F / Z;
+
+    m_pi = Q.commit(m_GPK);
 }
 
 bool ProverProof::check(G2 tG2, G2 g2)
 {
-    auto result = true;
+    //Инициализация Транскрипта todo: (мб публичный ключ)
+    Transcript tr("test");
 
-    auto aProof = PlonkProof::forVerifier(m_commitA, m_commitAQ, {m_r, m_rA}, m_GPK);
-    auto bProof = PlonkProof::forVerifier(m_commitB, m_commitBQ, {m_r, m_rB}, m_GPK);
-    auto cProof = PlonkProof::forVerifier(m_commitC, m_commitCQ, {m_r, m_rC}, m_GPK);
-    //tg2, g2 для проверки pi-пруфа
+    tr.appendPoint("commitA", m_commitA);
+    tr.appendPoint("commitB", m_commitB);
+    tr.appendPoint("commitC", m_commitC);
 
-    for(auto &proof : {aProof, bProof, cProof}) {
-        result = result && proof->check(tG2, g2);
+    tr.appendPoint("commitQ", m_commitQ);
+
+    auto r = tr("r");
+
+    tr.appendScalar("rA", m_rA);
+    tr.appendScalar("rB", m_rB);
+    tr.appendScalar("rC", m_rC);
+    //    auto Rw;
+    tr.appendScalar("rQ", m_rQ);
+
+    auto v = tr("v");
+
+    commit_t W;
+    W.clear();
+    value_t currentV = 1;
+    for(auto &comm : {(m_commitA - m_GPK.keys[0] * m_rA), (m_commitB - m_GPK.keys[0] * m_rB),
+                      (m_commitC - m_GPK.keys[0] * m_rC), (m_commitQ - m_GPK.keys[0] * m_rQ)}) {
+        commit_t temp;
+        commit_t::mul(temp, comm, currentV);
+        commit_t::add(W, W, temp);
+        currentV *= v;
     }
 
-    return result;
+    GT e1, e2;
+    mcl::pairing(e1, m_pi, tG2 - g2 * r);
+    mcl::pairing(e2, W, g2);
+
+    return e1 == e2;
 }
 
 json_t ProverProof::toJson() const
@@ -206,23 +244,12 @@ bool ProverProof::fromJson(const json_t &json)
     return false;
 }
 
-commit_t ProverProof::getCommitQ(CanonicPolynom f, X_t toProve, GPK_t GPK) const
-{
-    auto u = toProve;
-    auto v = f(u);
-    auto xSubU = CanonicPolynom({-u, 1});
-
-    auto q = (f - CanonicPolynom({v, 0})) / xSubU;
-
-    return q.commit(GPK);
-}
-
 PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK)
 {
     const auto &left = t.left.toPartedCanonicPolynom();
     const auto &right = t.right.toPartedCanonicPolynom();
 
-    auto funcF = PartedCanonicPolynom(PartedCanonicPolynom::map{});
+    auto funcF = PartedCanonicPolynom(PartedCanonicPolynom::map_t{});
     for(const auto &[operation, dots] : SParams.opsFromS) {
 
         auto isOperation = InterpolationPolynom(dots).toPartedCanonicPolynom();
