@@ -871,31 +871,6 @@ Range PartedCanonicPolynom::atRange(X_t x) const
     return founded->first;
 }
 
-commit_t PartedCanonicPolynom::commit(GPK_t &gpk) const
-{
-    value_t r;
-    std::string data;
-    std::vector<commit_t> commits;
-
-    for (auto b = m_map.cbegin(); b != m_map.cend(); b++) {
-        auto com = b->second.commit(gpk);
-        commits.push_back(com);
-        data += com.getStr(16);
-    }
-    r.setHashOf(data);
-
-    values_t powers(commits.size());
-    powers[0] = 1;
-    for (size_t i = 1; i < commits.size(); ++i) {
-        powers[i] = powers[i - 1] * r;
-    }
-
-    commit_t cTotal;
-    G1::mulVec(cTotal, commits.data(), powers.data(), commits.size());
-
-    return cTotal;
-}
-
 const int PartedCanonicPolynom::Partition = 3;
 
 }

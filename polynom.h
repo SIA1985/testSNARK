@@ -289,8 +289,6 @@ public:
 
     Range atRange(X_t x) const;
 
-    virtual commit_t commit(GPK_t &gpk) const override;
-
     const static int Partition;
 
 protected:

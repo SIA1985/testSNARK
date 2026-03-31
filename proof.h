@@ -77,9 +77,16 @@ private:
     //Подготовка увеличивается согласно О(n^2)
     PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
 
-    commit_t m_commitA, m_commitB, m_commitC, m_commitW, m_commitQ;
+    commit_t m_commitAr, m_commitBr, m_commitCr, m_commitWr, m_commitQr;
     commit_t m_pi;
-    Y_t m_rA, m_rB, m_rC, m_rW, m_rQ;
+
+    Y_t m_rA, m_rB, m_rC, m_rW, m_rWNext, m_rQ;
+
+    MerkleLeaf m_MerkleRoot;
+    std::vector<MerkleLeaf> m_MerklePath;
+
+    //todo: по идее не нужен здесь, ибо глобальные параметры
+    //мб добавить g2 тоже в GPK?
     GPK_t m_GPK;
 };
 

@@ -115,6 +115,8 @@ protected:
 };
 void to_json(json_t& j, const Jsonable& jsonable);
 void from_json(const snrk::json_t& j, Jsonable& jsonable);
+
+typedef std::string MerkleLeaf;
 }
 
 #endif // TYPES_H

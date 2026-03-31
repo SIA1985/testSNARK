@@ -127,24 +127,35 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     m_GPK = gp.GPK();
 
     //todo: Зачем label в транскрипт?
-
-    //1. Инициализация Транскрипта todo: (мб публичный ключ)
+    //Инициализация Транскрипта todo: (мб публичный ключ)
     Transcript tr("test");
 
-    //2. Получаем обязательства splittedT и добавляем в T
+    /*
+   //1. Листья дерева (5 коммитментов в одном хеше) ---
+    size_t numSegments = splA.size();
+    std::vector<std::string> leafHashes;
+    for(size_t i = 0; i < numSegments; ++i) {
+        std::string data = splA.getCommit(i).getStr() + splB.getCommit(i).getStr() +
+                           splC.getCommit(i).getStr() + splQ.getCommit(i).getStr() +
+                           splZ.getCommit(i).getStr(); // Добавили Z
+        leafHashes.push_back(sha256(data));
+    }
 
-    auto left = TParams.splittedT.left.toPartedCanonicPolynom();
-    m_commitA = left.commit(m_GPK);
+    MerkleTree tree(leafHashes);
+    m_merkleRoot = tree.getRoot();
+    tr.appendString("merkleRoot", m_merkleRoot);
+    */
 
-    auto right = TParams.splittedT.right.toPartedCanonicPolynom();
-    m_commitB = right.commit(m_GPK);
+    //2. Получение точки раскрытия из Т
+    auto r = tr("r");
 
-    auto result = TParams.splittedT.result.toPartedCanonicPolynom();
-    m_commitC = result.commit(m_GPK);
+    auto A = TParams.splittedT.left.toPartedCanonicPolynom();
+    auto B = TParams.splittedT.right.toPartedCanonicPolynom();
+    auto C = TParams.splittedT.result.toPartedCanonicPolynom();
 
-    tr.appendPoint("commitA", m_commitA);
-    tr.appendPoint("commitB", m_commitB);
-    tr.appendPoint("commitC", m_commitC);
+    m_commitAr = A[r].commit(m_GPK);
+    m_commitBr = B[r].commit(m_GPK);
+    m_commitCr = C[r].commit(m_GPK);
 
     //3. Какой-то полином-аккумулятор, что у меня является W(x) и WT(x)
 
@@ -155,17 +166,13 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
     auto q = f / z;
 
-    m_commitQ = q.commit(m_GPK);
-    tr.appendPoint("commitQ", m_commitQ);
+    m_commitQr = q[r].commit(m_GPK);
 
-    //5. Получение точки раскрытия из Т
-    auto r = tr("r");
+//    m_merklePath = tree.getProof(m_segmentIndex);
 
-    //Получение значений всех полиномов выше (a, b, c, w, q) (для последующей проверки в SubstitutionProof,
-    //   точнее он будет фигурировать в проверке в "разобранном" виде)
-    m_rA = left(r);
-    m_rB = right(r);
-    m_rC = result(r);
+    m_rA = A(r);
+    m_rB = B(r);
+    m_rC = C(r);
 //    auto Rw;
     m_rQ = q(r);
 
@@ -178,9 +185,10 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     //6. Получения доказательства pi
     auto v = tr("v");
 
-    PartedCanonicPolynom F;
+    CanonicPolynom F;
     value_t currentV = 1;
-    for(auto &poly : {(left - m_rA), (right - m_rB), (result - m_rC), (q - m_rQ)}) {
+    //todo: commW
+    for(auto &poly : {(A[r] - m_rA), (B[r] - m_rB), (C[r] - m_rC), (q[r] - m_rQ)}) {
         F += poly * currentV;
         currentV *= v;
     }
@@ -196,13 +204,12 @@ bool ProverProof::check(G2 tG2, G2 g2)
     //Инициализация Транскрипта todo: (мб публичный ключ)
     Transcript tr("test");
 
-    tr.appendPoint("commitA", m_commitA);
-    tr.appendPoint("commitB", m_commitB);
-    tr.appendPoint("commitC", m_commitC);
-
-    tr.appendPoint("commitQ", m_commitQ);
-
+//    tr.appendString("merkleRoot", m_merkleRoot);
     auto r = tr("r");
+
+    //Проверка пути Меркла
+//    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
+//    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
 
     tr.appendScalar("rA", m_rA);
     tr.appendScalar("rB", m_rB);
@@ -215,8 +222,9 @@ bool ProverProof::check(G2 tG2, G2 g2)
     commit_t W;
     W.clear();
     value_t currentV = 1;
-    for(auto &comm : {(m_commitA - m_GPK.keys[0] * m_rA), (m_commitB - m_GPK.keys[0] * m_rB),
-                      (m_commitC - m_GPK.keys[0] * m_rC), (m_commitQ - m_GPK.keys[0] * m_rQ)}) {
+    //todo: commW
+    for(auto &comm : {(m_commitAr - m_GPK.keys[0] * m_rA), (m_commitBr - m_GPK.keys[0] * m_rB),
+                      (m_commitCr - m_GPK.keys[0] * m_rC), (m_commitQr - m_GPK.keys[0] * m_rQ)}) {
         commit_t temp;
         commit_t::mul(temp, comm, currentV);
         commit_t::add(W, W, temp);
