@@ -5,7 +5,6 @@
 #include <iomanip>
 #include <cmath>
 #include <csignal>
-#include "crypto.h"
 
 
 void sigFpeHandler(int signum) {

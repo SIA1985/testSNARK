@@ -174,6 +174,30 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 
 //    m_merklePath = tree.getProof(m_segmentIndex);
 
+    /*// 1. Готовим массив точек {x, y} для Z(x)
+std::vector<std::pair<value_t, value_t>> z_points;
+value_t current_z = 1;
+z_points.push_back({0, current_z}); // Z(0) = 1
+
+size_t n = splA.numNodes();
+for (size_t i = 0; i < n; ++i) {
+    // Получаем значения из всех трех полиномов в узлах
+    value_t valA = splA.getNodeValue(i);
+    value_t id   = splWT.getNodeValue(i);    // Исходный индекс (m_WT)
+    value_t sig  = splW.getNodeValue(i);     // Переставленный индекс (m_W)
+
+    // Формула: Z_{i+1} = Z_i * (val + beta*id + gamma) / (val + beta*sig + gamma)
+    value_t num = valA + (beta * id) + gamma;
+    value_t den = valA + (beta * sig) + gamma;
+
+    current_z *= (num / den);
+    z_points.push_back({(value_t)(i + 1), current_z});
+}
+
+// 2. Создаем сплайн Z и его коммитмент
+auto splZ = Spline::fromValues(z_points);
+m_commitZ = splZ.getGlobalCommit();*/
+
     m_rA = A(r);
     m_rB = B(r);
     m_rC = C(r);
@@ -220,6 +244,13 @@ bool ProverProof::check(G2 tG2, G2 g2)
     tr.appendScalar("rC", m_rC);
     //    auto Rw;
     tr.appendScalar("rQ", m_rQ);
+    //todo: другие скаляры
+
+    /*    // Проверка уравнения связи Z (Grand Product)
+    value_t left_side = m_rZ_next * (m_rA + beta * m_rW + gamma);
+    value_t right_side = m_rZ * (m_rA + beta * m_rWT + gamma);
+
+    if (left_side != right_side) return false; // Ошибка перестановки!*/
 
     auto v = tr("v");
 
