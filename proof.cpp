@@ -134,10 +134,14 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
    //1. Листья дерева (5 коммитментов в одном хеше) ---
     size_t numSegments = splA.size();
     std::vector<std::string> leafHashes;
+
     for(size_t i = 0; i < numSegments; ++i) {
-        std::string data = splA.getCommit(i).getStr() + splB.getCommit(i).getStr() +
-                           splC.getCommit(i).getStr() + splQ.getCommit(i).getStr() +
-                           splZ.getCommit(i).getStr(); // Добавили Z
+        // Конкатенируем 7 точек в одну строку для хеширования
+        std::string data = splA.getCommit(i).getStr()  + splB.getCommit(i).getStr()  +
+                           splC.getCommit(i).getStr()  + splQ.getCommit(i).getStr()  +
+                           splZ.getCommit(i).getStr()  + splW.getCommit(i).getStr()  +
+                           splWT.getCommit(i).getStr();
+
         leafHashes.push_back(sha256(data));
     }
 

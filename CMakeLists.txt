@@ -19,7 +19,6 @@ set(PROJECT_SOURCES
     proof.h proof.cpp
     operation.h operation.cpp
     types.h types.cpp
-    crypto.h crypto.cpp
     main.cpp
 )
 
