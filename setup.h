@@ -27,7 +27,7 @@ public:
     using opsFromS_t = std::unordered_map<GateType_t, dots_t>;
     using TParams_t = struct{T_t t; SplittedT_t splittedT;};
     using SParams_t = struct{S_t s; opsFromS_t opsFromS;};
-    using WParams_t = struct{W_t w; WT_t wt;};
+    using WParams_t = struct{W_t wt; WT_t wi;};
     using WtoValue_t = std::unordered_map<witness_t, value_t>;
 
     using cond_t = std::unordered_set<witness_t>;
@@ -43,6 +43,8 @@ public:
     GPK_t GPK() const;
 
     ProverParams_t PP() const;
+
+    std::size_t circutSize() const;
 
 private:
     WtoValue_t generateT(const Circut &circut);
@@ -62,8 +64,10 @@ private:
     S_t m_S;
     opsFromS_t m_opsFromS;
 
-    W_t m_W;
-    WT_t m_WT;
+    W_t m_WT;
+    WT_t m_WI;
+
+    std::size_t m_circutSize;
 };
 
 }

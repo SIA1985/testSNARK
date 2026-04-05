@@ -168,46 +168,56 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
 
     auto z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
-    auto q = f / z;
+    auto Q = f / z;
 
-    m_commitQr = q[r].commit(m_GPK);
+    m_commitQr = Q[r].commit(m_GPK);
 
 //    m_merklePath = tree.getProof(m_segmentIndex);
+    //todo: фиксация в транскрипте корня Меркла?
 
-    /*// 1. Готовим массив точек {x, y} для Z(x)
-std::vector<std::pair<value_t, value_t>> z_points;
-value_t current_z = 1;
-z_points.push_back({0, current_z}); // Z(0) = 1
+    auto beta = tr("beta");
+    auto gamma = tr("gamma");
 
-size_t n = splA.numNodes();
-for (size_t i = 0; i < n; ++i) {
-    // Получаем значения из всех трех полиномов в узлах
-    value_t valA = splA.getNodeValue(i);
-    value_t id   = splWT.getNodeValue(i);    // Исходный индекс (m_WT)
-    value_t sig  = splW.getNodeValue(i);     // Переставленный индекс (m_W)
+    auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
+    auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
 
-    // Формула: Z_{i+1} = Z_i * (val + beta*id + gamma) / (val + beta*sig + gamma)
-    value_t num = valA + (beta * id) + gamma;
-    value_t den = valA + (beta * sig) + gamma;
+    dots_t WDots;
+    Y_t currentW = 1;
+    WDots.push_back({0, currentW}); // W(0) = 1
 
-    current_z *= (num / den);
-    z_points.push_back({(value_t)(i + 1), current_z});
-}
+    size_t n = gp.circutSize();//количество строк таблицы
+    for (size_t i = 0; i < n; ++i) {
+        // Получаем значения из всех трех полиномов в узлах
+        value_t valA = A(i);
+        value_t id   = WI(i);    // Исходный индекс (m_WI)
+        value_t sig  = WT(i);     // Переставленный индекс (m_WT)
 
-// 2. Создаем сплайн Z и его коммитмент
-auto splZ = Spline::fromValues(z_points);
-m_commitZ = splZ.getGlobalCommit();*/
+        // Формула: Z_{i+1} = Z_i * (val + beta*id + gamma) / (val + beta*sig + gamma)
+        value_t num = valA + (beta * id) + gamma;
+        value_t den = valA + (beta * sig) + gamma;
+
+        currentW *= (num / den);
+        WDots.push_back({(value_t)(i + 1), currentW});
+    }
+
+    auto W = InterpolationPolynom(WDots).toPartedCanonicPolynom();
+    m_commitWr = W[r].commit(m_GPK);
 
     m_rA = A(r);
     m_rB = B(r);
     m_rC = C(r);
-//    auto Rw;
-    m_rQ = q(r);
+    m_rW = W(r);
+    m_rWNext = W(r + 1);
+    m_rQ = Q(r);
+
+    m_rWT = WT(r);
+    m_rWI = WI(r);
 
     tr.appendScalar("rA", m_rA);
     tr.appendScalar("rB", m_rB);
     tr.appendScalar("rC", m_rC);
-    //    auto Rw;
+    tr.appendScalar("rW", m_rW);
+    tr.appendScalar("rWNext", m_rWNext);
     tr.appendScalar("rQ", m_rQ);
 
     //6. Получения доказательства pi
@@ -215,16 +225,16 @@ m_commitZ = splZ.getGlobalCommit();*/
 
     CanonicPolynom F;
     value_t currentV = 1;
-    //todo: commW
-    for(auto &poly : {(A[r] - m_rA), (B[r] - m_rB), (C[r] - m_rC), (q[r] - m_rQ)}) {
+    for(auto &poly : {(A[r] - m_rA), (B[r] - m_rB), (C[r] - m_rC),
+                      (W[r] - m_rW), (Q[r] - m_rQ)}) {
         F += poly * currentV;
         currentV *= v;
     }
+    F += (W[r] - m_rWNext) * currentV;
+    F = F - F(r); //todo: operator -=
 
     auto Z = CanonicPolynom({-r, 1});
-    auto Q = F / Z;
-
-    m_pi = Q.commit(m_GPK);
+    m_pi = (F / Z).commit(m_GPK);
 }
 
 bool ProverProof::check(G2 tG2, G2 g2)
@@ -239,32 +249,39 @@ bool ProverProof::check(G2 tG2, G2 g2)
 //    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
 //    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
 
+    // Проверка уравнения связи W (Grand Product)
+    auto beta = tr("beta");
+    auto gamma = tr("gamma");
+
+    value_t left = m_rWNext * (m_rA + beta * m_rWI + gamma);
+    value_t right = m_rW * (m_rA + beta * m_rWT + gamma);
+
+    if (left != right) {
+        std::cout << left << " " << right << std::endl;
+        return false;
+    }
+
     tr.appendScalar("rA", m_rA);
     tr.appendScalar("rB", m_rB);
     tr.appendScalar("rC", m_rC);
-    //    auto Rw;
+    tr.appendScalar("rW", m_rW);
+    tr.appendScalar("rWNext", m_rWNext);
     tr.appendScalar("rQ", m_rQ);
-    //todo: другие скаляры
-
-    /*    // Проверка уравнения связи Z (Grand Product)
-    value_t left_side = m_rZ_next * (m_rA + beta * m_rW + gamma);
-    value_t right_side = m_rZ * (m_rA + beta * m_rWT + gamma);
-
-    if (left_side != right_side) return false; // Ошибка перестановки!*/
 
     auto v = tr("v");
 
     commit_t W;
     W.clear();
     value_t currentV = 1;
-    //todo: commW
     for(auto &comm : {(m_commitAr - m_GPK.keys[0] * m_rA), (m_commitBr - m_GPK.keys[0] * m_rB),
-                      (m_commitCr - m_GPK.keys[0] * m_rC), (m_commitQr - m_GPK.keys[0] * m_rQ)}) {
+                      (m_commitCr - m_GPK.keys[0] * m_rC), (m_commitWr - m_GPK.keys[0] * m_rW),
+                      (m_commitQr - m_GPK.keys[0] * m_rQ)}) {
         commit_t temp;
         commit_t::mul(temp, comm, currentV);
         commit_t::add(W, W, temp);
         currentV *= v;
     }
+    //todo: + m_rWNext
 
     GT e1, e2;
     mcl::pairing(e1, m_pi, tG2 - g2 * r);

@@ -21,6 +21,7 @@ witnesses_t genWitnesses(witness_t start, std::size_t count, witness_t wStep)
 
 GlobalParams::GlobalParams(const Circut &circut, const GPK_t &GPK)
     : m_GPK{GPK}
+    , m_circutSize{circut.size()}
 {
     m_witnesses = genWitnesses(wStart, circut.degree(), wStep);
 
@@ -49,7 +50,12 @@ GPK_t GlobalParams::GPK() const
 
 GlobalParams::ProverParams_t GlobalParams::PP() const
 {
-    return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .WParams = {m_W, m_WT}};
+    return {.TParams = {m_T, m_splittedT}, .SParams = {m_S, m_opsFromS}, .WParams = {m_WT, m_WI}};
+}
+
+std::size_t GlobalParams::circutSize() const
+{
+    return m_circutSize;
 }
 
 GlobalParams::WtoValue_t GlobalParams::generateT(const Circut &circut)
@@ -164,9 +170,9 @@ void GlobalParams::generateW(const Circut &circut, WtoValue_t mappedT)
         return it;
     };
 
-    dots_t dots;
+    dots_t dotsWI;
     dots_t dotsWT;
-    dots.reserve(duplicates.size());
+    dotsWI.reserve(duplicates.size());
     dotsWT.reserve(duplicates.size());
 
     for(const auto &[_, condition] : duplicates) {
@@ -175,11 +181,11 @@ void GlobalParams::generateW(const Circut &circut, WtoValue_t mappedT)
 
         for(auto it = begin; it != end;) {
             dotsWT.push_back({*it, mappedT[*it]});
-            dots.push_back({*it, *circleIterator(begin, ++it, end)});
+            dotsWI.push_back({*it, *circleIterator(begin, ++it, end)});
         }
     }
 
-    m_W = W_t(dots);
+    m_WI = W_t(dotsWI);
     m_WT = WT_t(dotsWT);
 
 }

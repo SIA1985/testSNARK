@@ -81,6 +81,7 @@ private:
     commit_t m_pi;
 
     Y_t m_rA, m_rB, m_rC, m_rW, m_rWNext, m_rQ;
+    Y_t m_rWT, m_rWI;
 
     MerkleLeaf m_MerkleRoot;
     std::vector<MerkleLeaf> m_MerklePath;
