@@ -77,6 +77,8 @@ public:
 
     void operator*=(const value_t value);
 
+    void operator-=(const value_t value);
+
     CanonicPolynom operator()(const CanonicPolynom &other) const;
 
     value_t &operator[](std::size_t i);

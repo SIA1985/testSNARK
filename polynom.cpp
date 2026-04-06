@@ -210,6 +210,13 @@ void CanonicPolynom::operator*=(const CanonicPolynom &other)
     m_coefs = (*this * other).m_coefs;
 }
 
+void CanonicPolynom::operator-=(const value_t value)
+{
+    assert(m_coefs.size() > 0);
+
+    m_coefs[0] -= value;
+}
+
 void CanonicPolynom::operator*=(const value_t value)
 {
     for(std::size_t i = 0; i < m_coefs.size(); i++) {

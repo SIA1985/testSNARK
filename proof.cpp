@@ -161,54 +161,70 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     m_commitBr = B[r].commit(m_GPK);
     m_commitCr = C[r].commit(m_GPK);
 
-    //3. Какой-то полином-аккумулятор, что у меня является W(x) и WT(x)
-
-    //4. Деление на Zero-полином (comQ -> T)
+    //3. Деление на Zero-полином (comQ -> T)
     auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), m_GPK);
     auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
 
-    auto z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
-    auto Q = f / z;
+    auto Z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
+    auto QG = f / Z;
 
-    m_commitQr = Q[r].commit(m_GPK);
+    m_commitZr = Z[r].commit(m_GPK);
+    m_commitQGr = QG[r].commit(m_GPK);
 
 //    m_merklePath = tree.getProof(m_segmentIndex);
     //todo: фиксация в транскрипте корня Меркла?
+    //todo: если r и r_next в разных сплайнах, то нужно их всех в Меркла
 
+
+    //4. Полином-аккумулятор, для проверки перестановки
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
 
-    dots_t WDots;
+    dots_t WDots, WDotsShift1, NumDots, DenDots;
     Y_t currentW = 1;
+    size_t n = gp.circutSize();
+
     WDots.push_back({0, currentW}); // W(0) = 1
-
-    size_t n = gp.circutSize();//количество строк таблицы
     for (size_t i = 0; i < n; ++i) {
-        // Получаем значения из всех трех полиномов в узлах
         value_t valA = A(i);
-        value_t id   = WI(i);    // Исходный индекс (m_WI)
-        value_t sig  = WT(i);     // Переставленный индекс (m_WT)
+        value_t id   = WI(i);
+        value_t sig  = WT(i);
 
-        // Формула: Z_{i+1} = Z_i * (val + beta*id + gamma) / (val + beta*sig + gamma)
         value_t num = valA + (beta * id) + gamma;
         value_t den = valA + (beta * sig) + gamma;
 
         currentW *= (num / den);
-        WDots.push_back({(value_t)(i + 1), currentW});
-    }
 
+        WDots.push_back({(value_t)(i + 1), currentW});
+        WDotsShift1.push_back({(value_t)(i), currentW});
+        NumDots.push_back({});
+        DenDots.push_back({});
+    }
+    WDotsShift1.push_back({(value_t)(n), 1});
+
+    auto num = A + (WI * beta) + gamma;
+    auto den = A + (WT * beta) + gamma;
+
+    auto WShift1 = InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom();
     auto W = InterpolationPolynom(WDots).toPartedCanonicPolynom();
     m_commitWr = W[r].commit(m_GPK);
+    std::cout << WI.distance() << " " << WT.distance() << std::endl;
+
+    auto Err = (WShift1 * num) - (W * den);
+    auto QP = Err / Z;
+    m_commitQPr = QP[r].commit(m_GPK);
 
     m_rA = A(r);
     m_rB = B(r);
     m_rC = C(r);
     m_rW = W(r);
     m_rWNext = W(r + 1);
-    m_rQ = Q(r);
+    m_rZ = Z(r);
+    m_rQG = QG(r);
+    m_rQP = QP(r);
 
     m_rWT = WT(r);
     m_rWI = WI(r);
@@ -218,23 +234,26 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     tr.appendScalar("rC", m_rC);
     tr.appendScalar("rW", m_rW);
     tr.appendScalar("rWNext", m_rWNext);
-    tr.appendScalar("rQ", m_rQ);
+    tr.appendScalar("rZ", m_rZ);
+    tr.appendScalar("rQG", m_rQG);
+    tr.appendScalar("rQP", m_rQP);
 
-    //6. Получения доказательства pi
+    //5. Получения доказательства pi
     auto v = tr("v");
 
     CanonicPolynom F;
     value_t currentV = 1;
     for(auto &poly : {(A[r] - m_rA), (B[r] - m_rB), (C[r] - m_rC),
-                      (W[r] - m_rW), (Q[r] - m_rQ)}) {
+                      (W[r] - m_rW), (Z[r] - m_rZ), (QG[r] - m_rQG),
+                      (QP[r] - m_rQP)}) {
         F += poly * currentV;
         currentV *= v;
     }
     F += (W[r] - m_rWNext) * currentV;
-    F = F - F(r); //todo: operator -=
+    F -= F(r);
 
-    auto Z = CanonicPolynom({-r, 1});
-    m_pi = (F / Z).commit(m_GPK);
+    auto z = CanonicPolynom({-r, 1});
+    m_pi = (F / z).commit(m_GPK);
 }
 
 bool ProverProof::check(G2 tG2, G2 g2)
@@ -249,15 +268,17 @@ bool ProverProof::check(G2 tG2, G2 g2)
 //    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
 //    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
 
-    // Проверка уравнения связи W (Grand Product)
+    // Проверка уравнения связи W
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
     value_t left = m_rWNext * (m_rA + beta * m_rWI + gamma);
     value_t right = m_rW * (m_rA + beta * m_rWT + gamma);
 
-    if (left != right) {
-        std::cout << left << " " << right << std::endl;
+    if (left - right != m_rQP * m_rZ) {
+        std::cout << left - right << std::endl;
+        std::cout << m_rZ << std::endl;
+        std::cout << m_rQP << std::endl;
         return false;
     }
 
@@ -266,26 +287,30 @@ bool ProverProof::check(G2 tG2, G2 g2)
     tr.appendScalar("rC", m_rC);
     tr.appendScalar("rW", m_rW);
     tr.appendScalar("rWNext", m_rWNext);
-    tr.appendScalar("rQ", m_rQ);
+    tr.appendScalar("rZ", m_rZ);
+    tr.appendScalar("rQG", m_rQG);
+    tr.appendScalar("rQP", m_rQP);
 
     auto v = tr("v");
 
-    commit_t W;
-    W.clear();
+    commit_t F;
+    F.clear();
     value_t currentV = 1;
-    for(auto &comm : {(m_commitAr - m_GPK.keys[0] * m_rA), (m_commitBr - m_GPK.keys[0] * m_rB),
-                      (m_commitCr - m_GPK.keys[0] * m_rC), (m_commitWr - m_GPK.keys[0] * m_rW),
-                      (m_commitQr - m_GPK.keys[0] * m_rQ)}) {
-        commit_t temp;
-        commit_t::mul(temp, comm, currentV);
-        commit_t::add(W, W, temp);
+    for(auto &comm : {(m_commitAr - m_GPK.g1 * m_rA), (m_commitBr - m_GPK.g1 * m_rB),
+                      (m_commitCr - m_GPK.g1 * m_rC), (m_commitWr - m_GPK.g1 * m_rW),
+                      (m_commitZr - m_GPK.g1 * m_rZ), (m_commitQGr - m_GPK.g1 * m_rQG),
+                      (m_commitQPr - m_GPK.g1 * m_rQP)}) {
+        F += comm * currentV;
         currentV *= v;
     }
-    //todo: + m_rWNext
+    F += (m_commitWr - m_GPK.g1 * m_rWNext) * currentV;
+
+    value_t compensation = (m_rW - m_rWNext) * currentV;
+    F -= (m_GPK.g1 * compensation);
 
     GT e1, e2;
     mcl::pairing(e1, m_pi, tG2 - g2 * r);
-    mcl::pairing(e2, W, g2);
+    mcl::pairing(e2, F, g2);
 
     return e1 == e2;
 }
