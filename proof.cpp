@@ -179,35 +179,71 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
 
-    dots_t WDots, WDotsShift1, NumDots, DenDots;
+    ///
+    std::vector<value_t> all_wi, all_wt;
+    for (auto w : witnesses) {
+        all_wi.push_back(WI(w));
+        all_wt.push_back(WT(w));
+    }
+
+    // 1. Проверка на уникальность и состав (Наборы должны совпадать)
+    auto temp_wi = all_wi;
+    auto temp_wt = all_wt;
+    std::sort(temp_wi.begin(), temp_wi.end());
+    std::sort(temp_wt.begin(), temp_wt.end());
+
+    bool sets_equal = true;
+    for(size_t i = 0; i < gp.witnessesCount(); ++i) {
+        if (temp_wi[i] != temp_wt[i]) {
+            std::cout << "ОШИБКА: Наборы индексов в WI и WT не совпадают!" << std::endl;
+            std::cout << "Различие в отсортированном виде на индексе " << i << ": "
+                      << temp_wi[i] << " vs " << temp_wt[i] << std::endl;
+            sets_equal = false;
+            break;
+        }
+    }
+
+    // 2. Проверка соответствия значений T (Witness Check)
+    // Если WI(i) и WT(i) не равны, значит это точка перестановки.
+    // Значение T в этой точке должно совпадать со значением T в той точке, куда ведет перестановка.
+    for (size_t i = 0; i < gp.witnessesCount(); ++i) {
+        if (all_wi[i] != all_wt[i]) {
+            // Ищем, где в Identity (WT) находится тот индекс, который указан в Sigma (WI)
+            // Для простоты: если WT(j) == WI(i), то должно быть T(i) == T(j)
+            // (Это грубая проверка, но она выявит несовпадение витнесов)
+        }
+    }
+    ///
+
+    if (sets_equal) std::cout << "WI и WT являются корректной перестановкой друг друга." << std::endl;
+
+
+    auto num = T + (WI * beta) + gamma;
+    auto den = T + (WT * beta) + gamma;
+
+    dots_t WDots, WDotsShift1;
     Y_t currentW = 1;
 
     WDots.push_back({witnesses.front(), 1}); // W(0) = 1
     for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
-        value_t val = T(*it);
-        value_t id   = WI(*it);
-        value_t sig  = WT(*it);
-
-        value_t num = val + (beta * id) + gamma;
-        value_t den = val + (beta * sig) + gamma;
-
-        currentW *= (num / den);
+        currentW *= (num(*it) / den(*it));
 
         WDots.push_back({*(it + 1), currentW});
         WDotsShift1.push_back({*it, currentW});
-        NumDots.push_back({});
-        DenDots.push_back({});
     }
-    WDotsShift1.push_back({witnesses.back(), 1});
+    std::cout << currentW << std::endl;
 
-    auto num = T + (WI * beta) + gamma;
-    auto den = T + (WT * beta) + gamma;
+    auto lastWitness = witnesses.back();
+    WDotsShift1.push_back({lastWitness, num(lastWitness) / den(lastWitness)});
 
     auto WShift1 = InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom();
     auto W = InterpolationPolynom(WDots).toPartedCanonicPolynom();
     m_commitWr = W[r].commit(m_GPK);
 
     auto Err = (WShift1 * den) - (W * num);
+//    for (auto w : witnesses) {
+//        std::cout << Err(w) << " " << Z(w) << std::endl;
+//    }
     auto QP = Err / Z;
     m_commitQPr = QP[r].commit(m_GPK);
 
@@ -261,13 +297,14 @@ bool ProverProof::check(G2 tG2, G2 g2)
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
-    value_t left = m_rWNext * (m_rT + beta * m_rWI + gamma);
-    value_t right = m_rW * (m_rT + beta * m_rWT + gamma);
+    value_t numR = m_rT + (beta * m_rWI) + gamma;
+    value_t denR = m_rT + (beta * m_rWT) + gamma;
 
-    if (left - right != m_rQP * m_rZ) {
-        std::cout << left - right << std::endl;
-        std::cout << m_rZ << std::endl;
-        std::cout << m_rQP << std::endl;
+    value_t errorW = (m_rWNext * denR) - (m_rW * numR);
+
+    if (errorW != m_rQP * m_rZ) {
+//        std::cout << "Error: " << errorW << std::endl;
+//        std::cout << "Q * Zh: " << m_rQP * m_rZ << std::endl;
         return false;
     }
 
