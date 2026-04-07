@@ -153,13 +153,9 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     //2. Получение точки раскрытия из Т
     auto r = tr("r");
 
-    auto A = TParams.splittedT.left.toPartedCanonicPolynom();
-    auto B = TParams.splittedT.right.toPartedCanonicPolynom();
-    auto C = TParams.splittedT.result.toPartedCanonicPolynom();
+    auto T = TParams.t.toPartedCanonicPolynom();
+    m_commitTr = T[r].commit(m_GPK);
 
-    m_commitAr = A[r].commit(m_GPK);
-    m_commitBr = B[r].commit(m_GPK);
-    m_commitCr = C[r].commit(m_GPK);
 
     //3. Деление на Zero-полином (comQ -> T)
     auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), m_GPK);
@@ -185,41 +181,37 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 
     dots_t WDots, WDotsShift1, NumDots, DenDots;
     Y_t currentW = 1;
-    size_t n = gp.circutSize();
 
-    WDots.push_back({0, currentW}); // W(0) = 1
-    for (size_t i = 0; i < n; ++i) {
-        value_t valA = A(i);
-        value_t id   = WI(i);
-        value_t sig  = WT(i);
+    WDots.push_back({witnesses.front(), 1}); // W(0) = 1
+    for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
+        value_t val = T(*it);
+        value_t id   = WI(*it);
+        value_t sig  = WT(*it);
 
-        value_t num = valA + (beta * id) + gamma;
-        value_t den = valA + (beta * sig) + gamma;
+        value_t num = val + (beta * id) + gamma;
+        value_t den = val + (beta * sig) + gamma;
 
         currentW *= (num / den);
 
-        WDots.push_back({(value_t)(i + 1), currentW});
-        WDotsShift1.push_back({(value_t)(i), currentW});
+        WDots.push_back({*(it + 1), currentW});
+        WDotsShift1.push_back({*it, currentW});
         NumDots.push_back({});
         DenDots.push_back({});
     }
-    WDotsShift1.push_back({(value_t)(n), 1});
+    WDotsShift1.push_back({witnesses.back(), 1});
 
-    auto num = A + (WI * beta) + gamma;
-    auto den = A + (WT * beta) + gamma;
+    auto num = T + (WI * beta) + gamma;
+    auto den = T + (WT * beta) + gamma;
 
     auto WShift1 = InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom();
     auto W = InterpolationPolynom(WDots).toPartedCanonicPolynom();
     m_commitWr = W[r].commit(m_GPK);
-    std::cout << WI.distance() << " " << WT.distance() << std::endl;
 
-    auto Err = (WShift1 * num) - (W * den);
+    auto Err = (WShift1 * den) - (W * num);
     auto QP = Err / Z;
     m_commitQPr = QP[r].commit(m_GPK);
 
-    m_rA = A(r);
-    m_rB = B(r);
-    m_rC = C(r);
+    m_rT = T(r);
     m_rW = W(r);
     m_rWNext = W(r + 1);
     m_rZ = Z(r);
@@ -229,9 +221,7 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     m_rWT = WT(r);
     m_rWI = WI(r);
 
-    tr.appendScalar("rA", m_rA);
-    tr.appendScalar("rB", m_rB);
-    tr.appendScalar("rC", m_rC);
+    tr.appendScalar("rT", m_rT);
     tr.appendScalar("rW", m_rW);
     tr.appendScalar("rWNext", m_rWNext);
     tr.appendScalar("rZ", m_rZ);
@@ -243,9 +233,8 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
 
     CanonicPolynom F;
     value_t currentV = 1;
-    for(auto &poly : {(A[r] - m_rA), (B[r] - m_rB), (C[r] - m_rC),
-                      (W[r] - m_rW), (Z[r] - m_rZ), (QG[r] - m_rQG),
-                      (QP[r] - m_rQP)}) {
+    for(auto &poly : {(T[r] - m_rT), (W[r] - m_rW), (Z[r] - m_rZ),
+                      (QG[r] - m_rQG), (QP[r] - m_rQP)}) {
         F += poly * currentV;
         currentV *= v;
     }
@@ -272,8 +261,8 @@ bool ProverProof::check(G2 tG2, G2 g2)
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
-    value_t left = m_rWNext * (m_rA + beta * m_rWI + gamma);
-    value_t right = m_rW * (m_rA + beta * m_rWT + gamma);
+    value_t left = m_rWNext * (m_rT + beta * m_rWI + gamma);
+    value_t right = m_rW * (m_rT + beta * m_rWT + gamma);
 
     if (left - right != m_rQP * m_rZ) {
         std::cout << left - right << std::endl;
@@ -282,9 +271,7 @@ bool ProverProof::check(G2 tG2, G2 g2)
         return false;
     }
 
-    tr.appendScalar("rA", m_rA);
-    tr.appendScalar("rB", m_rB);
-    tr.appendScalar("rC", m_rC);
+    tr.appendScalar("rT", m_rT);
     tr.appendScalar("rW", m_rW);
     tr.appendScalar("rWNext", m_rWNext);
     tr.appendScalar("rZ", m_rZ);
@@ -296,8 +283,7 @@ bool ProverProof::check(G2 tG2, G2 g2)
     commit_t F;
     F.clear();
     value_t currentV = 1;
-    for(auto &comm : {(m_commitAr - m_GPK.g1 * m_rA), (m_commitBr - m_GPK.g1 * m_rB),
-                      (m_commitCr - m_GPK.g1 * m_rC), (m_commitWr - m_GPK.g1 * m_rW),
+    for(auto &comm : {(m_commitTr - m_GPK.g1 * m_rT), (m_commitWr - m_GPK.g1 * m_rW),
                       (m_commitZr - m_GPK.g1 * m_rZ), (m_commitQGr - m_GPK.g1 * m_rQG),
                       (m_commitQPr - m_GPK.g1 * m_rQP)}) {
         F += comm * currentV;

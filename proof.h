@@ -77,10 +77,10 @@ private:
     //Подготовка увеличивается согласно О(n^2)
     PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
 
-    commit_t m_commitAr, m_commitBr, m_commitCr, m_commitWr, m_commitZr, m_commitQGr, m_commitQPr;
+    commit_t m_commitTr, m_commitWr, m_commitZr, m_commitQGr, m_commitQPr;
     commit_t m_pi;
 
-    Y_t m_rA, m_rB, m_rC, m_rW, m_rWNext, m_rZ, m_rQG, m_rQP;
+    Y_t m_rT, m_rW, m_rWNext, m_rZ, m_rQG, m_rQP;
     Y_t m_rWT, m_rWI;
 
     MerkleLeaf m_MerkleRoot;

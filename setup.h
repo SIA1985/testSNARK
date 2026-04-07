@@ -40,6 +40,8 @@ public:
     witnesses_t witnesses() const;
     witnesses_t SWitnesses() const;
 
+    std::size_t witnessesCount() const;
+
     GPK_t GPK() const;
 
     ProverParams_t PP() const;

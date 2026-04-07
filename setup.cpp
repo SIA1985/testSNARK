@@ -43,6 +43,11 @@ witnesses_t GlobalParams::SWitnesses() const
     return m_SWitnesses;
 }
 
+std::size_t GlobalParams::witnessesCount() const
+{
+    return m_witnesses.size();
+}
+
 GPK_t GlobalParams::GPK() const
 {
     return m_GPK;
