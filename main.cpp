@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 
     snrk::GlobalParams gp(c, GPK);
 
-    snrk::ProverProof proof(gp, {x1, x2, {w1}}, {5});
+    snrk::ProverProof proof(gp);
 
     if (proof.check(tG2, g2)) {
         std::cout << "Ok!" << std::endl;

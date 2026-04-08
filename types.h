@@ -99,7 +99,6 @@ class InterpolationPolynom;
 typedef InterpolationPolynom T_t;
 typedef InterpolationPolynom S_t;
 typedef InterpolationPolynom W_t;
-typedef InterpolationPolynom WT_t;
 
 #define Name(a) #a
 #define FromJson(json, a) json[Name(a)].get_to(a)

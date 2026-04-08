@@ -119,7 +119,7 @@ bool PlonkProof::fromJson(const json_t &json)
     return false;
 }
 
-ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t output)
+ProverProof::ProverProof(const GlobalParams &gp)
 {
     auto TParams = gp.PP().TParams;
     auto witnesses = gp.witnesses();
@@ -157,8 +157,8 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     m_commitTr = T[r].commit(m_GPK);
 
 
-    //3. Деление на Zero-полином (comQ -> T)
-    auto p = correctGates(TParams.splittedT, gp.PP().SParams, gp.SWitnesses(), m_GPK);
+    //3. Деление на Zero-полином (comQG -> T)
+    auto p = correctGates(TParams.splittedT, gp.PP().SParams);
     auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
 
     auto Z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
@@ -179,65 +179,10 @@ ProverProof::ProverProof(const GlobalParams &gp, const values_t &input, value_t 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
 
-    ///
-    std::vector<value_t> all_wi, all_wt;
-    for (auto w : witnesses) {
-        all_wi.push_back(WI(w));
-        all_wt.push_back(WT(w));
-    }
-
-    // 1. Проверка на уникальность и состав (Наборы должны совпадать)
-    auto temp_wi = all_wi;
-    auto temp_wt = all_wt;
-    std::sort(temp_wi.begin(), temp_wi.end());
-    std::sort(temp_wt.begin(), temp_wt.end());
-
-    bool sets_equal = true;
-    for(size_t i = 0; i < gp.witnessesCount(); ++i) {
-        if (temp_wi[i] != temp_wt[i]) {
-            std::cout << "ОШИБКА: Наборы индексов в WI и WT не совпадают!" << std::endl;
-            std::cout << "Различие в отсортированном виде на индексе " << i << ": "
-                      << temp_wi[i] << " vs " << temp_wt[i] << std::endl;
-            sets_equal = false;
-            break;
-        }
-    }
-
-    // 2. Проверка соответствия значений T (Witness Check)
-    // Если WI(i) и WT(i) не равны, значит это точка перестановки.
-    // Значение T в этой точке должно совпадать со значением T в той точке, куда ведет перестановка.
-    for (size_t i = 0; i < gp.witnessesCount(); ++i) {
-        if (all_wi[i] != all_wt[i]) {
-            // Ищем, где в Identity (WT) находится тот индекс, который указан в Sigma (WI)
-            // Для простоты: если WT(j) == WI(i), то должно быть T(i) == T(j)
-            // (Это грубая проверка, но она выявит несовпадение витнесов)
-        }
-    }
-    ///
-
-    if (sets_equal) std::cout << "WI и WT являются корректной перестановкой друг друга." << std::endl;
-
-
     auto num = T + (WI * beta) + gamma;
     auto den = T + (WT * beta) + gamma;
 
-    dots_t WDots, WDotsShift1;
-    Y_t currentW = 1;
-
-    WDots.push_back({witnesses.front(), 1}); // W(0) = 1
-    for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
-        currentW *= (num(*it) / den(*it));
-
-        WDots.push_back({*(it + 1), currentW});
-        WDotsShift1.push_back({*it, currentW});
-    }
-    std::cout << currentW << std::endl;
-
-    auto lastWitness = witnesses.back();
-    WDotsShift1.push_back({lastWitness, num(lastWitness) / den(lastWitness)});
-
-    auto WShift1 = InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom();
-    auto W = InterpolationPolynom(WDots).toPartedCanonicPolynom();
+    auto [W, WShift1] = correctPermulations(witnesses, num, den);
     m_commitWr = W[r].commit(m_GPK);
 
     auto Err = (WShift1 * den) - (W * num);
@@ -352,7 +297,7 @@ bool ProverProof::fromJson(const json_t &json)
     return false;
 }
 
-PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK)
+PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams)
 {
     const auto &left = t.left.toPartedCanonicPolynom();
     const auto &right = t.right.toPartedCanonicPolynom();
@@ -378,6 +323,26 @@ PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const Globa
     }
 
     return funcF;
+}
+
+ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den)
+{
+    dots_t WDots, WDotsShift1;
+    Y_t currentW = 1;
+
+    WDots.push_back({witnesses.front(), 1}); // W(0) = 1
+    for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
+        currentW *= (num(*it) / den(*it));
+
+        WDots.push_back({*(it + 1), currentW});
+        WDotsShift1.push_back({*it, currentW});
+    }
+
+    auto lastWitness = witnesses.back();
+    WDotsShift1.push_back({lastWitness, num(lastWitness) / den(lastWitness)});
+
+    return {InterpolationPolynom(WDots).toPartedCanonicPolynom(),
+            InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom()};
 }
 
 }

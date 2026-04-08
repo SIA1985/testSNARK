@@ -62,10 +62,11 @@ private:
 
 class ProverProof : public Proof
 {
+    using WResult_t = struct{PartedCanonicPolynom W; PartedCanonicPolynom WShift1;};
 public:
     ProverProof() = default;
 
-    ProverProof(const GlobalParams &gp, const values_t &input, value_t output);
+    ProverProof(const GlobalParams &gp);
 
     virtual bool check(G2 tG2, G2 g2) override;
 
@@ -75,7 +76,8 @@ protected:
 
 private:
     //Подготовка увеличивается согласно О(n^2)
-    PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams, const witnesses_t &ws, GPK_t GPK);
+    PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams);
+    WResult_t correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den);
 
     commit_t m_commitTr, m_commitWr, m_commitZr, m_commitQGr, m_commitQPr;
     commit_t m_pi;
