@@ -173,14 +173,28 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
 
     //4. Полином-аккумулятор, для проверки перестановки
-    auto beta = tr("beta");
-    auto gamma = tr("gamma");
+    auto beta = 1;//tr("beta");
+    auto gamma = 2;//tr("gamma");
 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
 
     auto num = T + (WI * beta) + gamma;
     auto den = T + (WT * beta) + gamma;
+
+    Y_t currN = 1;
+    Y_t currD = 1;
+    for(auto w : witnesses) {
+        std::cout << "wt: " << WT(w) << std::endl;
+        std::cout << "wi: " << WI(w) << std::endl;
+        std::cout << "t: " << T(w) << std::endl;
+        std::cout << "beta: " << beta << std::endl;
+        std::cout << "gamma: " << gamma << std::endl;
+
+        currN *= num(w);
+        currD *= den(w);
+        std::cout << "--- " << currN << " / " << currD << " ---" << std::endl; // != друг другу
+    }
 
     auto [W, WShift1] = correctPermulations(witnesses, num, den);
     m_commitWr = W[r].commit(m_GPK);
