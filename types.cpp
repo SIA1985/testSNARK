@@ -13,84 +13,38 @@ void from_json(const snrk::json_t& j, witnesses_t& ws)
     ws = j.at("array").get<std::vector<witness_t>>();
 }
 
-Value::Value(mcl::Fr fr)
-{
-    *this = fr;
-}
-
-Value::operator int() const
-{
-    return static_cast<int>(getInt64());
-}
-
-Value::operator const unsigned long() const
-{
-    return getUint64();
-}
-
-Value::operator double() const
-{
-    return getInt64();
-}
-
-Value::operator GateType_t() const
-{
-//    if (floor(*this) != *this) {
-//        return Unknown;
-//    }
-
-    return static_cast<GateType_t>(*getUnit());
-}
-
-//Value::operator witness_t() const
+//Value::operator double() const
 //{
-//    return static_cast<witness_t>(getUint64());
+//    return getInt64();
 //}
-
-Value::operator mpz_class() const
-{
-    return getMpz();
-}
 
 //Value::operator mcl::Fr() const
 //{
 //    return get_ui();
 //}
 
+//todo:
 void to_json(json_t& j, const dot_t& dot) {
-    j["x"] = dot.x;
-    j["y"] = dot.y;
+//    j["x"] = dot.x;
+//    j["y"] = dot.y;
 }
 
+//todo:
 void from_json(const snrk::json_t& j, dot_t& dot) {
-    dot.x = j.at("x").get<value_t>();
-    dot.y = j.at("y").get<value_t>();
+//    dot.x = j.at("x").get<value_t>();
+//    dot.y = j.at("y").get<value_t>();
 }
-
-address_t Value::address() const
-{
-    return address_t(this);
-}
-
-//bool operator<(const Value &a, const Value &b)
-//{
-//    return cmp(a, b) == -1;
-//}
-
-//bool operator==(const Value &a, const Value &b)
-//{
-//    return cmp(a, b) == 0;
-//}
 
 //todo:
 void to_json(json_t& j, const value_t& value)
 {
-    j["double"] = value.getUint64();
+//    j["double"] = static_cast<double>(value);
 }
 
+//todo: получаем всегда уникальное значение, как быть с адресом?
 void from_json(const snrk::json_t& j, value_t& value)
 {
-    value = j.at("double").get<double>();
+//    value = j.at("double").get<double>();
 }
 
 //todo:

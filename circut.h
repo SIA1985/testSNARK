@@ -10,14 +10,14 @@ namespace snrk {
 
 class Gate {
 
-    using input_t = struct{value_t a; value_t b;};
+    using input_t = struct{CircutValue_t a; CircutValue_t b;};
 public:
-    Gate(GateType_t type, input_t input, value_t output);
+    Gate(GateType_t type, input_t input, CircutValue_t output);
 
 private:
     GateType_t m_type{};
     input_t m_input{};
-    value_t m_output{0};
+    CircutValue_t m_output{0};
 
     friend class GlobalParams;
     friend class Circut;
@@ -25,7 +25,7 @@ private:
 
 class Circut
 {
-    using input_t = std::vector<value_t>;
+    using input_t = std::vector<CircutValue_t>;
     using gate_t = Gate;
     using gates_t = std::vector<Gate>;
 

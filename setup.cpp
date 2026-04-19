@@ -25,6 +25,7 @@ GlobalParams::GlobalParams(const Circut &circut, const GPK_t &GPK)
 {
     m_witnesses = genWitnesses(wStart, circut.degree(), wStep);
 
+    //todo: мб получится вынести generateT в поток?
     generateT(circut);
     std::thread tS(&GlobalParams::generateS, this, std::ref(circut));
     std::thread tW(&GlobalParams::generateW, this, std::ref(circut));
@@ -68,10 +69,10 @@ void GlobalParams::generateT(const Circut &circut)
     dots_t dots, leftDots, rightDots, resultDots;
 
     auto cw = m_witnesses.cbegin();
-    auto fillMap = [&cw, &dots](const values_t &row)
+    auto fillMap = [&cw, &dots](const CircutValues_t &row)
     {
         for(const auto& element : row) {
-            dots.push_back({*cw, element});
+            dots.push_back({*cw, element.value()});
             cw++;
         }
     };
@@ -83,16 +84,16 @@ void GlobalParams::generateT(const Circut &circut)
     auto i = m_SWitnesses.begin();
 
     for(const auto& gate : circut.m_gates) {
-        dots.push_back({*cw, gate.m_input.a});
-        leftDots.push_back({*i, gate.m_input.a});
+        dots.push_back({*cw, gate.m_input.a.value()});
+        leftDots.push_back({*i, gate.m_input.a.value()});
         cw++;
 
-        dots.push_back({*cw, gate.m_input.b});
-        rightDots.push_back({*i, gate.m_input.b});
+        dots.push_back({*cw, gate.m_input.b.value()});
+        rightDots.push_back({*i, gate.m_input.b.value()});
         cw++;
 
-        dots.push_back({*cw, gate.m_output});
-        resultDots.push_back({*i, gate.m_output});
+        dots.push_back({*cw, gate.m_output.value()});
+        resultDots.push_back({*i, gate.m_output.value()});
         cw++;
 
         i++;
@@ -130,10 +131,10 @@ void GlobalParams::generateW(const Circut &circut)
 {
     /*addr -> свидетели*/
     std::unordered_map<std::size_t, std::shared_ptr<cond_t>> duplicates;
-    auto insert = [&duplicates](value_t key, witness_t value)
+    auto insert = [&duplicates](const CircutValue_t &key, witness_t value)
     {
-        auto address = (std::size_t)key.address();
-        if (!duplicates[address]) {
+        auto address = key.address();
+        if (duplicates.count(address) == 0) {
             duplicates[address] = std::make_shared<cond_t>();
         }
 
@@ -142,7 +143,7 @@ void GlobalParams::generateW(const Circut &circut)
 
     auto cw = m_witnesses.cbegin();
 
-    auto fillMap = [&cw, &insert](const values_t &row)
+    auto fillMap = [&cw, &insert](const CircutValues_t &row)
     {
         for(const auto &elment : row) {
             insert(elment, *cw++);
@@ -173,7 +174,7 @@ void GlobalParams::generateW(const Circut &circut)
     dotsWI.reserve(duplicates.size());
     dotsWT.reserve(duplicates.size());
 
-    for(const auto &[_, condition] : duplicates) {
+    for(const auto &[_k, condition] : duplicates) {
         auto begin = condition->begin();
         auto end = condition->end();
 
@@ -184,7 +185,7 @@ void GlobalParams::generateW(const Circut &circut)
     }
 
     m_WT = W_t(dotsWT); //witness -> witness
-    m_WI = W_t(dotsWI); //witness -> next_this_value_wintess
+    m_WI = W_t(dotsWI); //witness -> next_this_addres_value_wintess
 }
 
 }

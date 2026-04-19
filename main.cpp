@@ -44,9 +44,9 @@ int main(int argc, char *argv[])
     mpf_set_default_prec(128);
     mcl::initPairing(mcl::BLS12_381);
 
-    auto x1 = snrk::value_t(5);
-    auto x2 = snrk::value_t(6);
-    auto w1 = snrk::value_t(1);
+    auto x1 = snrk::CircutValue_t(5);
+    auto x2 = snrk::CircutValue_t(6);
+    auto w1 = snrk::CircutValue_t(1);
 
     snrk::Circut c({x1, x2}, {w1});
 
@@ -65,9 +65,9 @@ int main(int argc, char *argv[])
 //    c.addGate({snrk::Devide, {x1, w1}, out6});
 //    }
 
-    auto out1 = snrk::value_t(11);
+    auto out1 = snrk::CircutValue_t(11);
     c.addGate({snrk::Sum, {x1, x2}, out1});
-    auto out2 = snrk::value_t(10);
+    auto out2 = snrk::CircutValue_t(10);
     c.addGate({snrk::Minus, {out1, w1}, out2});
 
     snrk::G1 g;
@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
  * 7. Оптимизация: если таблица разбивается на полиномы степеней больше 3, то разбивать (но на кратное 3)!
  * 8. Взаимоно переименовать WI(будет index) и WT(будет transition)
  * 9. Сделать операции сплайнов без сдвигов (считать, что все имеют одинаковые шаги и диапазоны, иначе ассерт)
+ * 10. Макрос на вкл/выкл многопотока
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson

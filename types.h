@@ -40,37 +40,47 @@ private:
 void to_json(json_t& j, const witnesses_t& ws);
 void from_json(const snrk::json_t& j, witnesses_t& ws);
 
-class Value : public mcl::Fr
+template<typename T>
+class CircutValue
 {
+    using ptr_t = std::shared_ptr<T>;
+
 public:
-    Value() = default;
-    Value(mcl::Fr fr);
-    using mcl::Fr::Fr;
+    CircutValue() {
+        m_data = ptr_t(new T);
+    }
+    CircutValue(T data) {
+        m_data = ptr_t(new T(data));
+    }
+    CircutValue(const CircutValue &value) {
+        m_data = value.m_data;
+    }
 
-    operator int() const;
-    operator const unsigned long() const;
-    operator double() const;
-    operator GateType_t() const;
-//    operator witness_t() const;
-//    operator mcl::Fr() const;
-    operator mpz_class() const;
-    using mcl::Fr::operator=;
-    using mcl::Fr::operator<;
+    CircutValue& operator=(const CircutValue&) = delete;
 
-    address_t address() const;
+    bool operator<(const CircutValue &value) {
+        return *m_data < *value.m_data;
+    }
+
+    address_t address() const {
+        return address_t(m_data.get());
+    }
+
+    T value() const {
+        return *m_data;
+    }
 
 private:
-//    friend bool operator<(const Value &a, const Value &b);
-//    friend bool operator==(const Value &a, const Value &b);
+    ptr_t m_data;
 };
 
-typedef Value value_t;
-//bool operator<(const value_t &a, const value_t &b);
-//bool operator==(const value_t &a, const value_t &b);
+typedef mcl::Fr value_t;
+typedef CircutValue<value_t> CircutValue_t;
 void to_json(json_t& j, const value_t& value);
 void from_json(const snrk::json_t& j, value_t& value);
 
 typedef std::vector<value_t> values_t;
+typedef std::vector<CircutValue_t> CircutValues_t;
 
 typedef value_t X_t;
 typedef value_t Y_t;

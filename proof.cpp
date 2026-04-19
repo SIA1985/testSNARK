@@ -173,8 +173,8 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
 
     //4. Полином-аккумулятор, для проверки перестановки
-    auto beta = 1;//tr("beta");
-    auto gamma = 2;//tr("gamma");
+    auto beta = /*1;*/tr("beta");
+    auto gamma = /*2;*/tr("gamma");
 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
@@ -186,7 +186,7 @@ ProverProof::ProverProof(const GlobalParams &gp)
     Y_t currD = 1;
     for(auto w : witnesses) {
         std::cout << "wt: " << WT(w) << std::endl;
-        std::cout << "wi: " << WI(w) << std::endl;
+        std::cout << "wi: " << WI(w) << std::endl; //неверно находит следующего!
         std::cout << "t: " << T(w) << std::endl;
         std::cout << "beta: " << beta << std::endl;
         std::cout << "gamma: " << gamma << std::endl;
@@ -342,12 +342,14 @@ PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const Globa
 ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den)
 {
     dots_t WDots, WDotsShift1;
-    Y_t currentW = 1;
+    Y_t currN, currD;
 
-    WDots.push_back({witnesses.front(), 1}); // W(0) = 1
+    WDots.push_back({witnesses.front(), 1}); // W(0) = 1 - точно так?
     for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
-        currentW *= (num(*it) / den(*it));
+        currN = num(*it);
+        currD = den(*it);
 
+        Y_t currentW = currN / currD;
         WDots.push_back({*(it + 1), currentW});
         WDotsShift1.push_back({*it, currentW});
     }

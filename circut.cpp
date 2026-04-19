@@ -5,7 +5,7 @@
 
 namespace snrk {
 
-Gate::Gate(GateType_t type, input_t input, value_t output)
+Gate::Gate(GateType_t type, input_t input, CircutValue_t output)
     : m_type{type}
     , m_input{input}
     , m_output{output}
