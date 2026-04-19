@@ -79,7 +79,7 @@ private:
     PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams);
     WResult_t correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den);
 
-    commit_t m_commitTr, m_commitWr, m_commitZr, m_commitQGr, m_commitQPr;
+    commit_t m_commitTr, m_commitWr, m_commitWNextr, m_commitZr, m_commitQGr, m_commitQPr;
     commit_t m_pi;
 
     Y_t m_rT, m_rW, m_rWNext, m_rZ, m_rQG, m_rQP;

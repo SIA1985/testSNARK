@@ -184,6 +184,7 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
     auto [W, WShift1] = correctPermulations(witnesses, num, den);
     m_commitWr = W[r].commit(m_GPK);
+    m_commitWNextr = WShift1[r].commit(m_GPK);
 
     auto Err = (WShift1 * den) - (W * num);
     auto QP = Err / Z;
@@ -191,7 +192,7 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
     m_rT = T(r);
     m_rW = W(r);
-    m_rWNext = W(r + 1);
+    m_rWNext = WShift1(r);
     m_rZ = Z(r);
     m_rQG = QG(r);
     m_rQP = QP(r);
@@ -211,13 +212,11 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
     CanonicPolynom F;
     value_t currentV = 1;
-    for(auto &poly : {(T[r] - m_rT), (W[r] - m_rW), (Z[r] - m_rZ),
-                      (QG[r] - m_rQG), (QP[r] - m_rQP)}) {
+    for(auto &poly : {(T[r] - m_rT), (W[r] - m_rW), (WShift1[r] - m_rWNext),
+                (Z[r] - m_rZ), (QG[r] - m_rQG), (QP[r] - m_rQP)}) {
         F += poly * currentV;
         currentV *= v;
     }
-    F += (W[r] - m_rWNext) * currentV;
-    F -= F(r);
 
     auto z = CanonicPolynom({-r, 1});
     m_pi = (F / z).commit(m_GPK);
@@ -262,16 +261,11 @@ bool ProverProof::check(G2 tG2, G2 g2)
     commit_t F;
     F.clear();
     value_t currentV = 1;
-    for(auto &comm : {(m_commitTr - m_GPK.g1 * m_rT), (m_commitWr - m_GPK.g1 * m_rW),
-                      (m_commitZr - m_GPK.g1 * m_rZ), (m_commitQGr - m_GPK.g1 * m_rQG),
-                      (m_commitQPr - m_GPK.g1 * m_rQP)}) {
+    for(auto &comm : {(m_commitTr - m_GPK.g1 * m_rT), (m_commitWr - m_GPK.g1 * m_rW), (m_commitWNextr - m_GPK.g1 * m_rWNext),
+                      (m_commitZr - m_GPK.g1 * m_rZ), (m_commitQGr - m_GPK.g1 * m_rQG),(m_commitQPr - m_GPK.g1 * m_rQP)}) {
         F += comm * currentV;
         currentV *= v;
     }
-    F += (m_commitWr - m_GPK.g1 * m_rWNext) * currentV;
-
-    value_t compensation = (m_rW - m_rWNext) * currentV;
-    F -= (m_GPK.g1 * compensation);
 
     GT e1, e2;
     mcl::pairing(e1, m_pi, tG2 - g2 * r);
