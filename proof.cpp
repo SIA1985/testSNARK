@@ -173,8 +173,8 @@ ProverProof::ProverProof(const GlobalParams &gp)
 
 
     //4. Полином-аккумулятор, для проверки перестановки
-    auto beta = /*1;*/tr("beta");
-    auto gamma = /*2;*/tr("gamma");
+    auto beta = tr("beta");
+    auto gamma = tr("gamma");
 
     auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
     auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
@@ -182,27 +182,10 @@ ProverProof::ProverProof(const GlobalParams &gp)
     auto num = T + (WI * beta) + gamma;
     auto den = T + (WT * beta) + gamma;
 
-    Y_t currN = 1;
-    Y_t currD = 1;
-    for(auto w : witnesses) {
-        std::cout << "wt: " << WT(w) << std::endl;
-        std::cout << "wi: " << WI(w) << std::endl; //неверно находит следующего!
-        std::cout << "t: " << T(w) << std::endl;
-        std::cout << "beta: " << beta << std::endl;
-        std::cout << "gamma: " << gamma << std::endl;
-
-        currN *= num(w);
-        currD *= den(w);
-        std::cout << "--- " << currN << " / " << currD << " ---" << std::endl; // != друг другу
-    }
-
     auto [W, WShift1] = correctPermulations(witnesses, num, den);
     m_commitWr = W[r].commit(m_GPK);
 
     auto Err = (WShift1 * den) - (W * num);
-//    for (auto w : witnesses) {
-//        std::cout << Err(w) << " " << Z(w) << std::endl;
-//    }
     auto QP = Err / Z;
     m_commitQPr = QP[r].commit(m_GPK);
 
@@ -262,8 +245,8 @@ bool ProverProof::check(G2 tG2, G2 g2)
     value_t errorW = (m_rWNext * denR) - (m_rW * numR);
 
     if (errorW != m_rQP * m_rZ) {
-//        std::cout << "Error: " << errorW << std::endl;
-//        std::cout << "Q * Zh: " << m_rQP * m_rZ << std::endl;
+        std::cout << "Error: " << errorW << std::endl;
+        std::cout << "Q * Zh: " << m_rQP * m_rZ << std::endl;
         return false;
     }
 
@@ -342,20 +325,19 @@ PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const Globa
 ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den)
 {
     dots_t WDots, WDotsShift1;
-    Y_t currN, currD;
+    Y_t currN, currD, currW = 1;
 
-    WDots.push_back({witnesses.front(), 1}); // W(0) = 1 - точно так?
+    WDots.push_back({witnesses.front(), 1});
     for (auto it = witnesses.begin(); it != std::prev(witnesses.end()); it++) {
         currN = num(*it);
         currD = den(*it);
 
-        Y_t currentW = currN / currD;
-        WDots.push_back({*(it + 1), currentW});
-        WDotsShift1.push_back({*it, currentW});
+        currW *= currN / currD;
+        WDots.push_back({*(it + 1), currW});
+        WDotsShift1.push_back({*it, currW});
     }
 
-    auto lastWitness = witnesses.back();
-    WDotsShift1.push_back({lastWitness, num(lastWitness) / den(lastWitness)});
+    WDotsShift1.push_back({witnesses.back(), 1});
 
     return {InterpolationPolynom(WDots).toPartedCanonicPolynom(),
             InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom()};
