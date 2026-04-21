@@ -38,7 +38,7 @@ class PlonkProof : public Proof
 public:
     using ptr_t = std::shared_ptr<PlonkProof>;
 
-    static ptr_t forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, GPK_t &GPK, const witnesses_t &witness, X_t u);
+    static ptr_t forProver(SplinePolynom &g, SplinePolynom &p, GPK_t &GPK, const witnesses_t &witness, X_t u);
     static ptr_t forVerifier(commit_t comF, commit_t comQ, dot_t toProve, GPK_t GPK);
 
     virtual bool check(G2 tG2, G2 g2) override;
@@ -62,7 +62,7 @@ private:
 
 class ProverProof : public Proof
 {
-    using WResult_t = struct{PartedCanonicPolynom W; PartedCanonicPolynom WShift1;};
+    using WResult_t = struct{SplinePolynom W; SplinePolynom WShift1;};
 public:
     ProverProof() = default;
 
@@ -76,8 +76,8 @@ protected:
 
 private:
     //Подготовка увеличивается согласно О(n^2)
-    PartedCanonicPolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams);
-    WResult_t correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den);
+    SplinePolynom correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams);
+    WResult_t correctPermulations(const witnesses_t &witnesses, SplinePolynom &num, SplinePolynom &den);
 
     commit_t m_commitTr, m_commitWr, m_commitWNextr, m_commitZr, m_commitQGr, m_commitQPr;
     commit_t m_pi;

@@ -184,8 +184,8 @@ void GlobalParams::generateW(const Circut &circut)
         }
     }
 
-    m_WT = W_t(dotsWT); //witness -> witness
-    m_WI = W_t(dotsWI); //witness -> next_this_addres_value_wintess
+    m_WI = W_t(dotsWT); //witness -> witness
+    m_WT = W_t(dotsWI); //witness -> next_this_addres_value_wintess
 }
 
 }

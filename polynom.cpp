@@ -386,11 +386,11 @@ CanonicPolynom InterpolationPolynom::toCanonicPolynom() const
     return CanonicPolynom(canonicalCoeffs);
 }
 
-PartedCanonicPolynom InterpolationPolynom::toPartedCanonicPolynom() const
+SplinePolynom InterpolationPolynom::toSplinePolynom() const
 {
     std::set<dot_t> sortedDots(m_dots.begin(), m_dots.end());
 
-    return PartedCanonicPolynom(sortedDots);
+    return SplinePolynom(sortedDots);
 }
 
 ZeroWitnessPolynom::ZeroWitnessPolynom(const witnesses_t &xs)
@@ -398,14 +398,14 @@ ZeroWitnessPolynom::ZeroWitnessPolynom(const witnesses_t &xs)
 {
 }
 
-PartedCanonicPolynom ZeroWitnessPolynom::toPartedCanonicPolynom() const
+SplinePolynom ZeroWitnessPolynom::toSplinePolynom() const
 {
     std::set<dot_t> dots;
     for(const auto &root : m_roots) {
         dots.insert(dot_t{root, 0});
     }
 
-    return PartedCanonicPolynom(dots, false);
+    return SplinePolynom(dots, false);
 }
 
 Range::Range(X_t left, X_t right)
@@ -507,13 +507,13 @@ std::ostream &operator<<(std::ostream &out, const Range &r)
     return out << "{" << r.leftBound() << ", " << r.rightBound() << "}";
 }
 
-PartedCanonicPolynom::PartedCanonicPolynom(const map_t &map)
+SplinePolynom::SplinePolynom(const map_t &map)
     : m_map{map}
 {
 }
 
 //O(n)
-PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
+SplinePolynom::SplinePolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation)
 {
     using iterator = std::set<dot_t>::const_iterator;
     auto func = [fromInterpolation](iterator begin, iterator end, map_t& m) {
@@ -576,17 +576,17 @@ PartedCanonicPolynom::PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bo
     }
 }
 
-Y_t PartedCanonicPolynom::operator()(X_t x)
+Y_t SplinePolynom::operator()(X_t x)
 {
     return m_map[x](x);
 }
 
-CanonicPolynom PartedCanonicPolynom::operator[](X_t x)
+CanonicPolynom SplinePolynom::operator[](X_t x)
 {
     return m_map[x];
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other) const
+SplinePolynom SplinePolynom::operator/(SplinePolynom &other) const
 {
     map_t result;
 
@@ -600,10 +600,10 @@ PartedCanonicPolynom PartedCanonicPolynom::operator/(PartedCanonicPolynom &other
         result.insert(currentRange, res);
     });
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other) const
+SplinePolynom SplinePolynom::operator/(CanonicPolynom &other) const
 {
     assert(m_map.size() > 0);
 
@@ -612,10 +612,10 @@ PartedCanonicPolynom PartedCanonicPolynom::operator/(CanonicPolynom &other) cons
         it->second / other;
     }
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom &other) const
+SplinePolynom SplinePolynom::operator+(const SplinePolynom &other) const
 {
     map_t result;
     operatorPrivate(other, [&result](map_t::const_iterator it, map_t::const_iterator itOther, Range currentRange)
@@ -623,20 +623,20 @@ PartedCanonicPolynom PartedCanonicPolynom::operator+(const PartedCanonicPolynom 
         result.insert(currentRange, it->second + itOther->second);
     });
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator+(const value_t value) const
+SplinePolynom SplinePolynom::operator+(const value_t value) const
 {
     map_t result = m_map;
     for(auto it = result.begin(); it != result.end(); it++) {
         it->second += value;
     }
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom &other) const
+SplinePolynom SplinePolynom::operator*(const SplinePolynom &other) const
 {
     map_t result;
     operatorPrivate(other, [&result](map_t::const_iterator it, map_t::const_iterator itOther, Range currentRange)
@@ -644,20 +644,20 @@ PartedCanonicPolynom PartedCanonicPolynom::operator*(const PartedCanonicPolynom 
         result.insert(currentRange, it->second * itOther->second);
     });
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator*(const value_t value) const
+SplinePolynom SplinePolynom::operator*(const value_t value) const
 {
     map_t result = m_map;
     for(auto it = result.begin(); it != result.end(); it++) {
         it->second *= value;
     }
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom &other) const
+SplinePolynom SplinePolynom::operator-(const SplinePolynom &other) const
 {
     map_t result;
     operatorPrivate(other, [&result](map_t::const_iterator it, map_t::const_iterator itOther, Range currentRange)
@@ -665,15 +665,15 @@ PartedCanonicPolynom PartedCanonicPolynom::operator-(const PartedCanonicPolynom 
         result.insert(currentRange, it->second - itOther->second);
     });
 
-    return PartedCanonicPolynom(result);
+    return SplinePolynom(result);
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::operator-(const value_t value) const
+SplinePolynom SplinePolynom::operator-(const value_t value) const
 {
     return this->operator+(-value);
 }
 
-void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
+void SplinePolynom::operator+=(const SplinePolynom &other)
 {
     if (m_map.size() == 0) {
         m_map = other.m_map;
@@ -683,7 +683,7 @@ void PartedCanonicPolynom::operator+=(const PartedCanonicPolynom &other)
     *this = *this + other;
 }
 
-void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const
+void SplinePolynom::operatorPrivate(const SplinePolynom &other, operatorPred_t pred) const
 {
     auto mapCopy = m_map;
     auto mapCopyOther = other.m_map;
@@ -752,12 +752,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     };
 
     while(it != end || itOther != otherEnd) {
-//        std::cout << itRange() << " " << otherRange() << std::endl;
-//        if (currentRange.inRange(1318)) {
-//            int i = 0;
-//            i += 1;;
-//        }
-
         switch(itRange().isCrossStrict(otherRange())) {
         case Range::equal: {
             currentRange = itRange();
@@ -816,7 +810,6 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
 
             break;
         }
-
         case Range::left: {
             if (it == end) {
                 goto right;
@@ -845,7 +838,7 @@ void PartedCanonicPolynom::operatorPrivate(const PartedCanonicPolynom &other, op
     }
 }
 
-Range PartedCanonicPolynom::distance() const
+Range SplinePolynom::distance() const
 {
     if (m_map.size() == 0) {
         return Range{0, 0};
@@ -854,21 +847,21 @@ Range PartedCanonicPolynom::distance() const
     return Range{m_map.cbegin()->first.leftBound(), std::prev(m_map.cend())->first.rightBound()};
 }
 
-PartedCanonicPolynom PartedCanonicPolynom::cut(Range distance) const
+SplinePolynom SplinePolynom::cut(Range distance) const
 {
     auto begin = m_map.find(distance.leftBound());
     auto end = m_map.find(distance.rightBound());
 
     if (begin == m_map.cend()) {
-        return PartedCanonicPolynom{};
+        return SplinePolynom{};
     }
 
     end = (end == m_map.cend()) ? end : std::next(end);
 
-    return PartedCanonicPolynom(map_t(begin, end));
+    return SplinePolynom(map_t(begin, end));
 }
 
-Range PartedCanonicPolynom::atRange(X_t x) const
+Range SplinePolynom::atRange(X_t x) const
 {
     auto founded = m_map.find(x);
     if (founded == m_map.cend()) {
@@ -878,6 +871,6 @@ Range PartedCanonicPolynom::atRange(X_t x) const
     return founded->first;
 }
 
-const int PartedCanonicPolynom::Partition = 3;
+const int SplinePolynom::Partition = 3;
 
 }

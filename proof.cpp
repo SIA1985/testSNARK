@@ -53,7 +53,7 @@ void Transcript::updateState(const std::string &data)
 }
 
 
-PlonkProof::ptr_t PlonkProof::forProver(PartedCanonicPolynom &g, PartedCanonicPolynom &p, GPK_t &GPK, const witnesses_t &witness, X_t u)
+PlonkProof::ptr_t PlonkProof::forProver(SplinePolynom &g, SplinePolynom &p, GPK_t &GPK, const witnesses_t &witness, X_t u)
 {
     assert(g.distance() == p.distance());
 
@@ -65,7 +65,7 @@ PlonkProof::ptr_t PlonkProof::forProver(PartedCanonicPolynom &g, PartedCanonicPo
     auto f = g - p;
     ptr->m_comF = f.commit(GPK);
 
-    auto z = ZeroWitnessPolynom(witness).toPartedCanonicPolynom();
+    auto z = ZeroWitnessPolynom(witness).toSplinePolynom();
 
     auto q = f / z;
     ptr->m_comQ = q.commit(GPK);
@@ -153,15 +153,15 @@ ProverProof::ProverProof(const GlobalParams &gp)
     //2. Получение точки раскрытия из Т
     auto r = tr("r");
 
-    auto T = TParams.t.toPartedCanonicPolynom();
+    auto T = TParams.t.toSplinePolynom();
     m_commitTr = T[r].commit(m_GPK);
 
 
     //3. Деление на Zero-полином (comQG -> T)
     auto p = correctGates(TParams.splittedT, gp.PP().SParams);
-    auto f = p - gp.PP().TParams.splittedT.result.toPartedCanonicPolynom();
+    auto f = p - gp.PP().TParams.splittedT.result.toSplinePolynom();
 
-    auto Z = ZeroWitnessPolynom(witnesses).toPartedCanonicPolynom();
+    auto Z = ZeroWitnessPolynom(witnesses).toSplinePolynom();
     auto QG = f / Z;
 
     m_commitZr = Z[r].commit(m_GPK);
@@ -176,11 +176,11 @@ ProverProof::ProverProof(const GlobalParams &gp)
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
-    auto WT = gp.PP().WParams.wt.toPartedCanonicPolynom();
-    auto WI = gp.PP().WParams.wi.toPartedCanonicPolynom();
+    auto WT = gp.PP().WParams.wt.toSplinePolynom();
+    auto WI = gp.PP().WParams.wi.toSplinePolynom();
 
-    auto num = T + (WI * beta) + gamma;
-    auto den = T + (WT * beta) + gamma;
+    auto num = T + (WT * beta) + gamma;
+    auto den = T + (WI * beta) + gamma;
 
     auto [W, WShift1] = correctPermulations(witnesses, num, den);
     m_commitWr = W[r].commit(m_GPK);
@@ -213,7 +213,7 @@ ProverProof::ProverProof(const GlobalParams &gp)
     CanonicPolynom F;
     value_t currentV = 1;
     for(auto &poly : {(T[r] - m_rT), (W[r] - m_rW), (WShift1[r] - m_rWNext),
-                (Z[r] - m_rZ), (QG[r] - m_rQG), (QP[r] - m_rQP)}) {
+                      (Z[r] - m_rZ), (QG[r] - m_rQG), (QP[r] - m_rQP)}) {
         F += poly * currentV;
         currentV *= v;
     }
@@ -234,18 +234,16 @@ bool ProverProof::check(G2 tG2, G2 g2)
 //    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
 //    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
 
-    // Проверка уравнения связи W
+    // Проверка перестановки
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
-    value_t numR = m_rT + (beta * m_rWI) + gamma;
-    value_t denR = m_rT + (beta * m_rWT) + gamma;
+    value_t numR = m_rT + (beta * m_rWT) + gamma;
+    value_t denR = m_rT + (beta * m_rWI) + gamma;
 
     value_t errorW = (m_rWNext * denR) - (m_rW * numR);
 
     if (errorW != m_rQP * m_rZ) {
-        std::cout << "Error: " << errorW << std::endl;
-        std::cout << "Q * Zh: " << m_rQP * m_rZ << std::endl;
         return false;
     }
 
@@ -288,15 +286,15 @@ bool ProverProof::fromJson(const json_t &json)
     return false;
 }
 
-PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams)
+SplinePolynom ProverProof::correctGates(const SplittedT_t &t, const GlobalParams::SParams_t SParams)
 {
-    const auto &left = t.left.toPartedCanonicPolynom();
-    const auto &right = t.right.toPartedCanonicPolynom();
+    const auto &left = t.left.toSplinePolynom();
+    const auto &right = t.right.toSplinePolynom();
 
-    auto funcF = PartedCanonicPolynom(PartedCanonicPolynom::map_t{});
+    auto funcF = SplinePolynom(SplinePolynom::map_t{});
     for(const auto &[operation, dots] : SParams.opsFromS) {
 
-        auto isOperation = InterpolationPolynom(dots).toPartedCanonicPolynom();
+        auto isOperation = InterpolationPolynom(dots).toSplinePolynom();
 
         switch(operation) {
         case Sum: {
@@ -316,7 +314,7 @@ PartedCanonicPolynom ProverProof::correctGates(const SplittedT_t &t, const Globa
     return funcF;
 }
 
-ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witnesses, PartedCanonicPolynom &num, PartedCanonicPolynom &den)
+ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witnesses, SplinePolynom &num, SplinePolynom &den)
 {
     dots_t WDots, WDotsShift1;
     Y_t currN, currD, currW = 1;
@@ -333,8 +331,8 @@ ProverProof::WResult_t ProverProof::correctPermulations(const witnesses_t &witne
 
     WDotsShift1.push_back({witnesses.back(), 1});
 
-    return {InterpolationPolynom(WDots).toPartedCanonicPolynom(),
-            InterpolationPolynom(WDotsShift1).toPartedCanonicPolynom()};
+    return {InterpolationPolynom(WDots).toSplinePolynom(),
+            InterpolationPolynom(WDotsShift1).toSplinePolynom()};
 }
 
 }

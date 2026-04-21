@@ -96,7 +96,7 @@ protected:
     /*x0, x1 .. xn*/
     coefs_t m_coefs;
 
-    friend class PartedCanonicPolynom;
+    friend class SplinePolynom;
 };
 
 /* [left, right] */
@@ -251,43 +251,43 @@ private:
     std::map<Range, T> m_map;
 };
 
-class PartedCanonicPolynom : public Polynom
+class SplinePolynom : public Polynom
 {
 public:
     using map_t = RangeMap<CanonicPolynom>;
 
 
-    PartedCanonicPolynom() = default;
+    SplinePolynom() = default;
 
-    PartedCanonicPolynom(const RangeMap<CanonicPolynom> &map);
+    SplinePolynom(const RangeMap<CanonicPolynom> &map);
 
-    PartedCanonicPolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation = true);
+    SplinePolynom(const std::set<dot_t> &sortedDots, bool fromInterpolation = true);
 
     virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom operator[](X_t x);
 
-    PartedCanonicPolynom operator+(const PartedCanonicPolynom &other) const;
+    SplinePolynom operator+(const SplinePolynom &other) const;
 
-    PartedCanonicPolynom operator+(const value_t value) const;
+    SplinePolynom operator+(const value_t value) const;
 
-    PartedCanonicPolynom operator-(const PartedCanonicPolynom &other) const;
+    SplinePolynom operator-(const SplinePolynom &other) const;
 
-    PartedCanonicPolynom operator-(const value_t value) const;
+    SplinePolynom operator-(const value_t value) const;
 
-    PartedCanonicPolynom operator*(const PartedCanonicPolynom &other) const;
+    SplinePolynom operator*(const SplinePolynom &other) const;
 
-    PartedCanonicPolynom operator*(const value_t value) const;
+    SplinePolynom operator*(const value_t value) const;
 
-    PartedCanonicPolynom operator/(PartedCanonicPolynom &other) const;
+    SplinePolynom operator/(SplinePolynom &other) const;
 
-    PartedCanonicPolynom operator/(CanonicPolynom &other) const;
+    SplinePolynom operator/(CanonicPolynom &other) const;
 
-    void operator+=(const PartedCanonicPolynom &other);
+    void operator+=(const SplinePolynom &other);
 
     Range distance() const;
 
-    PartedCanonicPolynom cut(Range distance) const;
+    SplinePolynom cut(Range distance) const;
 
     Range atRange(X_t x) const;
 
@@ -297,7 +297,7 @@ protected:
     using operatorPred_t = std::function<void(RangeMap<CanonicPolynom>::const_iterator it,
                                               RangeMap<CanonicPolynom>::const_iterator itOther,
                                               Range currentRange)>;
-    void operatorPrivate(const PartedCanonicPolynom &other, operatorPred_t pred) const;
+    void operatorPrivate(const SplinePolynom &other, operatorPred_t pred) const;
 
      map_t m_map;
 };
@@ -315,7 +315,7 @@ public:
     virtual Y_t operator()(X_t x) override;
 
     CanonicPolynom toCanonicPolynom() const;
-    PartedCanonicPolynom toPartedCanonicPolynom() const;
+    SplinePolynom toSplinePolynom() const;
 
 protected:
     dots_t m_dots;
@@ -329,7 +329,7 @@ public:
 
     ZeroWitnessPolynom(const witnesses_t &xs);
 
-    PartedCanonicPolynom toPartedCanonicPolynom() const;
+    SplinePolynom toSplinePolynom() const;
 
 private:
     witnesses_t m_roots;
