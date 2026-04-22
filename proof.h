@@ -85,8 +85,8 @@ private:
     Y_t m_rT, m_rW, m_rWNext, m_rZ, m_rQG, m_rQP;
     Y_t m_rWT, m_rWI;
 
-    MerkleLeaf m_MerkleRoot;
-    std::vector<MerkleLeaf> m_MerklePath;
+    hash_t m_MerkleRoot;
+    hashes_t m_MerklePath;
 
     //todo: по идее не нужен здесь, ибо глобальные параметры
     //мб добавить g2 тоже в GPK?

@@ -6,6 +6,9 @@
 #include <set>
 #include <memory>
 #include "nlohmann/json.hpp"
+#include <string>
+#include <vector>
+#include <cmath>
 #define MCL_USE_GMP 1
 #include <mcl/bls12_381.hpp>
 
@@ -125,7 +128,23 @@ protected:
 void to_json(json_t& j, const Jsonable& jsonable);
 void from_json(const snrk::json_t& j, Jsonable& jsonable);
 
-typedef std::string MerkleLeaf;
+typedef std::string hash_t; //todo: char[256]
+typedef std::vector<hash_t> hashes_t;
+
+hash_t hash(std::string toHash);
+
+class MerkleTree {
+public:
+    MerkleTree(const std::vector<std::string> &data);
+
+    hash_t root() const;
+
+    hashes_t path(hash_t leaf) const;
+
+private:
+    std::vector<hashes_t> m_tree;
+    std::size_t leafsCount;
+};
 }
 
 #endif // TYPES_H

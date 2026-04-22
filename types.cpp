@@ -81,4 +81,53 @@ void from_json(const snrk::json_t& j, Jsonable& jsonable)
     jsonable.fromJson(j.at("obj"));
 }
 
+//todo:
+hash_t hash(std::string toHash)
+{
+    return toHash.substr(0, 3);
+}
+
+MerkleTree::MerkleTree(const std::vector<std::string> &data)
+{
+    assert(data.size() != 0);
+
+
+    leafsCount = data.size();
+    int layers = std::ceil(std::log2(leafsCount)) + 1;
+
+    m_tree.reserve(layers);
+
+    hashes_t lay, temp;
+    for(const auto &d : data) {
+        lay.push_back(hash(d));
+    }
+
+    for(int i = 0; i < layers; i++) {
+        temp.clear();
+
+        if (lay.size() % 2 == 1) {
+            lay.push_back(lay.back());
+        }
+
+        for(std::size_t j = 0; j < lay.size(); j += 2) {
+            auto toHash = lay[j] + lay[j + 1];
+            temp.push_back(hash(toHash));
+        }
+
+        lay = temp;
+        m_tree.push_back(lay);
+    }
+
+}
+
+hash_t MerkleTree::root() const
+{
+    return m_tree.back().back();
+}
+
+hashes_t MerkleTree::path(hash_t leaf) const
+{
+
+}
+
 }

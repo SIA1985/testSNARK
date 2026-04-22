@@ -50,25 +50,25 @@ int main(int argc, char *argv[])
 
     snrk::Circut c({x1, x2}, {w1});
 
-//    for(int i = 0; i < 100; i++) {
-//    auto out1 = snrk::value_t(5);
-//    c.addGate({snrk::Devide, {x1, w1}, out1});
-//    auto out2 = snrk::value_t(1);
-//    c.addGate({snrk::Devide, {x1, out1}, out2});
-//    auto out3 = snrk::value_t(5);
-//    c.addGate({snrk::Product, {x1, w1}, out3});
-//    auto out4 = snrk::value_t(4);
-//    c.addGate({snrk::Minus, {x1, w1}, out4});
-//    auto out5 = snrk::value_t(6);
-//    c.addGate({snrk::Sum, {x1, w1}, out5});
-//    auto out6 = snrk::value_t(5);
-//    c.addGate({snrk::Devide, {x1, w1}, out6});
-//    }
+    for(int i = 0; i < 100; i++) {
+    auto out1 = snrk::value_t(5);
+    c.addGate({snrk::Devide, {x1, w1}, out1});
+    auto out2 = snrk::value_t(1);
+    c.addGate({snrk::Devide, {x1, out1}, out2});
+    auto out3 = snrk::value_t(5);
+    c.addGate({snrk::Product, {x1, w1}, out3});
+    auto out4 = snrk::value_t(4);
+    c.addGate({snrk::Minus, {x1, w1}, out4});
+    auto out5 = snrk::value_t(6);
+    c.addGate({snrk::Sum, {x1, w1}, out5});
+    auto out6 = snrk::value_t(5);
+    c.addGate({snrk::Devide, {x1, w1}, out6});
+    }
 
-    auto out1 = snrk::CircutValue_t(11);
-    c.addGate({snrk::Sum, {x1, x2}, out1});
-    auto out2 = snrk::CircutValue_t(10);
-    c.addGate({snrk::Minus, {out1, w1}, out2});
+//    auto out1 = snrk::CircutValue_t(11);
+//    c.addGate({snrk::Sum, {x1, x2}, out1});
+//    auto out2 = snrk::CircutValue_t(10);
+//    c.addGate({snrk::Minus, {out1, w1}, out2});
 
     snrk::G1 g;
     mcl::mapToG1(g, 1);
@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
  * (+ отвечает на: почему Partition > 3 не работает
  * Тут дело в если точек меньше, чем Partition(=4), то раз на входе 3 точки -> полином(^2)/полином(^3)))
  * 6. Макрос на вкл/выкл многопотока
+ * 7. В библиотеке убрать ассерты
  *
  * Зависимости:
  * mcl, gmp++, nlohmanjson
