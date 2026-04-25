@@ -291,6 +291,10 @@ public:
 
     Range atRange(X_t x) const;
 
+    std::size_t segmentsCounts() const;
+
+    commit_t commit(std::size_t segmentIndex, GPK_t GPK) const;
+
     const static int Partition;
 
 protected:

@@ -871,6 +871,19 @@ Range SplinePolynom::atRange(X_t x) const
     return founded->first;
 }
 
+std::size_t SplinePolynom::segmentsCounts() const
+{
+    return m_map.size();
+}
+
+commit_t SplinePolynom::commit(GPK_t GPK, std::size_t segmentIndex) const
+{
+    auto it = m_map.cbegin();
+    std::advance(it, segmentIndex);
+
+    return it->second.commit(GPK);
+}
+
 const int SplinePolynom::Partition = 3;
 
 }

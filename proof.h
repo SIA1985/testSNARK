@@ -11,6 +11,8 @@ class Transcript {
 public:
    Transcript(const std::string &init);
 
+   void appendHash(const std::string &label, const hash_t &hashData);
+
    void appendPoint(const std::string &label, const mcl::bn::G1 &point);
 
    void appendScalar(const std::string &label, const mcl::bn::Fr &scalar);
@@ -20,7 +22,7 @@ public:
 private:
    void updateState(const std::string &data);
 
-   std::string m_state;
+   hash_t m_state;
 };
 
 class Proof : public Jsonable
@@ -85,8 +87,8 @@ private:
     Y_t m_rT, m_rW, m_rWNext, m_rZ, m_rQG, m_rQP;
     Y_t m_rWT, m_rWI;
 
-    hash_t m_MerkleRoot;
-    hashes_t m_MerklePath;
+    hash_t m_merkleRoot, m_merkleLeaf;
+    hashes_t m_merklePath;
 
     //todo: по идее не нужен здесь, ибо глобальные параметры
     //мб добавить g2 тоже в GPK?

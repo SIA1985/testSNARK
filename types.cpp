@@ -84,34 +84,38 @@ void from_json(const snrk::json_t& j, Jsonable& jsonable)
 //todo:
 hash_t hash(std::string toHash)
 {
-    return toHash.substr(0, 3);
+    if (toHash.length() <= 3) {
+        return toHash;
+    }
+
+    return toHash.substr(0, 1) + toHash.substr(toHash.length() - 2);
 }
 
 MerkleTree::MerkleTree(const std::vector<std::string> &data)
 {
-    assert(data.size() != 0);
+    assert(!data.empty());
 
 
     leafsCount = data.size();
-    int layers = std::ceil(std::log2(leafsCount)) + 1;
 
-    m_tree.reserve(layers);
+    //todo:
+//    m_tree.reserve(layers);
 
-    hashes_t lay, temp;
+    hashes_t lay;
     for(const auto &d : data) {
         lay.push_back(hash(d));
     }
+    m_tree.push_back(lay);
 
-    for(int i = 0; i < layers; i++) {
-        temp.clear();
-
+    while(lay.size() > 1) {
+        //todo: уязвимость с последним дубликатом
         if (lay.size() % 2 == 1) {
             lay.push_back(lay.back());
         }
 
-        for(std::size_t j = 0; j < lay.size(); j += 2) {
-            auto toHash = lay[j] + lay[j + 1];
-            temp.push_back(hash(toHash));
+        hashes_t temp;
+        for(std::size_t i = 0; i < lay.size(); i += 2) {
+            temp.push_back(hash(lay[i] + lay[i + 1]));
         }
 
         lay = temp;
@@ -125,9 +129,51 @@ hash_t MerkleTree::root() const
     return m_tree.back().back();
 }
 
-hashes_t MerkleTree::path(hash_t leaf) const
+MerkleTree::path_t MerkleTree::path(hash_t leaf) const
 {
+    if (m_tree.empty()) {
+        return std::nullopt;
+    }
 
+    auto &leafs = m_tree.front();
+
+    auto it = std::find(leafs.begin(), leafs.end(), leaf);
+    if (it == leafs.end()) {
+        return std::nullopt;
+    }
+
+    std::size_t index = std::distance(leafs.begin(), it);
+    hashes_t proof;
+
+    for (std::size_t i = 0; i < m_tree.size() - 1; ++i) {
+        const auto &layer = m_tree[i];
+
+        std::size_t pairIndex = (index % 2 == 0) ? index + 1 : index - 1;
+
+        if (pairIndex >= layer.size()) {
+            pairIndex = index;
+        }
+
+        proof.push_back(layer[pairIndex]);
+        index /= 2;
+    }
+
+    return proof;
+}
+
+bool MerkleTree::verify(const hashes_t &path, hash_t leaf, bool isLeft, hash_t root)
+{
+    hash_t result = leaf;
+
+    for(const auto &pair : path) {
+        if (isLeft) {
+            result = hash(result + pair);
+        } else {
+            result = hash(pair + result);
+        }
+    }
+
+    return root == result;
 }
 
 }

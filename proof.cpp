@@ -15,6 +15,13 @@ Transcript::Transcript(const std::string &init)
 {
 }
 
+void Transcript::appendHash(const std::string &label, const hash_t &hashData)
+{
+    m_state += label;
+
+    updateState(hashData);
+}
+
 void Transcript::appendPoint(const std::string &label, const mcl::G1 &point)
 {
     m_state += label;
@@ -45,11 +52,7 @@ value_t Transcript::operator()(const std::string &label)
 
 void Transcript::updateState(const std::string &data)
 {
-    m_state.append(data);
-
-    mcl::bn::Fr hash_value;
-    hash_value.setHashOf(m_state);
-    m_state = hash_value.getStr(16);
+    m_state = hash(m_state + data);
 }
 
 
@@ -63,12 +66,14 @@ PlonkProof::ptr_t PlonkProof::forProver(SplinePolynom &g, SplinePolynom &p, GPK_
     ptr->m_GPK = GPK;
 
     auto f = g - p;
-    ptr->m_comF = f.commit(GPK);
+    //todo:
+//    ptr->m_comF = f.commit(GPK);
 
     auto z = ZeroWitnessPolynom(witness).toSplinePolynom();
 
     auto q = f / z;
-    ptr->m_comQ = q.commit(GPK);
+    //todo:
+//    ptr->m_comQ = q.commit(GPK);
 
     ptr->m_toProve.x = u;
     ptr->m_toProve.y = q(u);
@@ -127,52 +132,19 @@ ProverProof::ProverProof(const GlobalParams &gp)
     m_GPK = gp.GPK();
 
     //todo: Зачем label в транскрипт?
-    //Инициализация Транскрипта todo: (мб публичный ключ)
+    //1. Инициализация Транскрипта todo: (мб публичный ключ)
     Transcript tr("test");
 
-    /*
-   //1. Листья дерева (5 коммитментов в одном хеше) ---
-    size_t numSegments = splA.size();
-    std::vector<std::string> leafHashes;
-
-    for(size_t i = 0; i < numSegments; ++i) {
-        // Конкатенируем 7 точек в одну строку для хеширования
-        std::string data = splA.getCommit(i).getStr()  + splB.getCommit(i).getStr()  +
-                           splC.getCommit(i).getStr()  + splQ.getCommit(i).getStr()  +
-                           splZ.getCommit(i).getStr()  + splW.getCommit(i).getStr()  +
-                           splWT.getCommit(i).getStr();
-
-        leafHashes.push_back(sha256(data));
-    }
-
-    MerkleTree tree(leafHashes);
-    m_merkleRoot = tree.getRoot();
-    tr.appendString("merkleRoot", m_merkleRoot);
-    */
-
-    //2. Получение точки раскрытия из Т
-    auto r = tr("r");
+    //2. Построение всех сплайнов
+    auto Z = ZeroWitnessPolynom(witnesses).toSplinePolynom();
 
     auto T = TParams.t.toSplinePolynom();
-    m_commitTr = T[r].commit(m_GPK);
 
-
-    //3. Деление на Zero-полином (comQG -> T)
     auto p = correctGates(TParams.splittedT, gp.PP().SParams);
     auto f = p - gp.PP().TParams.splittedT.result.toSplinePolynom();
 
-    auto Z = ZeroWitnessPolynom(witnesses).toSplinePolynom();
     auto QG = f / Z;
 
-    m_commitZr = Z[r].commit(m_GPK);
-    m_commitQGr = QG[r].commit(m_GPK);
-
-//    m_merklePath = tree.getProof(m_segmentIndex);
-    //todo: фиксация в транскрипте корня Меркла?
-    //todo: если r и r_next в разных сплайнах, то нужно их всех в Меркла
-
-
-    //4. Полином-аккумулятор, для проверки перестановки
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
@@ -183,11 +155,46 @@ ProverProof::ProverProof(const GlobalParams &gp)
     auto den = T + (WI * beta) + gamma;
 
     auto [W, WShift1] = correctPermulations(witnesses, num, den);
-    m_commitWr = W[r].commit(m_GPK);
-    m_commitWNextr = WShift1[r].commit(m_GPK);
 
     auto Err = (WShift1 * den) - (W * num);
     auto QP = Err / Z;
+
+
+    //3. Дерево Меркла для доказательства монолитности сплайнов
+     size_t numSegments = Z.segmentsCounts();
+     hashes_t leafHashes;
+
+     for(size_t i = 0; i < numSegments; ++i) {
+         std::string data;
+         for(const auto &poly : {T, W, WShift1, Z, QG, QP, WT, WI}) {
+             data += poly.commit(m_GPK, i).getStr();
+         }
+
+         leafHashes.push_back(hash(data));
+     }
+
+     MerkleTree tree(leafHashes);
+     m_merkleRoot = tree.root();
+     tr.appendHash("merkleRoot", m_merkleRoot);
+
+    //4. Получение точки раскрытия из Т
+    auto r = tr("r");
+
+    std::string toHash;
+    for(const auto &poly : {T[r], W[r], WShift1[r], Z[r],
+                            QG[r], QP[r], WT[r], WI[r]}) {
+        toHash += poly.commit(m_GPK).getStr();
+    }
+    m_merkleLeaf = hash(toHash);
+
+    m_merklePath = tree.path(m_merkleLeaf).value();
+    //todo: если r и r_next в разных сплайнах, то нужно их всех в Меркла?
+
+    m_commitTr = T[r].commit(m_GPK);
+    m_commitZr = Z[r].commit(m_GPK);
+    m_commitQGr = QG[r].commit(m_GPK);
+    m_commitWr = W[r].commit(m_GPK);
+    m_commitWNextr = WShift1[r].commit(m_GPK);
     m_commitQPr = QP[r].commit(m_GPK);
 
     m_rT = T(r);
@@ -206,6 +213,7 @@ ProverProof::ProverProof(const GlobalParams &gp)
     tr.appendScalar("rZ", m_rZ);
     tr.appendScalar("rQG", m_rQG);
     tr.appendScalar("rQP", m_rQP);
+
 
     //5. Получения доказательства pi
     auto v = tr("v");
@@ -227,14 +235,6 @@ bool ProverProof::check(G2 tG2, G2 g2)
     //Инициализация Транскрипта todo: (мб публичный ключ)
     Transcript tr("test");
 
-//    tr.appendString("merkleRoot", m_merkleRoot);
-    auto r = tr("r");
-
-    //Проверка пути Меркла
-//    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
-//    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
-
-    // Проверка перестановки
     auto beta = tr("beta");
     auto gamma = tr("gamma");
 
@@ -246,6 +246,15 @@ bool ProverProof::check(G2 tG2, G2 g2)
     if (errorW != m_rQP * m_rZ) {
         return false;
     }
+
+    tr.appendHash("merkleRoot", m_merkleRoot);
+
+    auto r = tr("r");
+
+    //Проверка пути Меркла
+//    std::string leafData = m_CjA.getStr() + m_CjB.getStr() + m_CjC.getStr() + m_CjQ.getStr() + m_CjZ.getStr();
+//    if (!verifyMerkle(m_merkleRoot, leafData, m_merklePath, m_segmentIndex)) return false;
+
 
     tr.appendScalar("rT", m_rT);
     tr.appendScalar("rW", m_rW);

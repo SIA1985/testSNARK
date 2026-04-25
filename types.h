@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <optional>
 #define MCL_USE_GMP 1
 #include <mcl/bls12_381.hpp>
 
@@ -134,12 +135,15 @@ typedef std::vector<hash_t> hashes_t;
 hash_t hash(std::string toHash);
 
 class MerkleTree {
+    using path_t  = std::optional<hashes_t>;
 public:
     MerkleTree(const std::vector<std::string> &data);
 
     hash_t root() const;
 
-    hashes_t path(hash_t leaf) const;
+    path_t path(hash_t leaf) const;
+
+    static bool verify(const hashes_t &path, hash_t leaf, bool isLeft, hash_t root);
 
 private:
     std::vector<hashes_t> m_tree;
